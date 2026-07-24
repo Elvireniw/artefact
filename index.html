@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artefact — гончарна школа</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="is-preloading">
+
+  <!-- CUSTOM CURSOR — glassmorphic "далі" cursor for media elements -->
+  <div class="cursor" id="cursor" aria-hidden="true">
+    <div class="cursor__dot"></div>
+    <div class="cursor__media">
+      <span class="cursor__media-label">далі</span>
+    </div>
+  </div>
+
+  <!-- PRELOADER — "The Focusing Logo" -->
+  <div class="preloader" id="preloader" role="presentation" aria-hidden="true">
+    <div class="preloader__logo" role="img" aria-label="Artefact">
+      <span style="--i:1" aria-hidden="true"><img src="img/logo-letter-1.svg" alt="A"></span>
+      <span style="--i:2" aria-hidden="true"><img src="img/logo-letter-2.svg" alt="R"></span>
+      <span style="--i:3" aria-hidden="true"><img src="img/logo-letter-3.svg" alt="T"></span>
+      <span style="--i:4" aria-hidden="true"><img src="img/logo-letter-4.svg" alt="E"></span>
+      <span style="--i:5" aria-hidden="true"><img src="img/logo-letter-5.svg" alt="F"></span>
+      <span style="--i:6" aria-hidden="true"><img src="img/logo-letter-6.svg" alt="A"></span>
+      <span style="--i:7" aria-hidden="true"><img src="img/logo-letter-7.svg" alt="C"></span>
+      <span style="--i:8" aria-hidden="true"><img src="img/logo-letter-8.svg" alt="T"></span>
+    </div>
+  </div>
+
+  <!-- HERO SECTION -->
+  <section class="hero" id="hero">
+
+    <img class="hero__bg" src="img/hero-bg.png" alt="" aria-hidden="true">
+
+    <p class="hero__label hero__label--craft js-parallax" data-depth="0.6"><span class="italic-symbol">(</span>craft</p>
+    <p class="hero__label hero__label--texture js-parallax" data-depth="0.8"><span class="italic-symbol">(</span>texture</p>
+    <p class="hero__label hero__label--touch js-parallax" data-depth="0.5"><span class="italic-symbol">(</span>human touch</p>
+    <p class="hero__label hero__label--process js-parallax" data-depth="0.7"><span class="italic-symbol">(</span>process</p>
+    <p class="hero__label hero__label--materiality js-parallax" data-depth="0.9"><span class="italic-symbol">(</span>materiality</p>
+    <p class="hero__label hero__label--rhythm js-parallax" data-depth="0.6"><span class="italic-symbol">(</span>rhythm</p>
+
+    <img src="img/artefact-blur.png" alt="" aria-hidden="true" class="hero__ghost-img js-parallax" data-depth="1.4">
+
+    <header class="hero__nav">
+      <a class="hero__logo" href="#" aria-label="Artefact">
+        <img src="img/logo-header.svg" alt="Artefact" width="200" height="28">
+      </a>
+
+      <nav class="hero__links" aria-label="Основна навігація">
+        <a href="#philosophy" class="hero__link"><span class="hero__link-text">філософія</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#method" class="hero__link"><span class="hero__link-text">метод</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#reviews" class="hero__link"><span class="hero__link-text">відгуки</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#pricing" class="hero__link"><span class="hero__link-text">тарифи</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#" target="_blank" rel="noopener" class="hero__link"><span class="hero__link-text">inst</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+      </nav>
+
+      <button class="hero__menu-btn js-line-hover" type="button">
+        <span class="hero__menu-label">меню</span>
+        <span class="hero__menu-line-track" aria-hidden="true">
+          <span class="hero__menu-line hero__menu-line--out"></span>
+          <span class="hero__menu-line hero__menu-line--in"></span>
+        </span>
+      </button>
+    </header>
+
+    <div class="hero__vase-scene">
+      <img class="hero__table" src="img/table.png" alt="">
+      <div class="hero__vase-intro">
+        <img class="hero__vase" src="img/vase.png" alt="Керамічна ваза ручної роботи">
+      </div>
+    </div>
+
+    <div class="hero__content">
+      <div class="hero__title-wrap">
+        <p class="hero__eyebrow js-split-chars"><span class="italic-symbol">(</span>яке об'єднує</p>
+        <img src="img/hero-title.png" alt="ЗВ'ЯЗОК ПОКОЛІНЬ ЧЕРЕЗ МИСТЕЦТВО ГОНЧАРСТВА" class="hero__title-img">
+      </div>
+      <h1 class="visually-hidden">ЗВ'ЯЗОК ПОКОЛІНЬ ЧЕРЕЗ МИСТЕЦТВО ГОНЧАРСТВА</h1>
+    </div>
+
+    <p class="hero__description">
+      <span class="hero__description-line--1">відроджуємо</span> <span class="hero__description-line--2">традиції майстрів</span><br>
+      у цифрову епоху
+    </p>
+
+    <a href="#course" class="hero__btn js-line-hover">
+      <span class="hero__btn-text">обрати курс</span>
+      <span class="hero__btn-plus" aria-hidden="true">
+        <span class="hero__btn-plus-track">
+          <span class="hero__btn-plus-char hero__btn-plus-char--out">+</span>
+          <span class="hero__btn-plus-char hero__btn-plus-char--in">+</span>
+        </span>
+      </span>
+      <span class="hero__btn-line-track" aria-hidden="true">
+        <span class="hero__btn-line hero__btn-line--out"></span>
+        <span class="hero__btn-line hero__btn-line--in"></span>
+      </span>
+    </a>
+
+    <a href="#philosophy" class="hero__scroll" aria-label="Прокрутити вниз">
+      <svg class="hero__scroll-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 0V23M8 23L1 16M8 23L15 16" stroke="currentColor" stroke-width="1.4"/>
+      </svg>
+    </a>
+
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js" defer></script>
+  <script src="script.js" defer></script>
+</body>
+</html>

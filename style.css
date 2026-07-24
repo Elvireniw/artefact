@@ -1,0 +1,840 @@
+/* ==========================================================================
+   FONTS — Helvetica Neue (local files, Font/)
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueUltraLight.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueUltraLightItalic.otf') format('opentype');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueThin.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueThinItalic.otf') format('opentype');
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueLight.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueLightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueRoman.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueItalic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueMedium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueMediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueBold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueBoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueHeavy.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueHeavyItalic.otf') format('opentype');
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueBlack.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Helvetica Neue';
+  src: url('Font/HelveticaNeueBlackItalic.otf') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ==========================================================================
+   RESET
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  min-height: 100vh;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body.is-preloading {
+  overflow: hidden;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.has-custom-cursor,
+  body.has-custom-cursor a,
+  body.has-custom-cursor button {
+    cursor: none;
+  }
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+/* ==========================================================================
+   SPECIAL TEXT SYMBOLS
+   Оборачивать декоративные символы вида "(" в свой span,
+   когда по макету скобка идёт курсивом, а остальной текст — regular.
+   ========================================================================== */
+
+.italic-symbol {
+  font-style: italic;
+}
+
+/* ==========================================================================
+   DESIGN TOKENS (з Figma Dev Mode, "Artefact", node 1:893)
+   ========================================================================== */
+
+:root {
+  /* fluid unit — 1920px макет = 100vw, все розміри масштабуються пропорційно */
+  --u: calc(100vw / 1920);
+
+  /* 4-колонкова сітка: margin 50 / gutter 10 (у fluid-одиницях) */
+  --grid-margin: calc(var(--u) * 50);
+  --grid-gutter: calc(var(--u) * 10);
+  --grid-col: calc((100vw - (2 * var(--grid-margin)) - (3 * var(--grid-gutter))) / 4);
+  --col-1: var(--grid-margin);
+  /* left-column correction: logo/eyebrow/H1 shifted -15u to balance the
+     measured physical left/right margin discrepancy */
+  --col-1-left: calc(var(--col-1) - var(--u) * 15);
+  --col-2: calc(var(--grid-margin) + var(--grid-col) + var(--grid-gutter));
+  --col-3: calc(var(--grid-margin) + 2 * (var(--grid-col) + var(--grid-gutter)));
+  --col-4: calc(var(--grid-margin) + 3 * (var(--grid-col) + var(--grid-gutter)));
+
+  --beige-100: #EDE9DD;
+  --beige-80: rgba(237, 233, 221, 0.8);
+  --beige-60: rgba(237, 233, 221, 0.6);
+  --beige-40: rgba(237, 233, 221, 0.4);
+  --blue: #B1B8CA;
+  --olive-60: rgba(154, 150, 113, 0.6);
+  --preloader-bg: radial-gradient(circle at center, rgba(217, 224, 242, 1) 0%, rgba(147, 154, 172, 1) 100%);
+  --preloader-fg: #2B3D2D;
+}
+
+/* ==========================================================================
+   PRELOADER — "The Focusing Logo"
+   Повноекранний оверлей із окремих SVG-літер логотипу. Літери проявляються
+   зі стагером (opacity 0 → 1, blur 20px → 0) через GSAP, після чого весь
+   оверлей плавно згасає, відкриваючи статичний Hero.
+   ========================================================================== */
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: var(--preloader-bg);
+}
+
+.preloader__logo {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 6);
+}
+
+/* letters animate purely via this CSS keyframe (staggered per-letter with
+   the --i custom property set inline in index.html) — script.js never
+   sets opacity/filter on these elements, so nothing fights the animation;
+   it only times a delayed call off the same durations to know when the
+   hold + fade-out should start */
+.preloader__logo span {
+  display: inline-flex;
+  align-items: center;
+  animation: animateBlur 2.0s ease-in-out 3; /* EXACTLY 3 PASSES */
+  animation-delay: calc(0.12s * var(--i));
+  animation-fill-mode: forwards;
+  will-change: opacity, filter;
+}
+
+.preloader__logo img {
+  display: block;
+  height: calc(var(--u) * 84);
+  width: auto;
+}
+
+@keyframes animateBlur {
+  0%, 20% {
+    filter: blur(0px);
+    opacity: 1;
+  }
+  40% {
+    filter: blur(16px);
+    opacity: 0.3;
+  }
+  60%, 100% {
+    filter: blur(0px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader__logo span {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   HERO SECTION
+   Усі розміри/позиції зведені у fluid-одиниці --u, де 1920px макета = 100vw,
+   тому композиція масштабується пропорційно на будь-якій ширині екрана.
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1920 / 1080;
+  overflow: hidden;
+  margin: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background-color: #2f4a3d;
+  color: var(--beige-100);
+}
+
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- decorative background labels + ARTEFACT ghost text --- */
+
+.hero__label {
+  position: absolute;
+  z-index: 6;
+  display: inline-flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 6);
+  margin: 0;
+  font-size: calc(var(--u) * 20);
+  line-height: 1.5;
+  color: var(--olive-60);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.hero__label--craft { left: calc(var(--u) * 569); top: calc(var(--u) * 158); }
+.hero__label--texture { left: calc(var(--u) * 284); top: calc(var(--u) * 256); }
+.hero__label--touch { left: calc(var(--u) * 1034); top: calc(var(--u) * 266); }
+.hero__label--process { left: calc(var(--u) * 1403); top: calc(var(--u) * 403); }
+.hero__label--materiality { left: calc(var(--u) * 227); top: calc(var(--u) * 834); }
+.hero__label--rhythm { left: calc(var(--u) * 569); top: calc(var(--u) * 981); }
+
+/* img/artefact-blur.png, positioned behind the vase (z-index 1 < vase's 2).
+   Base top (141u) is the original Pixel Perfect position; the requested
+   "shift up 15px" is folded into that offset (141 - 15 = 126) via `top`
+   rather than a CSS `transform`, because this element is also a live
+   gsap.quickTo() parallax target (script.js) — a static `transform` here
+   would be overwritten the instant the parallax quickTo first touches x/y,
+   silently losing the shift. Same visual result, no conflict with parallax. */
+.hero__ghost-img {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 420);
+  top: calc(var(--u) * 126);
+  width: calc(var(--u) * 1367.744);
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+/* --- top navigation --- */
+
+.hero__logo {
+  position: absolute;
+  z-index: 7;
+  left: var(--col-1-left);
+  top: calc(var(--u) * 30);
+  width: calc(var(--u) * 200);
+  height: calc(var(--u) * 28);
+}
+
+.hero__logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero__links {
+  position: absolute;
+  z-index: 7;
+  left: calc(var(--u) * 965);
+  top: calc(var(--u) * 26);
+  width: calc(var(--u) * 729);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  font-size: calc(var(--u) * 24);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--beige-80);
+  white-space: nowrap;
+}
+
+.hero__links a {
+  position: relative;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.hero__links a:hover {
+  color: var(--beige-100);
+}
+
+.hero__link-text {
+  display: inline-block;
+}
+
+/* underline hidden at rest; draws in left-to-right on hover, exits to the
+   right on mouseleave (same left/right transform-origin flip as the menu
+   and CTA underlines, just starting from scaleX(0) instead of visible) */
+.hero__link-underline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * -6);
+  height: 1px;
+  background: var(--beige-100);
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.hero__link:hover .hero__link-underline {
+  transform-origin: left;
+  transform: scaleX(1);
+}
+
+.hero__menu-btn {
+  position: absolute;
+  z-index: 7;
+  left: calc(var(--u) * 1807);
+  top: calc(var(--u) * 26);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: calc(var(--u) * 24);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--beige-80);
+  white-space: nowrap;
+}
+
+.hero__menu-label {
+  display: block;
+}
+
+.hero__menu-line-track {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin-top: calc(var(--u) * 2);
+  overflow: hidden;
+}
+
+.hero__menu-line {
+  position: absolute;
+  inset: 0;
+  background: var(--beige-100);
+}
+
+/* --- vase scene --- */
+
+.hero__vase-scene {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero__table {
+  position: absolute;
+  left: calc(var(--u) * 835);
+  top: calc(var(--u) * 895);
+  width: calc(var(--u) * 809);
+  height: calc(var(--u) * 186);
+  object-fit: cover;
+}
+
+.hero__vase-intro {
+  position: absolute;
+  left: calc(var(--u) * 856);
+  top: calc(var(--u) * 150);
+  width: calc(var(--u) * 654);
+  height: calc(var(--u) * 907);
+  transform-origin: 50% 100%;
+}
+
+.hero__vase {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  will-change: transform;
+}
+
+/* --- left content: eyebrow + H1 --- */
+
+.hero__content {
+  position: absolute;
+  z-index: 3;
+  left: var(--col-1-left);
+  /* 305u base position from an earlier pass, moved down 12u this pass */
+  top: calc(var(--u) * 317);
+  width: calc(var(--u) * 1087);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero__title-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.hero__title-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* top edge matches the top edge of hero-title.png exactly (both flush at
+   the title-wrap's own top) — this is the Pixel Perfect stage value; the
+   eyebrow's short width and the image's right-aligned "ЗВ'ЯЗОК" keep them
+   from ever overlapping horizontally */
+.hero__eyebrow {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 6);
+  display: block;
+  margin: 0;
+  font-size: calc(var(--u) * 30);
+  font-weight: 400;
+  letter-spacing: calc(var(--u) * -0.6);
+  text-transform: none;
+  color: var(--beige-100);
+  white-space: nowrap;
+}
+
+/* split into .char spans by splitChars() — .italic-symbol keeps its own
+   gap to the word since inline-flex/gap no longer applies per character */
+.hero__eyebrow .italic-symbol {
+  margin-right: calc(var(--u) * 6);
+}
+
+.hero__eyebrow .char {
+  display: inline-block;
+  will-change: opacity, filter;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- description + CTA --- */
+
+/* verified against Figma node 1:904 (get_metadata + get_design_context):
+   x:1423 y:654 width:446, font-size 48, Helvetica Neue Regular (400),
+   leading-none (line-height:1). Figma's own markup joins "відроджуємо" +
+   "традиції майстрів" as one space-separated run that wraps naturally at
+   this width, then a hard <br> before "у цифрову епоху" — which carries
+   no color override and simply inherits the paragraph's own
+   rgba(237,233,221,0.6), rather than being its own line span. */
+.hero__description {
+  position: absolute;
+  z-index: 3;
+  left: calc(var(--u) * 1423);
+  top: calc(var(--u) * 654);
+  width: calc(var(--u) * 446) !important;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif !important;
+  font-size: calc(var(--u) * 48) !important;
+  font-weight: 400 !important;
+  line-height: 1.0 !important;
+  color: rgba(237, 233, 221, 0.60);
+}
+
+.hero__description-line--1 { color: #EDE9DD !important; }
+.hero__description-line--2 { color: rgba(237, 233, 221, 0.80) !important; }
+
+.hero__btn {
+  position: absolute;
+  z-index: 7;
+  left: calc(50% + var(--u) * 598.5);
+  top: calc(var(--u) * 972);
+  /* centering handled via GSAP xPercent: -50 (script.js) so entrance
+     tweens on `y`/`opacity` never clobber the transform */
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  text-decoration: none;
+  color: var(--beige-100);
+  font-size: calc(var(--u) * 36);
+  line-height: 1.1;
+}
+
+body.is-preloading .hero__btn {
+  pointer-events: none;
+}
+
+.hero__btn-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--u) * 32);
+  line-height: 1;
+  color: var(--blue);
+  overflow: hidden;
+  height: 1em;
+}
+
+.hero__btn-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.hero__btn-plus-char {
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.hero__btn-plus-char--out {
+  transform: translateY(0%);
+}
+
+.hero__btn-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .hero__btn-plus-char--out {
+  transform: translateY(-100%);
+}
+
+.js-line-hover:hover .hero__btn-plus-char--in {
+  transform: translateY(0%);
+}
+
+.hero__btn-line-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * -8);
+  height: 1px;
+  overflow: hidden;
+}
+
+.hero__btn-line {
+  position: absolute;
+  inset: 0;
+  background: var(--beige-100);
+}
+
+/* --- scroll-down arrow --- */
+
+/* shares .hero__btn's top + line-box height so the arrow centers on the
+   exact same horizontal band as the "обрати курс +" text */
+.hero__scroll {
+  position: absolute;
+  z-index: 7;
+  right: var(--grid-margin);
+  top: calc(var(--u) * 972);
+  height: calc(var(--u) * 36 * 1.1);
+  display: inline-flex;
+  align-items: center;
+  color: var(--beige-100);
+}
+
+.hero__scroll-arrow {
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 24);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero__scroll-arrow {
+    animation: scrollArrowBob 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes scrollArrowBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(calc(var(--u) * 6)); }
+}
+
+/* ==========================================================================
+   LINE-HOVER MICRO-INTERACTION
+   Idle line slides out to the right (transform-origin: right) while a new
+   line slides in from the left (transform-origin: left). Applied to the
+   menu button underline and the CTA button underline.
+   ========================================================================== */
+
+.hero__menu-line--out,
+.hero__btn-line--out {
+  transform-origin: left;
+  transform: scaleX(1);
+  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.hero__menu-line--in,
+.hero__btn-line--in {
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.js-line-hover:hover .hero__menu-line--out,
+.js-line-hover:hover .hero__btn-line--out {
+  transform-origin: right;
+  transform: scaleX(0);
+}
+
+.js-line-hover:hover .hero__menu-line--in,
+.js-line-hover:hover .hero__btn-line--in {
+  transform-origin: left;
+  transform: scaleX(1);
+}
+
+/* ==========================================================================
+   CUSTOM CURSOR — glassmorphic "Далі" cursor
+   Small trailing dot by default; expands into a glass circle with a label
+   when hovering images/video/portfolio-style media.
+   ========================================================================== */
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.cursor__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--u) * 10);
+  height: calc(var(--u) * 10);
+  margin: calc(var(--u) * -5) 0 0 calc(var(--u) * -5);
+  border-radius: 50%;
+  background: var(--beige-100);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.cursor__media {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 110);
+  height: calc(var(--u) * 110);
+  margin: calc(var(--u) * -55) 0 0 calc(var(--u) * -55);
+  border-radius: 50%;
+  background: rgba(154, 150, 113, 0.22); /* sand/olive glass tint, matches --olive-60 */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(237, 233, 221, 0.25);
+  opacity: 0;
+  transform: scale(0.4);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.cursor__media-label {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: calc(var(--u) * 24);
+  font-weight: 400;
+  letter-spacing: calc(var(--u) * 0.2);
+  color: var(--beige-100);
+}
+
+.cursor.is-media .cursor__dot {
+  opacity: 0;
+  transform: scale(0);
+}
+
+.cursor.is-media .cursor__media {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .cursor {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   MOTION
+   Vase entrance settles into an infinite GSAP "breathe" float (script.js).
+   Everything else in the master timeline runs once on load and rests in
+   its final state.
+   ========================================================================== */
+
+.js-parallax {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll-arrow {
+    animation: none !important;
+  }
+}

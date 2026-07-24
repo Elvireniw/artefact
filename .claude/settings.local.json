@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -v \"png$\")",
+      "PowerShell(Start-Process \"D:\\\\9_CLAUDE\\\\Sessions\\\\Artefact\\\\index.html\")"
+    ]
+  }
+}
