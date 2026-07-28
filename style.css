@@ -648,7 +648,7 @@ body.is-preloading .hero__btn {
 
 .hero__btn-plus-char {
   display: block;
-  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hero__btn-plus-char--out {
@@ -718,35 +718,36 @@ body.is-preloading .hero__btn {
 
 /* ==========================================================================
    LINE-HOVER MICRO-INTERACTION
-   Idle line slides out to the right (transform-origin: right) while a new
-   line slides in from the left (transform-origin: left). Applied to the
-   menu button underline and the CTA button underline.
+   Idle line sits fully visible. On hover it collapses toward its right
+   edge, then redraws from its left edge, in one sequential sweep. Applied
+   to the menu button underline and the CTA button underline.
    ========================================================================== */
 
 .hero__menu-line--out,
 .hero__btn-line--out {
-  transform-origin: left;
+  transform-origin: 0 0;
   transform: scaleX(1);
-  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-.hero__menu-line--in,
-.hero__btn-line--in {
-  transform-origin: right;
-  transform: scaleX(0);
-  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+@keyframes heroLineSweep {
+  0%, 0.1%   { transform-origin: 100% 100%; transform: scaleX(1); }
+  49.9%      { transform-origin: 100% 100%; transform: scaleX(0); }
+  50%, 50.1% { transform-origin: 0 0;       transform: scaleX(0); }
+  100%       { transform-origin: 0 0;       transform: scaleX(1); }
 }
 
-.js-line-hover:hover .hero__menu-line--out,
-.js-line-hover:hover .hero__btn-line--out {
-  transform-origin: right;
-  transform: scaleX(0);
+@media (hover: hover) and (pointer: fine) {
+  .js-line-hover:hover .hero__menu-line--out,
+  .js-line-hover:hover .hero__btn-line--out {
+    animation: heroLineSweep 0.75s ease forwards;
+  }
 }
 
-.js-line-hover:hover .hero__menu-line--in,
-.js-line-hover:hover .hero__btn-line--in {
-  transform-origin: left;
-  transform: scaleX(1);
+@media (prefers-reduced-motion: reduce) {
+  .js-line-hover:hover .hero__menu-line--out,
+  .js-line-hover:hover .hero__btn-line--out {
+    animation: none;
+  }
 }
 
 /* ==========================================================================
@@ -775,7 +776,7 @@ body.is-preloading .hero__btn {
   margin: calc(var(--u) * -5) 0 0 calc(var(--u) * -5);
   border-radius: 50%;
   background: var(--beige-100);
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
 
 .cursor__media {
@@ -795,7 +796,7 @@ body.is-preloading .hero__btn {
   border: 1px solid rgba(237, 233, 221, 0.25);
   opacity: 0;
   transform: scale(0.4);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
 }
 
 .cursor__media-label {

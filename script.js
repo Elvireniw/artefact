@@ -86,8 +86,8 @@ function initCustomCursor() {
   document.body.classList.add('has-custom-cursor');
 
   const label = cursor.querySelector('.cursor__media-label');
-  const moveX = gsap.quickTo(cursor, 'x', { duration: 0.5, ease: 'power3' });
-  const moveY = gsap.quickTo(cursor, 'y', { duration: 0.5, ease: 'power3' });
+  const moveX = gsap.quickTo(cursor, 'x', { duration: 0.6, ease: 'power2' });
+  const moveY = gsap.quickTo(cursor, 'y', { duration: 0.6, ease: 'power2' });
 
   gsap.set(cursor, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
 
