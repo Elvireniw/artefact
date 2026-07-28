@@ -56,13 +56,6 @@
         <a href="#pricing" class="hero__link"><span class="hero__link-text">тарифи</span><span class="hero__link-underline" aria-hidden="true"></span></a>
         <a href="#" target="_blank" rel="noopener" class="hero__link"><span class="hero__link-text">inst</span><span class="hero__link-underline" aria-hidden="true"></span></a>
       </nav>
-
-      <button class="hero__menu-btn js-line-hover" type="button">
-        <span class="hero__menu-label">меню</span>
-        <span class="hero__menu-line-track" aria-hidden="true">
-          <span class="hero__menu-line hero__menu-line--out"></span>
-        </span>
-      </button>
     </header>
 
     <div class="hero__vase-scene">
@@ -74,7 +67,7 @@
 
     <div class="hero__content">
       <div class="hero__title-wrap">
-        <p class="hero__eyebrow js-split-chars"><span class="italic-symbol">(</span>яке об'єднує</p>
+        <p class="hero__eyebrow js-split-words"><span class="italic-symbol">(</span>яке об'єднує</p>
         <img src="img/hero-title.png" alt="ЗВ'ЯЗОК ПОКОЛІНЬ ЧЕРЕЗ МИСТЕЦТВО ГОНЧАРСТВА" class="hero__title-img">
       </div>
       <h1 class="visually-hidden">ЗВ'ЯЗОК ПОКОЛІНЬ ЧЕРЕЗ МИСТЕЦТВО ГОНЧАРСТВА</h1>
@@ -102,9 +95,99 @@
       <svg class="hero__scroll-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M8 0V23M8 23L1 16M8 23L15 16" stroke="currentColor" stroke-width="1.4"/>
       </svg>
+      <span class="hero__scroll-tail" aria-hidden="true"></span>
     </a>
 
   </section>
+
+  <!-- Lives outside .hero on purpose: .hero__nav carries a leftover GSAP
+       transform (identity matrix, harmless visually) from the entrance
+       timeline, and any transformed ancestor becomes the containing block
+       AND stacking context for its descendants — even position:fixed ones,
+       which would otherwise trap this button below #menu-overlay
+       regardless of z-index. As a sibling of both, its absolute-position
+       left/top still resolve the same way since .hero starts flush at the
+       viewport's top-left. On desktop/tablet its z-index (7, same as the
+       rest of the header) now sits BELOW #menu-overlay (9000) on purpose,
+       so "меню" gets naturally covered as the curtain rises and revealed
+       as it retracts, with no separate fade logic; mobile overrides this
+       back up to 9001 (see style.css) since it has no separate close icon
+       and needs this same button to stay clickable while open. -->
+  <button class="hero__menu-btn js-line-hover" type="button" aria-expanded="false" aria-controls="menu-overlay">
+    <span class="hero__menu-label">меню</span>
+    <span class="hero__menu-line-track" aria-hidden="true">
+      <span class="hero__menu-line hero__menu-line--out"></span>
+    </span>
+    <span class="hero__menu-icon" aria-hidden="true">
+      <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <path class="hero__menu-icon-bar hero__menu-icon-bar--1" d="M0 17.0002H15.5674V19.0002H0L0 17.0002Z" fill="currentColor"/>
+        <path class="hero__menu-icon-bar hero__menu-icon-bar--2" d="M20.4326 17.0002H36V19.0002H20.4326V17.0002Z" fill="currentColor"/>
+      </svg>
+    </span>
+  </button>
+
+  <!-- MENU OVERLAY — full-screen curtain reveal, triggered by .hero__menu-btn -->
+  <div id="menu-overlay" class="menu-overlay" aria-hidden="true">
+
+    <a href="#" class="menu-overlay__logo" aria-label="Artefact">
+      <img src="img/logo-green.svg" alt="Artefact" width="200" height="28">
+    </a>
+
+    <!-- flush against the right edge (same right: var(--grid-margin)
+         convention as .hero__scroll), vertically centered on the logo
+         row -->
+    <button class="menu-overlay__close-icon js-menu-stagger" type="button" aria-label="Закрити меню">
+      <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <path class="menu-overlay__close-icon-bar menu-overlay__close-icon-bar--1" d="M0 17.0002H15.5674V19.0002H0L0 17.0002Z" fill="currentColor"/>
+        <path class="menu-overlay__close-icon-bar menu-overlay__close-icon-bar--2" d="M20.4326 17.0002H36V19.0002H20.4326V17.0002Z" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <ul class="menu-overlay__social menu-overlay__social--desktop" aria-label="Соціальні мережі">
+      <li><a href="#" class="menu-overlay__social-link js-menu-stagger"><span class="italic-symbol menu-overlay__social-paren" aria-hidden="true">(</span><span class="menu-overlay__social-text">instagram</span></a></li>
+      <li><a href="#" class="menu-overlay__social-link js-menu-stagger"><span class="italic-symbol menu-overlay__social-paren" aria-hidden="true">(</span><span class="menu-overlay__social-text">pinterest</span></a></li>
+      <li><a href="#" class="menu-overlay__social-link js-menu-stagger"><span class="italic-symbol menu-overlay__social-paren" aria-hidden="true">(</span><span class="menu-overlay__social-text">youtube</span></a></li>
+    </ul>
+
+    <div class="menu-overlay__contact">
+      <div class="menu-overlay__contact-col js-menu-stagger">
+        <p class="menu-overlay__contact-label">телефон</p>
+        <p class="menu-overlay__contact-value">+38 093 123 45 67</p>
+      </div>
+      <div class="menu-overlay__contact-col js-menu-stagger">
+        <p class="menu-overlay__contact-label">mail</p>
+        <p class="menu-overlay__contact-value">hello@artefact-clay.com</p>
+      </div>
+      <div class="menu-overlay__contact-col js-menu-stagger">
+        <p class="menu-overlay__contact-label">адреса</p>
+        <p class="menu-overlay__contact-value">м. Київ, вул. Майстерня, 15</p>
+      </div>
+    </div>
+
+    <div class="menu-overlay__mobile-strip">
+      <img src="img/logo-header.svg" alt="Artefact" class="menu-overlay__mobile-logo">
+    </div>
+
+    <nav class="menu-overlay__mobile-nav" aria-label="Мобільна навігація">
+      <a href="#philosophy" class="menu-overlay__mobile-link js-menu-stagger">філософія</a>
+      <a href="#method" class="menu-overlay__mobile-link js-menu-stagger">метод</a>
+      <a href="#reviews" class="menu-overlay__mobile-link js-menu-stagger">відгуки </a>
+      <a href="#pricing" class="menu-overlay__mobile-link js-menu-stagger">тарифи</a>
+    </nav>
+
+    <div class="menu-overlay__mobile-bottom">
+      <div class="menu-overlay__mobile-contact js-menu-stagger">
+        <p class="menu-overlay__mobile-mail">hello@artefact-clay.com</p>
+        <p class="menu-overlay__mobile-phone">+38 093 123 45 67</p>
+      </div>
+      <ul class="menu-overlay__social menu-overlay__social--mobile" aria-label="Соціальні мережі">
+        <li><a href="#" class="menu-overlay__social-link js-menu-stagger"><span class="italic-symbol menu-overlay__social-paren" aria-hidden="true">(</span><span class="menu-overlay__social-text">instagram</span></a></li>
+        <li><a href="#" class="menu-overlay__social-link js-menu-stagger"><span class="italic-symbol menu-overlay__social-paren" aria-hidden="true">(</span><span class="menu-overlay__social-text">pinterest</span></a></li>
+        <li><a href="#" class="menu-overlay__social-link js-menu-stagger"><span class="italic-symbol menu-overlay__social-paren" aria-hidden="true">(</span><span class="menu-overlay__social-text">youtube</span></a></li>
+      </ul>
+    </div>
+
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
