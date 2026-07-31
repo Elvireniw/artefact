@@ -236,6 +236,8 @@ video {
   --beige-60: rgba(237, 233, 221, 0.6);
   --beige-40: rgba(237, 233, 221, 0.4);
   --blue: #B1B8CA;
+  --olive-100: #9A9671;
+  --olive-80: rgba(154, 150, 113, 0.8);
   --olive-60: rgba(154, 150, 113, 0.6);
   --preloader-bg: radial-gradient(circle at center, rgba(217, 224, 242, 1) 0%, rgba(147, 154, 172, 1) 100%);
   --preloader-fg: #2B3D2D;
@@ -433,7 +435,7 @@ video {
   left: 0;
   right: 0;
   bottom: calc(var(--u) * -6);
-  height: 2px;
+  height: 1px;
   background: var(--beige-100);
   transform-origin: right;
   transform: scaleX(0);
@@ -472,7 +474,7 @@ video {
   left: 0;
   right: 0;
   bottom: calc(var(--u) * -6);
-  height: 2px;
+  height: 1px;
   overflow: hidden;
 }
 
@@ -675,7 +677,7 @@ body.is-preloading .hero__btn {
   left: 0;
   right: 0;
   bottom: calc(var(--u) * -8);
-  height: 2px;
+  height: 1px;
   overflow: hidden;
 }
 
@@ -689,11 +691,24 @@ body.is-preloading .hero__btn {
 
 /* shares .hero__btn's top + line-box height so the arrow centers on the
    exact same horizontal band as the "обрати курс +" text */
+/* left-anchored, NOT `right: var(--grid-margin)`. `--u` derives from 100vw,
+   which includes the scrollbar, while a `right` offset resolves against the
+   containing block, which does not — so a right-anchored 50u margin landed
+   the arrow at 1855u while every left-positioned element on the site lines
+   up on the working field's 1870u edge. Anchoring from the left instead
+   (1870u - the arrow's own 16u width) puts it flush with that edge and
+   keeps it there whether or not a scrollbar is present.
+
+   top is 988u, not the 972u of .hero__btn: the two boxes are the same
+   height and were already flush, but the 24u arrow glyph sits centred in
+   its 40u box, so the VISIBLE arrow ended 16u above the button's
+   underline. +16u drops the glyph's baseline onto that same line (the bob
+   keyframe then lifts it from there). */
 .hero__scroll {
   position: absolute;
   z-index: 7;
-  right: var(--grid-margin);
-  top: calc(var(--u) * 972);
+  left: calc(var(--u) * 1854);
+  top: calc(var(--u) * 988);
   height: calc(var(--u) * 36 * 1.1);
   display: inline-flex;
   align-items: center;
@@ -732,9 +747,13 @@ body.is-preloading .hero__btn {
   }
 }
 
+/* bobs UP, not down. The arrow's resting position is aligned with the CTA's
+   underline, so a downward bob spent half its cycle sitting below that line
+   and read as "the arrow dropped". Lifting instead keeps the aligned
+   position as the lowest point it ever reaches. */
 @keyframes scrollArrowBob {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(calc(var(--u) * 6)); }
+  50% { transform: translateY(calc(var(--u) * -6)); }
 }
 
 /* ==========================================================================
@@ -772,6 +791,1045 @@ body.is-preloading .hero__btn {
 }
 
 /* ==========================================================================
+   SECTION INNER — scroll-lag carrier
+   One per section (except .hero, which keeps its own arrangement for
+   stacking-context reasons). The scroll-lag drift animates `y` on THIS
+   element while each section's entrance timeline animates `y` on the
+   individual children — two separate elements, so the two never overwrite
+   each other's transform. inset:0 makes it exactly co-extensive with its
+   section, so every child's absolute left/top keeps resolving against the
+   same box it did before.
+   ========================================================================== */
+
+.section-inner {
+  position: absolute;
+  inset: 0;
+}
+
+/* ==========================================================================
+   CRAFT SECTION — "2_мистецтво" (Figma node 978:1223, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Same fluid --u system + position:relative /
+   absolutely-positioned-children structure as .hero. Entrance is
+   ScrollTrigger-driven (script.js: cacheCraftRefs/setInitialCraftStates/
+   runCraftEntrance) — plain fade/rise only, no pin/scrub/curtain between
+   sections. As with .hero, the pre-reveal hidden states (opacity 0 etc.)
+   are set entirely via GSAP on load, not authored here in CSS.
+   ========================================================================== */
+
+.craft {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1920 / 1224;
+  overflow: hidden;
+  margin: 0;
+  background-color: var(--beige-100);
+  color: #2B3D2D;
+}
+
+/* --- staggered 3-line heading; the visible lines are plain text, the
+   real <h2> (index.html) carries the full sentence hidden, same split
+   as .hero__title-img (visible) + its hidden <h1> --- */
+
+.craft__heading-line {
+  position: absolute;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 96);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -4.8);
+  text-transform: uppercase;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.craft__heading-line--1 { left: calc(var(--u) * 50); top: calc(var(--u) * 150); }
+.craft__heading-line--2 { left: calc(var(--u) * 468); top: calc(var(--u) * 251); }
+.craft__heading-line--3 { left: calc(var(--u) * 398); top: calc(var(--u) * 352); }
+
+/* --- img-art-1: stacked close-up pair, only the first visible; the
+   second sits ready at opacity 0 for a later hover-crossfade --- */
+
+.craft__art-1 {
+  position: absolute;
+  left: calc(var(--u) * 980);
+  /* +2px fixed offset: the heading shares this same 150u top, but its
+     text has its own font-metric leading space above the visible glyph
+     top, so without this the image reads as sitting slightly higher
+     than the heading */
+  top: calc(var(--u) * 150 + 2px);
+  width: calc(var(--u) * 199);
+  height: calc(var(--u) * 273);
+  overflow: hidden;
+}
+
+/* height/top: oversized + centered so the scroll-linked yPercent:-15
+   drift (script.js: initCraftImageParallax()) never exposes empty space
+   at the frame's bottom edge — the drift only ever moves the image
+   upward from its resting position, so the bottom buffer (25%) has to
+   cover the full drift distance (15% of a 150%-tall image = 22.5% of
+   the frame's own height), with a small margin to spare. */
+.craft__art-1-img {
+  position: absolute;
+  left: 0;
+  top: -25%;
+  width: 100%;
+  height: 150%;
+  object-fit: cover;
+}
+
+.craft__art-1-img--b {
+  opacity: 0;
+}
+
+/* --- body copy --- */
+
+.craft__body {
+  position: absolute;
+  left: calc(50% - var(--u) * 492);
+  top: calc(var(--u) * 494);
+  width: calc(var(--u) * 359);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 36);
+  font-weight: 400;
+  line-height: 1;
+  color: #2B3D2D;
+}
+
+/* --- "free вебинар +" link: same text+plus layout convention as
+   .hero__btn, including its plus-swap hover (minus the line-sweep —
+   the underline here is a static border-bottom by design, not the
+   line-sweep mechanism). Its Figma left value is the widget's
+   horizontal CENTER, not its left edge (node 978:1230: x:470.5 width:270
+   → center 605.5, exactly 50% - 354.5u) — same center-anchor +
+   translateX(-50%) trick .hero__btn uses via GSAP xPercent:-50, done in
+   plain CSS here since this element's own position never animates. --- */
+
+.craft__cta {
+  position: absolute;
+  left: calc(50% - var(--u) * 354.5);
+  top: calc(var(--u) * 894);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding-bottom: calc(var(--u) * 8);
+  border-bottom: 1px solid #2B3D2D;
+  color: #2B3D2D;
+  text-decoration: none;
+  font-family: 'Helvetica Neue', sans-serif;
+}
+
+.craft__cta-text {
+  font-size: calc(var(--u) * 36);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.craft__cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--u) * 32);
+  font-weight: 400;
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+}
+
+.craft__cta-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.craft__cta-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.craft__cta-plus-char--out {
+  transform: translateY(0%);
+}
+
+.craft__cta-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .craft__cta-plus-char--out {
+  transform: translateY(-100%);
+}
+
+.js-line-hover:hover .craft__cta-plus-char--in {
+  transform: translateY(0%);
+}
+
+/* --- large ceramics photo --- */
+
+.craft__art-2-frame {
+  position: absolute;
+  left: calc(var(--u) * 1423);
+  top: calc(var(--u) * 494);
+  width: calc(var(--u) * 422);
+  height: calc(var(--u) * 580);
+  overflow: hidden;
+}
+
+/* height/top: same oversized + centered buffer as .craft__art-1-img,
+   for the same reason — covers the scroll-linked yPercent:-15 drift
+   without exposing empty space at the frame's bottom edge. */
+.craft__art-2 {
+  position: absolute;
+  left: 0;
+  top: -25%;
+  width: 100%;
+  height: 150%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- img-art-1 / img-art-2: plain hover zoom (script.js:
+   initCraftImageHover(), gated behind (hover:hover) and (pointer:fine)
+   in script.js itself, not here) + a scroll-linked vertical drift
+   (initCraftImageParallax()) on the INNER image only — the outer frame
+   (.craft__art-1/.craft__art-2-frame) never scales or moves, it stays a
+   fixed box and only clips the inner image via its own overflow:hidden
+   (set above). No CSS transition on the inner images: both the hover
+   scale and the scroll-drift are driven directly via GSAP inline styles
+   every frame, and a competing CSS transition on the same property
+   would fight it — same reasoning as .menu-overlay__close-icon-bar's
+   own "transition: none". --- */
+
+/* --- right-side three-tier text block, same multi-tier color-span
+   convention as .hero__description (base color = lowest-opacity tier,
+   line--1/--2 override for the higher tiers) --- */
+
+.craft__side-text {
+  position: absolute;
+  left: calc(var(--u) * 1423);
+  top: calc(var(--u) * 290);
+  width: calc(var(--u) * 446);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 48);
+  font-weight: 400;
+  line-height: 1;
+  color: rgba(43, 61, 45, 0.4);
+}
+
+.craft__side-text-line--1 { color: rgba(43, 61, 45, 0.8); }
+.craft__side-text-line--2 { color: rgba(43, 61, 45, 0.6); }
+
+/* ==========================================================================
+   CLAY SECTION — "3_мова глини" (Figma node 978:1237, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Same fluid --u system as .hero/.craft.
+   Pixel Perfect only for now — no entrance/scroll effects yet.
+   ========================================================================== */
+
+.clay {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1920 / 1080;
+  overflow: hidden;
+  margin: 0;
+  background-color: #c9beae;
+  color: var(--beige-100);
+}
+
+/* Exactly the section's own size — no oversizing. Matches rejouice.com's
+   own reel markup, whose video element is 100% of its container while the
+   drift runs yPercent -50 -> +50 (script.js: initClayVideoParallax()).
+   That pairing is self-covering: at every scroll position the half of the
+   element left uncovered is the half that is off-screen anyway, so the
+   visible part of the section is never bare. An earlier 200%-tall version
+   here needed a smaller ±25% drift to stay covered, which halved the
+   visible movement and was why the effect read as absent. */
+.clay__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* mova-clay.png: pre-rendered title asset (blur is baked into the PNG by
+   design, not a CSS effect — matches Figma exactly). The 1707×268 export
+   has asymmetric transparent padding around the glyphs from the blur bleed
+   (measured via alpha-bbox: content sits at x:[27,1682] y:[21,231] inside
+   the full canvas) — sizing/positioning off the full image would misalign
+   the glyphs from Figma's actual frame (978:1244: 846×117 at 50,883).
+   Scaled + shifted so the glyph content itself (not the padded canvas)
+   lands on the frame's left edge, matching .clay__word's left:50u so
+   "МОВА" and "ваші" sit flush on the same line. */
+.clay__title {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 36.2);
+  top: calc(var(--u) * 872.3);
+  width: calc(var(--u) * 872.6);
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+/* --- "ваші руки оживляють у форму та наповнюють її історією": each word
+   individually positioned per Figma (978:1247), not a flex/justify line —
+   per her explicit instruction to match the exact absolute coordinates. --- */
+
+.clay__word {
+  position: absolute;
+  z-index: 1;
+  top: calc(var(--u) * 807);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1;
+  color: var(--beige-80);
+  white-space: nowrap;
+}
+
+.clay__word--vashi { left: calc(var(--u) * 50); }
+.clay__word--ruky { left: calc(var(--u) * 141); }
+.clay__word--ozhivlyayut { left: calc(var(--u) * 315); }
+.clay__word--u { left: calc(var(--u) * 604); }
+.clay__word--formu { left: calc(var(--u) * 672); }
+.clay__word--ta { left: calc(var(--u) * 904); }
+.clay__word--napovnyuyut { left: calc(var(--u) * 970); }
+.clay__word--ii { left: calc(var(--u) * 1347); }
+.clay__word--istoriyeyu { left: calc(var(--u) * 1424); }
+
+.clay__caption {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 1424);
+  top: calc(var(--u) * 876);
+  width: calc(var(--u) * 446);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 0.98;
+  color: #2B3D2D;
+}
+
+/* --- play/pause toggle: hit area is a centered circle (Figma "btn-next"
+   978:3108's own 150×150), not the full video — per her request the
+   cursor should only morph into the glass bubble near the middle of the
+   block, not anywhere over the footage. FEEDBACK is the existing custom
+   cursor morphing into its .cursor__media glass bubble (same
+   olive-tinted blur used for the "далі" hover state elsewhere) — her
+   call to make this "more interesting" than a permanently-visible static
+   circle. script.js: initClayVideoToggle() keeps this element's
+   data-cursor-label in sync with play state; initCustomCursor()'s
+   existing .js-cursor-media wiring (previously unused anywhere on the
+   site) reads it on hover. --- */
+.clay__video-toggle {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(var(--u) * 150);
+  height: calc(var(--u) * 150);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   MATERIAL SECTION — "4_глина це" (Figma node 978:1257, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Same fluid --u system as the other sections.
+   Pixel Perfect only for now — no entrance/scroll effects yet.
+
+   All three text layers share the same optical centre (960.5u) but are
+   positioned with explicit left+width rather than translateX(-50%): these
+   are all future GSAP targets, and a static CSS transform here would be
+   wiped the moment a tween touches x/y — the same trap .hero__ghost-img
+   already hit in this project.
+   ========================================================================== */
+
+/* Full viewport height — the block always fills whatever screen the site is
+   opened on. svh rather than vh so collapsing mobile browser chrome doesn't
+   resize the box mid-scroll.
+   Because the height no longer scales with --u, the three text layers below
+   are anchored to the section's CENTRE instead of fixed `top` values (their
+   offsets are the original Figma distances from 993/2 = 496.5u), so the
+   composition keeps its exact internal spacing at any window height.
+   The empty margin this leaves around the text is intentional breathing
+   room; what previously made it read as a void was .material and .gallery
+   sharing one beige — the darker #DDD8C8 below now separates them. */
+.material {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  margin: 0;
+  /* a shade darker than --beige-100 (#EDE9DD), which the gallery below
+     keeps — now that the divider line is gone, this is what separates the
+     two beige blocks from each other */
+  background-color: #DDD8C8;
+  color: #2B3D2D;
+  /* no bottom border: removed at her request once the gallery block landed
+     below — both sections are beige, and the divider read as an unwanted
+     seam rather than a boundary */
+}
+
+/* decorative oversized echo of .material__text sitting behind it. Figma's
+   Layer blur 10 corresponds to CSS blur(5px) — the two use different
+   scales, and 5px is what reproduces the mockup. */
+.material__echo {
+  position: absolute;
+  z-index: 0;
+  left: calc(var(--u) * 104);
+  top: calc(50% - var(--u) * 289.02); /* Figma y 207.48, i.e. 289.02u above the 496.5u centre */
+  width: calc(var(--u) * 1713);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 100);
+  line-height: 0.98;
+  letter-spacing: calc(var(--u) * -2);
+  text-align: center;
+  color: #2B3D2D;
+  opacity: 0.1;
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+.material__label {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 890);
+  top: calc(50% - var(--u) * 298.5); /* Figma y 198 */
+  width: calc(var(--u) * 141);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -0.6);
+  text-align: center;
+  color: rgba(43, 61, 45, 0.8);
+}
+
+/* literal px gap, matching the .italic-symbol convention used elsewhere */
+.material__label .italic-symbol:first-child { margin-right: 10px; }
+.material__label .italic-symbol:last-child { margin-left: 10px; }
+
+.material__text {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 280);
+  top: calc(50% - var(--u) * 228.5); /* Figma y 268 */
+  width: calc(var(--u) * 1361);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 80);
+  line-height: 0.98;
+  letter-spacing: calc(var(--u) * -1.6);
+  text-align: center;
+  color: #2B3D2D;
+}
+
+/* same descending-opacity tiers as .craft__side-text / .hero__description */
+.material__tier-2 { color: rgba(43, 61, 45, 0.8); }
+.material__tier-3 { color: rgba(43, 61, 45, 0.6); }
+
+/* splitWordsDeep() wraps every word in these; inline-block is required or
+   the echo's horizontal scatter (a transform) would not apply at all */
+.material__echo .word,
+.material__text .word {
+  display: inline-block;
+  will-change: opacity, transform;
+}
+
+/* ==========================================================================
+   GALLERY SECTION — "5_галерея робіт" (Figma node 978:1261, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Same fluid --u system as the other sections.
+   Pixel Perfect only — no entrance/carousel behaviour yet.
+   ========================================================================== */
+
+/* 1240u, not Figma's frame height of 1230: the olive strip sits at y1194
+   with a height of 46, so it ends at 1240 and overflowed the frame by 10u
+   in the mockup itself.
+
+   Height is set in `--u` rather than via `aspect-ratio` on purpose. `--u`
+   is derived from 100vw, which INCLUDES the scrollbar, while aspect-ratio
+   resolves against the element's own content width, which does not — so an
+   aspect-ratio box ends up ~10px shorter than the 1240u coordinate space
+   its children are positioned in, and the bottom band gets clipped by
+   exactly the scrollbar's width. Sizing the box in the same unit as its
+   contents removes the mismatch. */
+.gallery {
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 1153);
+  overflow: hidden;
+  margin: 0;
+  background-color: var(--beige-100);
+  color: #2B3D2D;
+}
+
+/* --- heading group (Figma frame "H" at 51,237; its children are placed
+   here in absolute section coordinates rather than inside a wrapper, so
+   nothing needs a transform that a later GSAP tween could clobber) --- */
+
+.gallery__eyebrow {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 51);
+  top: calc(var(--u) * 150);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.5;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+/* u-based, not the 10px literal the Hero eyebrow uses: Figma builds this
+   gap out of typed spaces at mixed sizes (one 30px + two 18px), so it
+   scales with the type rather than being a fixed pixel inset */
+.gallery__eyebrow .italic-symbol {
+  margin-right: calc(var(--u) * 18.3);
+}
+
+.gallery__title {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 508); /* Figma: frame x51 + text x457 */
+  top: calc(var(--u) * 150);
+  width: calc(var(--u) * 685);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  font-size: calc(var(--u) * 96);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -1.92);
+  text-transform: uppercase;
+}
+
+.gallery__title-a { color: var(--olive-100); }
+.gallery__title-b { color: var(--olive-80); }
+
+.gallery__lead {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 508);
+  top: calc(var(--u) * 382); /* Figma frame y237 + text y232, shifted -87 */
+  width: calc(var(--u) * 294);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.24);
+  color: #2B3D2D;
+  opacity: 0.8;
+}
+
+/* --- category filter --- */
+
+/* gap 35.05u, not Figma's 40u: "Декор" has to line up with the left edge of
+   the "дозвольте цим образам" note (965u) while the two gaps stay equal,
+   and "Ліплення" has to start on the title/lead column (508u). Solved from
+   the items' MEASURED widths (145 / 242 / 97.2), which come out a few units
+   narrower than Figma reports: 508 + 145 + 242 + 2*35.05 = 965. The earlier
+   32.4 was solved against stale widths and left Декор 6.3u short. */
+.gallery__filter {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 508);
+  top: calc(var(--u) * 586);
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 35.05);
+}
+
+.gallery__filter-item {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: 'Helvetica Neue', sans-serif;
+  /* Roman (400), not the mockup's Medium (500) — her call */
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.9);
+  text-transform: uppercase;
+  /* all three share the brand green now — the mockup dimmed the middle one,
+     but that dimming turned out to mean "selected", which is expressed by
+     .is-active below instead of being baked into a position */
+  color: #2B3D2D;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.gallery__filter-text {
+  display: inline-block;
+}
+
+/* selected state — the 60% she specified */
+.gallery__filter-item.is-active {
+  opacity: 0.6;
+}
+
+/* same underline sweep as the nav links (.hero__link-underline): hidden at
+   rest, drawn in left-to-right on hover, retracted to the right on leave,
+   on the project's signature easing curve */
+.gallery__filter-underline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * -6);
+  height: 1px;
+  background: #2B3D2D;
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gallery__filter-item:hover .gallery__filter-underline {
+  transform-origin: left;
+  transform: scaleX(1);
+}
+
+/* --- olive strip the captions sit on. Sits at z-index 0 so the cards'
+   captions (z-index 1) read on top of it rather than being covered --- */
+
+.gallery__bar {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  top: calc(var(--u) * 1107);
+  width: 100%;
+  height: calc(var(--u) * 46);
+  background-color: var(--olive-100);
+}
+
+/* --- horizontal carousel track. Starts at -409u and runs 2738u wide, so
+   it deliberately overhangs the viewport on both sides; .gallery's own
+   overflow:hidden crops it to the mockup's framing. --- */
+
+.gallery__track {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * -409);
+  top: calc(var(--u) * 659);
+  width: calc(var(--u) * 2738);
+  height: calc(var(--u) * 494);
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 10);
+}
+
+.gallery__card {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 448);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 10);
+  /* Figma's component carries pb-10; content ends at 484u and the instance
+     measures 494u. Invisible on its own, but it keeps the card box matching
+     the mockup for whatever the motion pass hangs off it. */
+  padding-bottom: calc(var(--u) * 10);
+  margin: 0;
+}
+
+/* a <button> (each work opens a lightbox) — so it needs the control reset
+   before it can behave like the frame it used to be */
+.gallery__photo {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+
+/* +1px, and bottom:auto so the height wins over the inset: at scale 1 the
+   image and its frame are the same fractional size (a 448u card lands on
+   something like 203.2px), and the rounding could leave a hairline of the
+   beige page showing along the bottom edge as the hover scale settled back.
+   One spare pixel removes it; the crop shift is invisible. */
+.gallery__photo img {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 1px);
+  object-fit: cover;
+  display: block;
+}
+
+/* the first photo is cropped lower than centre in Figma (the export sits
+   at top:-61.89% inside a 177.82%-tall box); 79.5% is that same slice
+   expressed as an object-position, so the cup stays framed as designed */
+.gallery__card:first-child .gallery__photo img {
+  object-position: center 79.5%;
+}
+
+.gallery__caption {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  color: var(--beige-100);
+}
+
+.gallery__marks {
+  position: absolute;
+  z-index: 1;
+  right: calc(var(--u) * 10);
+  top: calc(var(--u) * 10);
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 10);
+  color: #2B3D2D;
+}
+
+/* the typographic "+" the CTA buttons use, not the old design's SVG glyph
+   (four stroked segments with a gap in the middle). 28u is chosen so the
+   rendered character reads at roughly the 16u the SVG box occupied. */
+.gallery__mark {
+  display: block;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 28);
+  line-height: 1;
+}
+
+/* --- the "txt" card sitting between the 3rd and 4th work --- */
+
+/* Absolutely placed rather than a flex item in .gallery__track, because the
+   track now scrubs horizontally (initGalleryCarousel) and this note must
+   not travel with it. It occupies the same 448u slot it used to hold in the
+   row, at the same 659u the cards start on, and sits above the track so the
+   cards pass behind it. */
+.gallery__note {
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--u) * 965);
+  top: calc(var(--u) * 659);
+  width: calc(var(--u) * 448);
+  height: calc(var(--u) * 494);
+}
+
+/* the beige panel from the mockup — a gap punched through the card row (and
+   through the olive caption strip below it) for the text to sit in */
+.gallery__note::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-color: var(--beige-100);
+}
+
+/* The note's box already starts on the same 659u line as the cards, but a
+   line box is not ink: with line-height 1 the first visible pixel of this
+   36u type sits 11.4u below the box top, so optically the paragraph hung
+   below the photo beside it. Pulled up by exactly that measured offset
+   (canvas TextMetrics: half-leading + fontAscent - actualAscent) so the
+   text's top edge reads flush with the photo's. */
+.gallery__note p {
+  width: calc(var(--u) * 356);
+  margin: calc(var(--u) * -11.4) 0 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1;
+  color: rgba(43, 61, 45, 0.8);
+}
+
+/* The mockup's circular "next" control (node 978:1273) is deliberately gone
+   from both the markup and here: that circle became the glass cursor, so
+   keeping a static one on the page duplicated it. */
+
+/* ==========================================================================
+   PHILOSOPHY SECTION — "6_філософія" (Figma node 978:1287, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Olive field that the gallery above flows into.
+
+   Height is set in --u for the same reason as .gallery: --u derives from
+   100vw (scrollbar included) while aspect-ratio resolves against the
+   element's own content width (scrollbar excluded), so an aspect-ratio box
+   ends up short of the coordinate space its children live in.
+
+   Inner layout is flex, following how the frame is built in Figma, rather
+   than the absolute-in-u approach the earlier sections use — the two
+   groups are absolutely placed, everything inside them flows.
+   ========================================================================== */
+
+/* --- film grain over the olive field, to match the mockup. Measured off
+   the Figma render of node 978:1287: a bare patch of background has a
+   per-channel standard deviation of ~3.4 levels at full resolution against
+   the flat #9A9671, i.e. a very fine roughly-monochrome noise, not a
+   texture. The tile itself is generated once in a canvas by
+   initOliveGrain() (same approach as the glass cursor's normal map) so the
+   amplitude is an exact number rather than an opacity guessed against an
+   feTurbulence.
+
+   `overlay` against a mid-grey tile leaves the base colour untouched and
+   only applies the deviations. `isolation: isolate` keeps that blend inside
+   the section instead of letting it reach the sections above. The pseudo
+   element paints under .section-inner (both are positioned, and it comes
+   first in DOM order), so the grain sits on the background only and never
+   over the photographs. --- */
+
+.philosophy {
+  isolation: isolate;
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 1762);
+  overflow: hidden;
+  margin: 0;
+  background-color: var(--olive-100);
+}
+
+.philosophy__group {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  right: calc(var(--u) * 50);
+}
+
+.philosophy__group--top {
+  top: calc(var(--u) * 150);
+  height: calc(var(--u) * 614);
+}
+
+.philosophy__group--bottom {
+  top: calc(var(--u) * 864);
+  height: calc(var(--u) * 748);
+}
+
+/* --- shared pieces --- */
+
+.philosophy__eyebrow {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* same mixed-size typed spaces as the gallery eyebrow, so the gap scales
+   with the type rather than sitting at a fixed pixel inset */
+.philosophy__eyebrow .italic-symbol {
+  margin-right: calc(var(--u) * 18.3);
+}
+
+.philosophy__eyebrow--light { color: var(--beige-100); }
+.philosophy__eyebrow--dark { color: #2B3D2D; }
+
+.philosophy__title {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  font-size: calc(var(--u) * 96);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -1.92);
+  text-transform: uppercase;
+}
+
+.philosophy__title--dark { color: #2B3D2D; }
+.philosophy__title--light { color: var(--beige-100); }
+.philosophy__title-dim { color: rgba(43, 61, 45, 0.8); }
+.philosophy__title-dim-light { color: rgba(237, 233, 221, 0.8); }
+
+.philosophy__head {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 20);
+  align-items: flex-start;
+  width: calc(var(--u) * 752);
+}
+
+.philosophy::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* set by initOliveGrain(); `none` keeps the section clean if JS is off */
+  background-image: var(--grain, none);
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+}
+
+.philosophy__img {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 125%/-12.5% rather than a flush fit: these images get the craft section's
+   hover-zoom + scroll-drift treatment (initMediaImageParallax), and the
+   drift needs spare image above and below the frame or the -7% yPercent
+   would expose the frame's bottom edge. The drift eats 8.75% of the frame
+   (7% of an image 1.25x its height) against 12.5% of overhang, leaving a
+   3.75% margin — 120%/-10% was tried first and left only half a pixel.
+   Still deliberately shallower than craft's 150%/-25% so the Figma crops
+   shift as little as possible. */
+.philosophy__img img {
+  position: absolute;
+  top: -12.5%;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: 125%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- top group --- */
+
+.philosophy__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: calc(var(--u) * 448);
+}
+
+.philosophy__imgh {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 162);
+  flex: 0 0 auto;
+}
+
+.philosophy__img--main {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 448);
+  height: calc(var(--u) * 448);
+}
+
+.philosophy__note {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 295);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+}
+
+.philosophy__note--dark { color: #2B3D2D; }
+
+/* Figma crops this one specifically: the export sits at top:-13.85% inside
+   a 150%-tall box, i.e. the visible slice starts above centre. Expressed as
+   an object-position so it survives any container size. */
+.philosophy__img--p1 {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: calc(var(--u) * 319);
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+}
+
+.philosophy__img--p1 img {
+  object-position: center 27.7%;
+}
+
+/* --- bottom group --- */
+
+.philosophy__col-left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 753);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 90);
+  /* Figma right-aligns the 295 image inside this 753 column */
+  align-items: flex-end;
+}
+
+.philosophy__col-left .philosophy__head {
+  width: 100%;
+}
+
+.philosophy__img--p2 {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+}
+
+.philosophy__col-right {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: 0;
+  width: calc(var(--u) * 905);
+  /* stands in for Figma's 120-tall transparent spacer div */
+  padding-top: calc(var(--u) * 120);
+}
+
+.philosophy__row-lower {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 163);
+  height: calc(var(--u) * 628);
+}
+
+/* the wrapper is 295 wide but its paragraph is 356 — the text deliberately
+   overhangs its column in the mockup, so nothing here may clip it */
+.philosophy__lead-wrap {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 628);
+  position: relative;
+}
+
+.philosophy__lead {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 356);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1.1;
+  color: var(--beige-100);
+}
+
+.philosophy__img-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(var(--u) * 447);
+  height: calc(var(--u) * 628);
+}
+
+.philosophy__img--p3 {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 181);
+  width: calc(var(--u) * 447);
+  height: calc(var(--u) * 447);
+}
+
+/* ==========================================================================
    CUSTOM CURSOR — glassmorphic "Далі" cursor
    Small trailing dot by default; expands into a glass circle with a label
    when hovering images/video/portfolio-style media.
@@ -797,9 +1855,41 @@ body.is-preloading .hero__btn {
   margin: calc(var(--u) * -5) 0 0 calc(var(--u) * -5);
   border-radius: 50%;
   background: var(--beige-100);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, background 0.2s ease;
 }
 
+/* toggled by script.js (initCustomCursor) based on which
+   [data-cursor-theme] section the cursor is currently over */
+body.cursor-on-light .cursor__dot {
+  background: #2B3D2D;
+}
+
+/* the filter lives in an inline <svg> that must not take up layout */
+.glass-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* --- the glass bubble. Matches Figma's Glass effect on node 978:1272
+   (Refraction 44 / Depth 73 / Dispersion 35 / Frost 7 / Light -50° at 0%).
+
+   Two things the old `backdrop-filter: blur(8px)` got wrong: Frost 7 is
+   nearly zero in Figma's own units (its shader scales the slider by
+   0.1, so 7 -> 0.007), and Light at 0% intensity means there is no
+   specular highlight at all — the bright rim in the mockup comes purely
+   from refraction bending the backdrop, not from a light source. So:
+   almost no blur, almost no tint, and the whole character comes from
+   the rim.
+
+   Layered so nothing can break: the box-shadow bevel and the 1.5px blur
+   below are the complete look everywhere, and the SVG refraction is a
+   second `backdrop-filter` declaration that simply overrides the first
+   in browsers that parse url() inside it (Chrome/Edge). Where it does
+   not parse (Safari, Firefox) the earlier declaration survives the
+   cascade and the bubble degrades to frost + bevel rather than to
+   nothing. --- */
 .cursor__media {
   position: absolute;
   top: 0;
@@ -811,10 +1901,19 @@ body.is-preloading .hero__btn {
   height: calc(var(--u) * 110);
   margin: calc(var(--u) * -55) 0 0 calc(var(--u) * -55);
   border-radius: 50%;
-  background: rgba(154, 150, 113, 0.22); /* sand/olive glass tint, matches --olive-60 */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(237, 233, 221, 0.25);
+  /* near-clear now that the frost is gone; just enough sand/olive to keep
+     the beige label legible over a bright photo */
+  background: rgba(154, 150, 113, 0.16);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px) url(#glass-refraction);
+  border: 1px solid rgba(237, 233, 221, 0.22);
+  /* Depth 73 — the inward bevel. Ring of light on the inside edge plus a
+     soft dark seat behind it, which is what reads as glass thickness. */
+  box-shadow:
+    inset 0 0 0 1px rgba(237, 233, 221, 0.30),
+    inset 0 0 calc(var(--u) * 16) calc(var(--u) * 7) rgba(237, 233, 221, 0.10),
+    inset 0 0 calc(var(--u) * 10) calc(var(--u) * 2) rgba(43, 61, 45, 0.10);
   opacity: 0;
   transform: scale(0.4);
   transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
@@ -868,12 +1967,14 @@ body.is-preloading .hero__btn {
    instead on mobile. On desktop/tablet, "меню" now stays visible the
    whole time (open or closed) exactly like the logo and nav links —
    .menu-overlay__close-icon below is a separate, additional control
-   inside the overlay, not a replacement for it. The X is built from the
-   SAME two bars in icon-menu.svg: each is re-centered onto the shared
-   18,18 midpoint (translateX) before rotating ±45deg about it, so the
-   two originally-separate dashes become one crossing X. Hovering the
+   inside the overlay, not a replacement for it. This mobile icon's X is
+   built from the two bars in icon-menu.svg: each is re-centered onto the
+   shared 18,18 midpoint (translateX) before rotating ±45deg about it, so
+   the two originally-separate dashes become one crossing X. Hovering the
    closed mobile icon previews that same X; once open, body.menu-is-open
-   forces it regardless of hover.
+   forces it regardless of hover. (.menu-overlay__close-icon-bar below is
+   plain HTML, not SVG, and has its own geometry/rules — see its own
+   comment further down.)
    ========================================================================== */
 
 .hero__menu-icon {
@@ -890,8 +1991,7 @@ body.is-preloading .hero__btn {
   height: 100%;
 }
 
-.hero__menu-icon-bar,
-.menu-overlay__close-icon-bar {
+.hero__menu-icon-bar {
   /* without this, transform-origin resolves against each bar's OWN tiny
      fill-box (e.g. bar--1 spans only x:0-15.5674, y:17-19) rather than
      the shared SVG center — "18px 18px" would then land way outside that
@@ -920,24 +2020,24 @@ body.menu-is-open .hero__menu-icon-bar--2 {
   transform: rotate(-45deg) translateX(-10.2163px);
 }
 
-/* --- close icon: lives inside #menu-overlay, flush against the right
-   edge (same right: var(--grid-margin) convention as .hero__scroll),
-   vertically centered on the logo row. Shares .hero__menu-icon-bar's
-   exact geometry/transform-origin/transition, but uses its OWN bar classes
-   (.menu-overlay__close-icon-bar--1/--2) rather than reusing the header
-   icon's — body.menu-is-open .hero__menu-icon-bar--1/--2 is unconditional
-   (no hover required, just an open menu) and would otherwise force this
-   element's bars into the X permanently the instant the menu opens,
-   since it only ever exists while already open. Its hover is the ONLY
-   thing that rotates these bars; resting state is the hamburger.
+/* --- close icon: lives inside #menu-overlay, positioned exactly where
+   .hero__menu-btn ("меню") sits in the header, so it reads as that
+   control turning into this icon. Its two bars
+   (.menu-overlay__close-icon-bar--1/--2) are plain HTML <span> elements,
+   not SVG — CSS position/transform-origin is unambiguous for a plain
+   HTML box (unlike SVG's fill-box vs view-box ambiguity, which caused a
+   persistent "jumps left" bug on open regardless of how that version was
+   patched). .menu-overlay__close-icon is the positioning context for
+   both spans. GSAP animates the hamburger→X morph automatically as part
+   of the menu opening (script.js); resting state is the hamburger.
    Desktop/tablet only — hidden on mobile alongside the other desktop-
    only overlay content, since mobile keeps its own header icon. Part of
    the overlay's existing .js-menu-stagger reveal, no separate mechanism. --- */
 
 .menu-overlay__close-icon {
   position: absolute;
-  right: var(--grid-margin);
-  top: calc(var(--u) * 30);
+  left: calc(var(--u) * 1807);
+  top: calc(var(--u) * 26);
   width: calc(var(--u) * 36);
   height: calc(var(--u) * 36);
   display: inline-flex;
@@ -955,15 +2055,18 @@ body.menu-is-open .hero__menu-icon-bar--2 {
   height: 100%;
 }
 
-/* Starts as the resting hamburger (no transform) — GSAP animates it to
-   the X once, automatically, as part of the menu opening (script.js).
-   No CSS transition here: GSAP drives this tween directly via inline
-   styles every frame, and a competing CSS transition on the same
-   property would fight it. (.hero__menu-icon-bar, the header/mobile
-   icon, keeps its own CSS transition for its separate hover behavior —
-   this override only applies to the overlay's close icon.) */
+/* transform-box: view-box is required — without it, transform-origin
+   resolves against each bar's own tiny fill-box (e.g. bar--1 spans only
+   x:0-15.5674, y:17-19) instead of the shared 36x36 SVG canvas, and "18
+   18" lands way outside that bbox, flinging the bar off its intended arc.
+   Resting hamburger (no rotation) — hovering (JS mouseenter/mouseleave,
+   script.js) animates these bars to/from the X by writing the `transform`
+   string directly every frame, not via GSAP's rotate shorthand and not
+   via a CSS transition — both were tried and didn't reliably respect this
+   origin during the actual animated tween. */
 .menu-overlay__close-icon-bar {
-  transition: none;
+  transform-box: view-box;
+  transform-origin: 18px 18px;
 }
 
 /* ==========================================================================
@@ -1089,12 +2192,12 @@ body.menu-is-open {
   position: absolute;
   left: 0;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .menu-overlay__social-text {
   display: inline-block;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .menu-overlay__social-link:hover .menu-overlay__social-paren {

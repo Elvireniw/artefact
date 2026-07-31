@@ -10,15 +10,72 @@ if (hasGSAP && window.ScrollTrigger) {
 }
 
 // ==========================================================================
+// FLUID UNIT CALIBRATION
+// --u is the layout's scale factor ("one Figma unit = this many pixels").
+// Its CSS fallback is `100vw / 1920`, but 100vw INCLUDES the scrollbar while
+// every section is `width: 100%`, which does not — so the ruler ran ~15px
+// longer than the canvas it measured. A section came out 1884u wide instead
+// of 1920u, and anything meant to sit 50u from the right edge landed at
+// about 14u instead.
+//
+// Recomputing from documentElement.clientWidth (scrollbar excluded) makes a
+// full-width section exactly 1920u, which is what every Figma coordinate in
+// this stylesheet assumes. Nothing needs its own compensation afterwards.
+// ==========================================================================
+
+let lastCalibratedWidth = 0;
+
+function calibrateFluidUnit() {
+  const width = document.documentElement.clientWidth;
+  if (!width || width === lastCalibratedWidth) return;
+
+  lastCalibratedWidth = width;
+  document.documentElement.style.setProperty('--u', `${width / 1920}px`);
+
+  // the layout just rescaled under every trigger's feet
+  if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
+}
+
+calibrateFluidUnit();
+
+// A ResizeObserver on <html>, not just a resize listener: when this script
+// first runs the page is still only as tall as the preloader, so there is no
+// vertical scrollbar yet and clientWidth momentarily equals the full window
+// width. The scrollbar appears once the real content lands — which fires no
+// resize event at all — and that is exactly the moment the calibration has
+// to be redone. Guarded by lastCalibratedWidth so it is a no-op otherwise.
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(calibrateFluidUnit).observe(document.documentElement);
+} else {
+  window.addEventListener('load', calibrateFluidUnit);
+}
+
+window.addEventListener('resize', calibrateFluidUnit);
+
+// ==========================================================================
 // SMOOTH SCROLL — Lenis, wired into the GSAP ticker + ScrollTrigger
 // ==========================================================================
+
+// module-scope so initScrollDownArrows() can hand its jumps to the same
+// instance — a native window.scrollTo({behavior:'smooth'}) would run its
+// own animation while Lenis keeps driving scroll from the GSAP ticker, and
+// the two fight over the same scroll position
+let lenis;
 
 (function initLenis() {
   if (reducedMotion || typeof window.Lenis === 'undefined') return;
 
-  const lenis = new Lenis({
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  lenis = new Lenis({
+    // 1.2 -> 1.6: she asked for a slightly heavier, more viscous scroll —
+    // "совсем чуток, но чтоб было заметно". Duration is what governs how
+    // long the wheel impulse keeps gliding, so a ~33% longer glide reads
+    // as weight without becoming sluggish.
+    duration: 1.6,
+    // exponent 10 -> 7: a softer exponential tail. The curve still settles
+    // (it is the same expo.out family the rest of the site eases with),
+    // but decelerates over a longer stretch instead of snapping to a stop,
+    // which is the "тягучий" part rather than merely the slower part.
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -7 * t)),
     smoothWheel: true,
   });
 
@@ -101,10 +158,162 @@ function splitWords(el) {
   return words;
 }
 
+// Recursive variant of splitWords(): descends INTO element children instead
+// of treating each one as a single unit. .material__text wraps whole phrases
+// in colour-tier spans, so the flat splitter would have made
+// "вчить вас терпінню, відкриває" one indivisible "word" and the per-word
+// reveal would have lit four words at once. This keeps the spans (and their
+// colours) intact while still wrapping every individual word inside them.
+function splitWordsDeep(el) {
+  const words = [];
+
+  function walk(node) {
+    Array.from(node.childNodes).forEach((child) => {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const parts = child.textContent.split(/(\s+)/);
+        const frag = document.createDocumentFragment();
+        parts.forEach((part) => {
+          if (part === '') return;
+          if (/^\s+$/.test(part)) {
+            frag.appendChild(document.createTextNode(part));
+            return;
+          }
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = part;
+          frag.appendChild(span);
+          words.push(span);
+        });
+        node.replaceChild(frag, child);
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        walk(child);
+      }
+    });
+  }
+
+  walk(el);
+  return words;
+}
+
+// ==========================================================================
+// GLASS CURSOR — Figma's Glass effect (node 978:1272) rebuilt as an SVG
+// refraction filter for .cursor__media's backdrop.
+//
+// The maths is lifted from Figma's own refraction shader rather than
+// eyeballed: a height field over the circle is differentiated into surface
+// normals, and each colour channel is refracted through its own IOR before
+// the backdrop is sampled at the offset. See the <filter> comment in
+// index.html for the channel ratios.
+//
+// This only generates the normal map (once — it is a PNG stretched to
+// whatever size the bubble currently is, so it never needs rebuilding) and
+// keeps the three displacement `scale`s in sync with the bubble's real px
+// size, since --u rescales it on every viewport change.
+// ==========================================================================
+
+// Figma's Refraction/Depth sliders are not CSS px and its Glass effect is
+// not the library shader, so these two are the mockup values converted by
+// factors calibrated against the Figma render (verified side by side in the
+// browser). They are the only two knobs worth touching if the bubble ever
+// needs to read stronger or weaker:
+//   Figma Refraction 44 -> displacement scale = 10% of the bubble's diameter
+//   Figma Depth 73      -> bevel reaches 23.4% of the radius inward
+// Raising either exaggerates the rainbow fringe fast — at 44% of the
+// diameter it stops reading as glass and starts reading as a soap bubble.
+const GLASS_REFRACTION_SCALE = 0.10;
+const GLASS_BEVEL = 0.234;
+
+// Dispersion 35 needs no calibration — it falls straight out of the shader.
+// (ior - 1) for iorR/iorG/iorB = 1.333 +/- (35/100 * 0.25), normalised to green.
+const GLASS_CHANNEL_RATIOS = [1.2628, 1.0, 0.7372];
+
+// Rendered at 150% of the bubble so it lines up with the filter region
+// declared on #glass-refraction; the 25% margin stays neutral grey (no
+// displacement) and exists so the rim can pull in real backdrop from
+// outside the circle instead of transparent black.
+function glassNormalMapDataURL(px) {
+  const canvas = document.createElement('canvas');
+  canvas.width = px;
+  canvas.height = px;
+
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(px, px);
+  const data = image.data;
+
+  const centre = px / 2;
+  const radius = px / 3;               // the bubble itself, inside the 150% region
+  const flatUntil = 1 - GLASS_BEVEL;   // normalised radius where the bevel starts
+
+  for (let y = 0; y < px; y++) {
+    for (let x = 0; x < px; x++) {
+      const dx = x + 0.5 - centre;
+      const dy = y + 0.5 - centre;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const t = dist / radius;
+
+      let nx = 0;
+      let ny = 0;
+
+      // flat and perfectly clear inside flatUntil, falling away to the edge
+      // on a cosine profile: zero slope where the bevel starts (so there is
+      // no visible seam) rising to its steepest right at the rim
+      if (t > flatUntil && t <= 1 && dist > 0) {
+        const slope = Math.sin(((t - flatUntil) / GLASS_BEVEL) * (Math.PI / 2));
+        nx = (dx / dist) * slope;
+        ny = (dy / dist) * slope;
+      }
+
+      const i = (y * px + x) * 4;
+      data[i] = Math.round(255 * (0.5 + nx * 0.5));       // R -> x offset
+      data[i + 1] = Math.round(255 * (0.5 + ny * 0.5));   // G -> y offset
+      data[i + 2] = 128;
+      data[i + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+  return canvas.toDataURL('image/png');
+}
+
+function initGlassCursor() {
+  const media = document.querySelector('.cursor__media');
+  const normalMap = document.getElementById('glass-normal-map');
+  if (!media || !normalMap) return;
+
+  const href = glassNormalMapDataURL(384);
+  normalMap.setAttribute('href', href);
+  // Chrome resolves plain href on feImage, but the xlink form is what older
+  // WebKit reads and it costs nothing to set both
+  normalMap.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', href);
+
+  const passes = [
+    document.getElementById('glass-disp-r'),
+    document.getElementById('glass-disp-g'),
+    document.getElementById('glass-disp-b'),
+  ];
+
+  // feDisplacementMap's scale is in user units (CSS px), so it has to track
+  // the bubble's --u-driven size or the refraction would drift out of
+  // proportion on any viewport that isn't 1920 wide
+  function syncScale() {
+    const size = media.offsetWidth;
+    if (!size) return;
+    const base = GLASS_REFRACTION_SCALE * size;
+    passes.forEach((pass, i) => {
+      if (pass) pass.setAttribute('scale', (base * GLASS_CHANNEL_RATIOS[i]).toFixed(2));
+    });
+  }
+
+  syncScale();
+  window.addEventListener('resize', syncScale);
+}
+
 // ==========================================================================
 // CUSTOM CURSOR — glassmorphic "далі" cursor for media elements
-// (no element currently opts in via .js-cursor-media; the engine stays
-// generic and ready for the gallery/video sections still to come)
+// Opted into per element with .js-cursor-media + data-cursor-label: the
+// block-3 video toggle ("стоп"/"грати") and every gallery work ("далі").
+// Deliberately nothing else — over plain backgrounds and non-clickable
+// imagery the cursor stays the small dot.
 // ==========================================================================
 
 function initCustomCursor() {
@@ -125,6 +334,10 @@ function initCustomCursor() {
   window.addEventListener('mousemove', (event) => {
     moveX(event.clientX);
     moveY(event.clientY);
+
+    const themedEl = event.target.closest('[data-cursor-theme]');
+    const isLight = themedEl && themedEl.dataset.cursorTheme === 'light';
+    document.body.classList.toggle('cursor-on-light', !!isLight);
   });
 
   document.querySelectorAll('.js-cursor-media').forEach((el) => {
@@ -199,8 +412,109 @@ function initParallax() {
 }
 
 // ==========================================================================
+// SECTION SCROLL LAG
+// The site-wide transition between blocks. As a section scrolls out at the
+// top, its CONTENT drifts downward at half the page's speed, so it visibly
+// lags behind its own background instead of leaving with it.
+//
+// Parameters are copied verbatim from rejouice.com's hero timeline (Nuxt
+// chunk BdSAQIjB.js) — the reference she was pointing at:
+//
+//   .fromTo(logo, {y:0}, {y: () => hero.offsetHeight * 0.5, ease:"none"})
+//   scrollTrigger: {trigger: hero, scrub:true, start:"top top",
+//                   end:"bottom top", invalidateOnRefresh:true}
+//
+// No opacity: the fade-out every section used to have is gone at her
+// request — the drift alone carries the transition now.
+//
+// Always targets a section's CHILDREN, never the section element itself.
+// For .hero that is critical rather than stylistic: a transform on .hero
+// gives it its own stacking context and re-breaks the preloader/curtain
+// z-index trick (see runHeroEntrance()). .hero__bg and .hero__vase-scene
+// are excluded so the backdrop keeps moving at full page speed — that
+// difference in rate IS the effect. .clay__bg is likewise left outside its
+// section's wrapper: it has its own ±50% drift in initClayVideoParallax().
+//
+// For every section except .hero the target is a single `.section-inner`
+// wrapper rather than a list of children. Driving the children directly
+// put this scrubbed tween and the section's entrance timeline on the same
+// `y` of the same elements, and they overwrote each other — the visible
+// symptom was block 2's images never settling into place. One transform
+// per element, one owner per transform.
+// ==========================================================================
+
+function applySectionLag(sectionSelector, childrenSelector, options) {
+  const section = document.querySelector(sectionSelector);
+  if (!section || !document.querySelector(childrenSelector)) return;
+
+  const clampToSection = !(options && options.clampToSection === false);
+
+  // How far the content may drift. rejouice's flat 0.5 * section height
+  // works there because the element they lag sits at the TOP of its
+  // section (their logo bottom is ~200px into a 972px block, so it never
+  // reaches the bottom edge). Every block here is bottom-anchored instead
+  // — block 3's title rests just 62px above its section's edge — so the
+  // same 0.5 pushed content straight through `overflow:hidden` and sliced
+  // it in half, which is the "вёрстка сломалась" she saw. Capping at the
+  // real slack below the lowest element keeps the drift as generous as the
+  // layout allows without ever clipping.
+  const driftDistance = () => {
+    const full = section.offsetHeight * 0.5;
+    if (!clampToSection) return full;
+
+    const wrapper = section.querySelector('.section-inner');
+    const measured = wrapper ? Array.from(wrapper.children) : [];
+    if (!measured.length) return full;
+
+    let lowest = 0;
+    measured.forEach((el) => {
+      const bottom = el.offsetTop + el.offsetHeight;
+      if (bottom > lowest) lowest = bottom;
+    });
+
+    // 2px of slack kept in hand: offsetTop/offsetHeight round to integers
+    // while the drift is sub-pixel, and without it block 3 still shaved a
+    // single pixel off its lowest line.
+    return Math.max(0, Math.min(full, section.offsetHeight - lowest - 2));
+  };
+
+  gsap.to(childrenSelector, {
+    y: driftDistance,
+    ease: 'none',
+    scrollTrigger: {
+      trigger: sectionSelector,
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true,
+      invalidateOnRefresh: true,
+    },
+  });
+}
+
+// .hero is handled separately (and only from runHeroEntrance(), never
+// eagerly at load) for the stacking-context reason above; the rest can be
+// wired up at init.
+function initHeroScrollLag() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+  // clampToSection:false — .hero has no .section-inner to measure against
+  // (its bg/vase must stay outside any wrapper), and this is the one block
+  // whose motion she has already signed off on, so it keeps the full 0.5.
+  applySectionLag('.hero', '.hero > *:not(.hero__bg):not(.hero__vase-scene)', { clampToSection: false });
+}
+
+function initSectionScrollLag() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+
+  // each targets that section's single .section-inner wrapper, never the
+  // individual children — see applySectionLag()'s header for why
+  applySectionLag('.craft', '.craft > .section-inner');
+  applySectionLag('.clay', '.clay > .section-inner');
+  applySectionLag('.material', '.material > .section-inner');
+}
+
+// ==========================================================================
 // MASTER ENTRANCE TIMELINE
-// hero__bg reveals via a clip-path curtain (bottom-to-top), concurrently
+// hero__bg reveals via a clip-path curtain (top-to-bottom), concurrently
 // with the preloader fading out over it; every other element is set to
 // its own hidden state on load and reveals afterward in sequence.
 // ==========================================================================
@@ -240,7 +554,12 @@ function setInitialHeroStates() {
     return;
   }
 
-  gsap.set(heroBg, { clipPath: 'inset(100% 0% 0% 0%)' });
+  // inset(top right bottom left): a 100% BOTTOM inset leaves a zero-height
+  // strip at the element's top, so animating it to 0 grows the reveal
+  // downward — the curtain descends. (The previous 100% TOP inset did the
+  // opposite, climbing up from the bottom edge.) Same direction the menu
+  // overlay already uses.
+  gsap.set(heroBg, { clipPath: 'inset(0% 0% 100% 0%)' });
   // plain pixels, not yPercent — .hero__nav has no CSS rule of its own and
   // collapses to 0 height (its children are all position:absolute), so a
   // yPercent-based offset would resolve to 0 and never actually move
@@ -266,7 +585,7 @@ function startVaseBreathe() {
 // before this timeline is even built. The preloader itself never fades —
 // it stays fully opaque and static. .hero__bg is temporarily bumped above
 // it in z-index so the curtain's growing revealed region visually climbs
-// up and covers it; once the 2.2s curtain tween completes, the preloader
+// up and covers it; once the 1.6s curtain tween completes, the preloader
 // is removed instantly and .hero__bg's z-index is restored to its normal
 // resting value (0) before anything else runs. Everything else is
 // strictly sequential from there, each step starting only once the
@@ -274,14 +593,14 @@ function startVaseBreathe() {
 // intentional overlaps are H1+ghost (together at 'h1Start') and
 // table+labels+vase (together, at vase's start via '<'):
 //   -0.75s (hold)         preloader logo settled, waiting to start
-//   0.0s                  curtain rises over the static preloader, 2.2s
+//   0.0s                  curtain rises over the static preloader, 1.6s
 //   +0.4s gap             header (nav + menu button drop + menu-line draw-in)
-//   +0.15s gap            eyebrow words fade in
-//   +0.15s gap, 'h1Start' H1 rises + fades in, ghost fade starts alongside it
-//   h1Start+1.3s          vase + table settle in, decorative labels alongside
-//   +0.3s gap             description words fade in
-//   +0.3s gap             CTA fades/slides up
-//   +0.4s gap             scroll arrow fades/slides up last
+//   +0.11s gap            eyebrow words fade in
+//   +0.11s gap, 'h1Start' H1 rises + fades in, ghost fade starts alongside it
+//   h1Start+0.98s         vase + table settle in, decorative labels alongside
+//   +0.225s gap           description words fade in
+//   +0.225s gap           CTA fades/slides up
+//   +0.3s gap             scroll arrow fades/slides up last
 function runHeroEntrance() {
   if (reducedMotion) return;
 
@@ -295,8 +614,12 @@ function runHeroEntrance() {
 
   tl.to(heroBg, {
       clipPath: 'inset(0% 0% 0% 0%)',
-      duration: 2.2,
-      ease: 'sine.inOut',
+      // Matched to the dropdown menu's curtain (openMenu/closeMenu) rather
+      // than rejouice's 1.6/expo.out — her call after comparing the two
+      // side by side. Both curtains now share one mechanism AND one
+      // setting: clip-path inset top-to-bottom, 1.2s, power3.out.
+      duration: 1.2,
+      ease: 'power3.out',
       onComplete: () => {
         document.body.classList.remove('is-preloading');
         preloader.remove();
@@ -310,8 +633,8 @@ function runHeroEntrance() {
       ease: 'power2.out',
       onComplete: () => gsap.set(menuLineOut, { clearProps: 'transform,transformOrigin' }),
     }, '-=0.3')
-    .to(eyebrowWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' }, '+=0.15')
-    .addLabel('h1Start', '+=0.15')
+    .to(eyebrowWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' }, '+=0.11')
+    .addLabel('h1Start', '+=0.11')
     .to(titleImg, { y: 0, opacity: 1, duration: 1.0, ease: 'power2.out' }, 'h1Start')
     .to(ghost, { opacity: 1, scale: 1, duration: 2.4, ease: 'sine.out' }, 'h1Start')
     .to(vase, {
@@ -321,14 +644,713 @@ function runHeroEntrance() {
       duration: 1.1,
       ease: 'power2.out',
       onComplete: startVaseBreathe,
-    }, 'h1Start+=1.3')
+    }, 'h1Start+=0.98')
     .to(table, { opacity: 1, y: 0, duration: 1.1, ease: 'power2.out' }, '<')
     .to(labels, { opacity: 1, scale: 1, duration: 1, stagger: 0.06, ease: 'sine.out' }, '<')
-    .to(descWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' }, '+=0.3')
-    .to(btn, { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out' }, '+=0.3')
-    .to(scrollArrow, { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '+=0.4')
-    // parallax only starts once the entrance choreography has fully settled
-    .call(initParallax);
+    .to(descWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' }, '+=0.225')
+    .to(btn, { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out' }, '+=0.225')
+    .to(scrollArrow, { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '+=0.3')
+    // parallax only starts once the entrance choreography has fully settled;
+    // the scroll-lag ScrollTrigger is created here too (not eagerly at
+    // load) — creating it any earlier puts an inline transform on .hero
+    // from frame 1, which gives .hero its own stacking context and traps
+    // heroBg's z-index:10000 boost inside it, so it can never actually
+    // outrank the preloader (a body-level sibling) and the curtain never
+    // visibly rises above the still-opaque preloader
+    .call(initParallax)
+    .call(initHeroScrollLag);
+}
+
+// ==========================================================================
+// CRAFT SECTION — scroll-triggered entrance
+// Mirrors the Hero's own load-entrance ordering (message first, then
+// visuals, then supporting content, CTA last), but triggered by scroll
+// position instead of page load, and plays once. Plain fade/rise only —
+// no pin, no scrub, no clip-path curtain between sections.
+// ==========================================================================
+
+let craftSection, craftHeadingLines, craftArt1, craftArt2Frame, craftBody,
+  craftSideText, craftSideTextWords, craftCta;
+
+function cacheCraftRefs() {
+  craftSection = document.querySelector('.craft');
+  craftHeadingLines = document.querySelectorAll('.craft__heading-line');
+  craftArt1 = document.querySelector('.craft__art-1');
+  craftArt2Frame = document.querySelector('.craft__art-2-frame');
+  craftBody = document.querySelector('.craft__body');
+  craftSideText = document.querySelector('.craft__side-text');
+  craftCta = document.querySelector('.craft__cta');
+
+  craftSideTextWords = craftSideText ? splitWords(craftSideText) : [];
+}
+
+function setInitialCraftStates() {
+  if (reducedMotion) return;
+
+  gsap.set(craftHeadingLines, { opacity: 0, y: 30 });
+  gsap.set([craftArt1, craftArt2Frame], { opacity: 0, y: 120 });
+  gsap.set(craftBody, { opacity: 0, y: 12 });
+  gsap.set(craftSideTextWords, { opacity: 0 });
+  gsap.set(craftCta, { opacity: 0, y: 30 });
+}
+
+// Same beat structure as runHeroEntrance() (heading -> visuals ->
+// supporting content -> CTA), just ScrollTrigger-driven and played once
+// instead of on page load. `y` tweens on .craft__art-1/.craft__art-2-frame
+// clear their inline transform on complete so no stray inline transform
+// is left sitting on the frame afterward (frame itself never animates
+// again post-entrance — initMediaImageHover() only ever touches the
+// inner image elements, not these frames).
+function runCraftEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !craftSection) return;
+
+  gsap.timeline({
+    scrollTrigger: {
+      trigger: craftSection,
+      start: 'top 80%',
+      once: true,
+    },
+  })
+    .to(craftHeadingLines, { opacity: 1, y: 0, duration: 1.0, stagger: 0.1, ease: 'power2.out' })
+    .to([craftArt1, craftArt2Frame], {
+      opacity: 1,
+      y: 0,
+      duration: 1.4,
+      stagger: 0.1,
+      ease: 'power4.out',
+      onComplete: () => gsap.set([craftArt1, craftArt2Frame], { clearProps: 'transform' }),
+    }, '+=0.15')
+    .to(craftBody, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '+=0.15')
+    .to(craftSideTextWords, { opacity: 1, duration: 0.8, stagger: 0.06, ease: 'sine.out' }, '<')
+    .to(craftCta, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '+=0.15');
+}
+
+// ==========================================================================
+// CLAY SECTION — scroll-triggered entrance
+// Beat order per her spec: video first, then the "ваші руки..." word row,
+// then the title, then the left-side caption. Each beat reuses an
+// already-established tween recipe verbatim from elsewhere in the site,
+// not a new invention: video = scale-settle fade (her chosen option, no
+// direct precedent elsewhere); words = same as .hero__eyebrow's
+// splitWords() stagger (these are already separate elements, so no
+// splitWords() call needed here); title = same as .hero__title-img;
+// caption = same as .craft__body.
+// ==========================================================================
+
+let claySection, clayVideo, clayWords, clayTitle, clayCaption;
+
+function cacheClayRefs() {
+  claySection = document.querySelector('.clay');
+  clayVideo = document.querySelector('.clay__bg');
+  clayWords = document.querySelectorAll('.clay__word');
+  clayTitle = document.querySelector('.clay__title');
+  clayCaption = document.querySelector('.clay__caption');
+}
+
+function setInitialClayStates() {
+  if (reducedMotion) return;
+
+  // 1.25 (not the earlier 1.08): on a full-bleed cover video there are no
+  // edges for the eye to reference, so a small scale change reads as
+  // nothing at all — the amplitude has to be obvious to register
+  gsap.set(clayVideo, { scale: 1.25, opacity: 0 });
+  gsap.set(clayWords, { opacity: 0 });
+  gsap.set(clayTitle, { y: 30, opacity: 0 });
+  gsap.set(clayCaption, { opacity: 0, y: 12 });
+}
+
+function runClayEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !claySection) return;
+
+  // The video gets its own trigger at 'top bottom' — the instant the section
+  // edges into the viewport. It used to be the first step of the timeline
+  // below, which fires at 'top 40%', so the block spent the first 60% of a
+  // viewport's worth of scrolling showing nothing but its flat background
+  // colour before the footage appeared. The zoom-out itself is unchanged.
+  gsap.to(clayVideo, {
+    scale: 1,
+    opacity: 1,
+    duration: 1.6,
+    ease: 'power2.out',
+    scrollTrigger: { trigger: claySection, start: 'top bottom', once: true },
+  });
+
+  gsap.timeline({
+    scrollTrigger: {
+      trigger: claySection,
+      // 'top 40%', not the 'top 80%' used elsewhere: at 80% the section has
+      // only just crept in from the bottom (~a third of it visible, and the
+      // TOP third — while the words/title sit at its bottom), so these beats
+      // played off-screen and were never actually seen.
+      start: 'top 40%',
+      once: true,
+    },
+  })
+    .to(clayWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' })
+    .to(clayTitle, { y: 0, opacity: 1, duration: 1.0, ease: 'power2.out' }, '+=0.15')
+    .to(clayCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '+=0.15');
+}
+
+// ==========================================================================
+// MATERIAL SECTION — "4_глина це" motion
+// Her choreography, in three beats:
+//   1. "( глина )" appears first, reusing the Hero eyebrow's word stagger.
+//   2. The blurred echo behind the paragraph assembles: its words start
+//      pushed out to the left and right and converge into place on scroll.
+//   3. The main paragraph fades in, then its words light up one by one as
+//      you keep scrolling.
+//
+// Beat 3's reveal is copied verbatim from kasiasiwosz.com, which she
+// pointed at — their inline Webflow script for [animate="word"]:
+//
+//   const split = new SplitText(el, {type:"words", wordsClass:"word"});
+//   gsap.fromTo(split.words, {opacity:0.3},
+//     {opacity:1, ease:"power2.out", stagger:0.1,
+//      scrollTrigger:{trigger:el, start:"top 80%", end:"top 35%",
+//                     scrub:true}});
+//
+// Same values here, with the range shifted later ('top 55%' -> 'top 20%')
+// so it starts after the paragraph itself has arrived rather than while it
+// is still fading in. SplitText is a paid GSAP plugin the project doesn't
+// load, so splitWordsDeep() stands in for it.
+//
+// The paragraph's own fade uses the CONTAINER's opacity while the reveal
+// uses each WORD's — the two multiply rather than overwrite, so they
+// compose cleanly instead of fighting (the trap that broke block 2).
+// ==========================================================================
+
+let materialSection, materialLabel, materialLabelWords,
+  materialEcho, materialEchoWords, materialText, materialTextWords;
+
+function cacheMaterialRefs() {
+  materialSection = document.querySelector('.material');
+  materialLabel = document.querySelector('.material__label');
+  materialEcho = document.querySelector('.material__echo');
+  materialText = document.querySelector('.material__text');
+
+  // the label's "(" / ")" are element children and stay whole units, same
+  // as the Hero eyebrow's own parenthesis
+  materialLabelWords = materialLabel ? splitWords(materialLabel) : [];
+  materialEchoWords = materialEcho ? splitWordsDeep(materialEcho) : [];
+  materialTextWords = materialText ? splitWordsDeep(materialText) : [];
+}
+
+// Each echo word starts displaced horizontally in proportion to how far it
+// already sits from the paragraph's centre — so the line reads as having
+// been pulled apart to both sides, and collapses back symmetrically.
+// Proportional rather than random keeps it deterministic and makes the
+// outer words travel furthest, which is what sells the "assembling" read.
+const ECHO_SCATTER = 0.9;
+
+function echoScatterFor(word) {
+  if (!materialEcho) return 0;
+  const centre = materialEcho.offsetWidth / 2;
+  const wordCentre = word.offsetLeft + word.offsetWidth / 2;
+  return (wordCentre - centre) * ECHO_SCATTER;
+}
+
+function setInitialMaterialStates() {
+  if (reducedMotion) return;
+
+  gsap.set(materialLabelWords, { opacity: 0 });
+  gsap.set(materialEchoWords, { opacity: 0, x: (i, target) => echoScatterFor(target) });
+  gsap.set(materialText, { opacity: 0, y: 12 });
+  gsap.set(materialTextWords, { opacity: 0.3 });
+}
+
+function runMaterialEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !materialSection) return;
+
+  // Beat 1 — label, trigger-once (same recipe as .hero__eyebrow, slowed)
+  gsap.to(materialLabelWords, {
+    opacity: 1,
+    duration: 1.4,
+    stagger: 0.14,
+    ease: 'sine.out',
+    scrollTrigger: { trigger: materialSection, start: 'top 90%', once: true },
+  });
+
+  // Beat 2 — echo assembles, scrubbed so she controls it with the wheel.
+  // Widened from 'top 75%'->'top 40%' to 'top 95%'->'top 45%'. On a scrubbed
+  // tween `duration` is ignored entirely — the scroll DISTANCE between
+  // start and end is what sets the pace, so the only way to slow this down
+  // is to give it more travel. 35% of the viewport became 50%.
+  gsap.to(materialEchoWords, {
+    opacity: 1,
+    x: 0,
+    // 'power3.out', not 'none'. Under scrub the ease is applied across the
+    // scroll range, so a linear one carried the words at a constant rate
+    // and then simply stopped — they hit their final position hard. An
+    // ease-out decelerates them into place instead.
+    ease: 'power3.out',
+    scrollTrigger: {
+      trigger: materialSection,
+      start: 'top 95%',
+      end: 'top 45%',
+      scrub: true,
+      invalidateOnRefresh: true,
+    },
+  });
+
+  // Beat 3a — the paragraph arrives (same fade+rise as .craft__body, slowed)
+  gsap.to(materialText, {
+    opacity: 1,
+    y: 0,
+    duration: 1.0,
+    ease: 'sine.out',
+    scrollTrigger: { trigger: materialSection, start: 'top 58%', once: true },
+  });
+
+  // Beat 3b — kasiasiwosz word-by-word emphasis, widened to 50% of the
+  // viewport (from their 35%).
+  //
+  // What makes this read as languid rather than staccato is the RATIO of
+  // `duration` to `stagger`, not either on its own. Under `scrub` the whole
+  // timeline is mapped onto the scroll range, so the pair decides how much
+  // each word's own fade overlaps its neighbours: 1.4 / 0.3 means a word is
+  // still brightening while the next four have begun, blending the wave
+  // instead of ticking through it. It was relying on GSAP's default 0.5
+  // duration against 0.16 — a tighter ratio, and each word snapped on in
+  // about 52px of scrolling where it now takes ~73px.
+  //
+  // The range runs past .material's own top edge into negative territory,
+  // which doubles the travel (50% -> 100% of the viewport) and is exactly
+  // the 2x slowdown she asked for. It was impossible while .material was
+  // the last section — max scroll landed on its top edge, so anything past
+  // 'top 0%' could never be reached. The gallery block below it is what
+  // unlocked this; if .gallery is ever removed, this has to come back to
+  // roughly 'top 8%' or the sentence will never finish lighting up.
+  gsap.to(materialTextWords, {
+    opacity: 1,
+    ease: 'power2.out',
+    duration: 1.4,
+    stagger: 0.3,
+    scrollTrigger: {
+      trigger: materialSection,
+      start: 'top 58%',
+      end: 'top -45%',
+      scrub: true,
+    },
+  });
+}
+
+// ==========================================================================
+// CRAFT IMAGES — hover zoom + scroll-linked parallax drift
+// Reference: olgaprudka.com's project-grid images — a plain hover scale
+// (no cursor-tracking) plus a scroll-linked vertical drift of the image
+// within its fixed frame. Rebuilt on GSAP ScrollTrigger (already in the
+// project) rather than adding Locomotive Scroll. The frame
+// (.craft__art-1/.craft__art-2-frame) itself never moves or scales — a
+// fixed box that clips the inner image via its own overflow:hidden. The
+// inner image is sized taller than its frame (style.css: height:150%/
+// top:-25%) so the -15% yPercent drift below never exposes empty space
+// at the frame's bottom edge (the only edge at risk, since the drift is
+// one continuous upward shift, never reversing past its start). Hover's
+// scale lives in JS/GSAP rather than CSS so it composes cleanly with the
+// scroll-drift's own GSAP-driven yPercent on the same element — both are
+// separate transform components (scale vs translateY) that GSAP
+// composites into one transform automatically, so hovering mid-scroll
+// shows the zoom layered on top of whatever drift position is current,
+// neither one overriding the other.
+// ==========================================================================
+
+// The philosophy section (block 6) gets this same treatment rather than the
+// glass cursor — its images are not clickable, so the hover reads as
+// "alive" without promising a destination. Its drift is shallower (-7 vs
+// -15) because its inner images are only oversized to 125%/-12.5% instead
+// of craft's 150%/-25%: the frame's bottom edge stays covered as long as
+// the drift in frame-% (yPercent * height/100) stays under the 12.5% of
+// overhang below, i.e. 7 * 1.25 = 8.75%. See the .philosophy__img img rule.
+function mediaImageGroups() {
+  const groups = [
+    { frame: document.querySelector('.craft__art-1'), imgs: document.querySelectorAll('.craft__art-1-img'), drift: -15 },
+    { frame: document.querySelector('.craft__art-2-frame'), imgs: document.querySelectorAll('.craft__art-2'), drift: -15 },
+  ];
+
+  document.querySelectorAll('.philosophy__img').forEach((frame) => {
+    groups.push({ frame, imgs: frame.querySelectorAll('img'), drift: -7 });
+  });
+
+  return groups;
+}
+
+function initMediaImageHover() {
+  if (!hasGSAP) return;
+
+  const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!isFinePointer) return;
+
+  mediaImageGroups().forEach(({ frame, imgs }) => {
+    if (!frame || !imgs.length) return;
+
+    // overwrite:'auto' so a fast in/out cannot leave the enter tween running
+    // past the leave tween and strand the image scaled up; 'auto' keeps it
+    // off the scroll-parallax's yPercent on the same element
+    frame.addEventListener('mouseenter', () => {
+      gsap.to(imgs, { scale: 1.05, duration: 0.7, ease: 'power2.out', overwrite: 'auto' });
+    });
+
+    frame.addEventListener('mouseleave', () => {
+      gsap.to(imgs, { scale: 1, duration: 0.7, ease: 'power2.out', overwrite: 'auto' });
+    });
+  });
+}
+
+function initMediaImageParallax() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+
+  mediaImageGroups().forEach(({ frame, imgs, drift }) => {
+    if (!frame || !imgs.length) return;
+
+    gsap.to(imgs, {
+      yPercent: drift,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: frame,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: true,
+      },
+    });
+  });
+}
+
+// ==========================================================================
+// GALLERY + PHILOSOPHY — scroll-triggered entrances (blocks 5 and 6)
+//
+// Every beat here is an existing recipe reused verbatim, per her spec:
+//   eyebrows ("роботи студентів" / "наша філософія" / "наш підхід")
+//     -> .hero__eyebrow's splitWords opacity stagger
+//   headings (both blocks)              -> .craft__heading-line's fade + rise
+//   .gallery__lead, the filter items,
+//   and the hover-revealed captions     -> .craft__body's fade + rise
+//   .gallery__note                      -> .craft__side-text's word stagger
+//
+// The philosophy paragraphs (.philosophy__note / .philosophy__lead) were not
+// specified; they take the .craft__body recipe as the closest match for body
+// copy. Say if they should be word-staggered like the gallery note instead.
+//
+// Two triggers per block rather than one: .gallery is 1153u tall, so a
+// single 'top 80%' trigger would fire the card row while it is still a full
+// viewport below the fold — the same mistake the clay section made. The
+// heading group gets .gallery, the row group gets .gallery__track.
+// ==========================================================================
+
+// how far the gallery images counter-move against the cursor, in u. Must
+// stay under the headroom the hover scale creates (2.5% of a 448u card =
+// 11.2u) or the image would pull its own edge into the frame
+const GALLERY_HOVER_SHIFT = 6;
+
+let gallerySection, galleryEyebrowWords, galleryTitle, galleryLead,
+  galleryFilterItems, galleryTrack, galleryPhotos, galleryCaptions,
+  galleryNoteWords;
+let philTopGroup, philBottomGroup, philEyebrowTopWords, philEyebrowBottomWords,
+  philTitleTop, philTitleBottom, philNote, philLead,
+  philImgMain, philImgP1, philImgP2, philImgP3;
+
+function cacheGalleryRefs() {
+  gallerySection = document.querySelector('.gallery');
+  const eyebrow = document.querySelector('.gallery__eyebrow');
+  galleryEyebrowWords = eyebrow ? splitWords(eyebrow) : [];
+  galleryTitle = document.querySelector('.gallery__title');
+  galleryLead = document.querySelector('.gallery__lead');
+  galleryFilterItems = document.querySelectorAll('.gallery__filter-item');
+  galleryTrack = document.querySelector('.gallery__track');
+  galleryPhotos = document.querySelectorAll('.gallery__photo');
+  galleryCaptions = document.querySelectorAll('.gallery__caption');
+
+  const note = document.querySelector('.gallery__note p');
+  galleryNoteWords = note ? splitWords(note) : [];
+}
+
+function cachePhilosophyRefs() {
+  philTopGroup = document.querySelector('.philosophy__group--top');
+  philBottomGroup = document.querySelector('.philosophy__group--bottom');
+
+  const eTop = document.querySelector('.philosophy__eyebrow--light');
+  const eBottom = document.querySelector('.philosophy__eyebrow--dark');
+  philEyebrowTopWords = eTop ? splitWords(eTop) : [];
+  philEyebrowBottomWords = eBottom ? splitWords(eBottom) : [];
+
+  philTitleTop = document.querySelector('.philosophy__title--dark');
+  philTitleBottom = document.querySelector('.philosophy__title--light');
+  philNote = document.querySelector('.philosophy__note');
+  philLead = document.querySelector('.philosophy__lead');
+
+  philImgMain = document.querySelector('.philosophy__img--main');
+  philImgP1 = document.querySelector('.philosophy__img--p1');
+  philImgP2 = document.querySelector('.philosophy__img--p2');
+  philImgP3 = document.querySelector('.philosophy__img--p3');
+}
+
+function setInitialGalleryStates() {
+  if (reducedMotion) return;
+
+  gsap.set(galleryEyebrowWords, { opacity: 0 });
+  gsap.set(galleryTitle, { opacity: 0, y: 30 });
+  gsap.set([galleryLead, galleryFilterItems], { opacity: 0, y: 12 });
+  // 90, not the 40 this started at: at 40 the rise finished before the eye
+  // found it and the row just seemed to be there already
+  gsap.set(galleryPhotos, { opacity: 0, y: 90 });
+  gsap.set(galleryNoteWords, { opacity: 0 });
+  // captions are hover-only from here on; left visible in CSS so a
+  // reduced-motion or no-GSAP visit still reads them
+  gsap.set(galleryCaptions, { opacity: 0, y: 12 });
+}
+
+function setInitialPhilosophyStates() {
+  if (reducedMotion) return;
+
+  gsap.set([philEyebrowTopWords, philEyebrowBottomWords], { opacity: 0 });
+  gsap.set([philTitleTop, philTitleBottom], { opacity: 0, y: 30 });
+  gsap.set([philNote, philLead], { opacity: 0, y: 12 });
+  // the craft images' own starting state, per her spec — set on the FRAMES,
+  // never the inner <img>, which already carries the hover scale and the
+  // scroll-drift's yPercent
+  gsap.set([philImgMain, philImgP1, philImgP2, philImgP3], { opacity: 0, y: 120 });
+}
+
+function runGalleryEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !gallerySection) return;
+
+  gsap.timeline({ scrollTrigger: { trigger: gallerySection, start: 'top 80%', once: true } })
+    .to(galleryEyebrowWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' })
+    .to(galleryTitle, { opacity: 1, y: 0, duration: 1.0, ease: 'power2.out' }, '-=0.8')
+    // starts only once the 96u heading beside it has landed. It used to
+    // overlap by 0.5s and was simply not seen — a 24u paragraph rising 12px
+    // cannot compete with that heading still moving next to it. It also
+    // animates to the 0.8 opacity the CSS gives it, not to 1, then hands the
+    // property back so the stylesheet stays the source of truth.
+    .to(galleryLead, {
+      opacity: 0.8,
+      y: 0,
+      duration: 0.8,
+      ease: 'sine.out',
+      onComplete: () => gsap.set(galleryLead, { clearProps: 'opacity,transform' }),
+    }, '+=0.05');
+
+  gsap.timeline({ scrollTrigger: { trigger: galleryTrack, start: 'top 85%', once: true } })
+    // per-item target opacity: the selected filter is dimmed to 0.6 by
+    // .is-active, so a flat `opacity: 1` here would light it up and then
+    // pop back down on clearProps
+    .to(galleryFilterItems, {
+      opacity: (i, el) => (el.classList.contains('is-active') ? 0.6 : 1),
+      y: 0,
+      duration: 0.6,
+      stagger: 0.08,
+      ease: 'sine.out',
+      onComplete: () => gsap.set(galleryFilterItems, { clearProps: 'opacity,transform' }),
+    })
+    .to(galleryPhotos, {
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(galleryPhotos, { clearProps: 'transform' }),
+    }, '-=0.35')
+    .to(galleryNoteWords, { opacity: 1, duration: 0.8, stagger: 0.06, ease: 'sine.out' }, '-=0.85');
+}
+
+// Beats run strictly top-to-bottom and barely overlap: her note was that
+// everything should arrive in turn and be *noticeable*, which the earlier
+// heavy '-=0.8' overlaps defeated — the eye only registers one thing at a
+// time. Images use the craft recipe verbatim (y 120, 1.4s, power4.out) and
+// clear their transform afterwards so nothing is left sitting on a frame
+// that the hover and scroll-drift also touch.
+function philImageBeat(target) {
+  return {
+    opacity: 1,
+    y: 0,
+    duration: 1.4,
+    ease: 'power4.out',
+    onComplete: () => gsap.set(target, { clearProps: 'transform' }),
+  };
+}
+
+function runPhilosophyEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+
+  if (philTopGroup) {
+    gsap.timeline({ scrollTrigger: { trigger: philTopGroup, start: 'top 80%', once: true } })
+      .to(philEyebrowTopWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' })
+      .to(philTitleTop, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
+      .to(philImgMain, philImageBeat(philImgMain), '-=0.35')
+      .to(philNote, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.8')
+      .to(philImgP1, philImageBeat(philImgP1), '-=0.3');
+  }
+
+  if (philBottomGroup) {
+    gsap.timeline({ scrollTrigger: { trigger: philBottomGroup, start: 'top 80%', once: true } })
+      .to(philEyebrowBottomWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' })
+      .to(philTitleBottom, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
+      .to(philLead, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.35')
+      .to(philImgP2, philImageBeat(philImgP2), '-=0.25')
+      .to(philImgP3, philImageBeat(philImgP3), '-=1.05');
+  }
+}
+
+// ==========================================================================
+// GALLERY PHOTO HOVER
+// olgaprudka.com's project-grid behaviour as she described it: the same
+// 1.05 scale the craft/philosophy images use, PLUS a micro drift away from
+// the cursor. The drift moves the image INSIDE its frame — the frame (the
+// <button>) never moves, so nothing shifts in the page's layout; the extra
+// image the scale creates is what the drift travels through.
+//
+// Note this contradicts what was concluded about this same reference last
+// time (that the DASHA image had no cursor tracking at all) — going with
+// her reading of it, since it is her design call either way.
+//
+// The caption ("створено на 8 тижні") rides the same hover, on .craft__body's
+// fade+rise, per her spec.
+// ==========================================================================
+
+function initGalleryPhotoHover() {
+  if (!hasGSAP) return;
+
+  const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!isFinePointer) return;
+
+  document.querySelectorAll('.gallery__photo').forEach((frame) => {
+    const img = frame.querySelector('img');
+    const card = frame.closest('.gallery__card');
+    const caption = card && card.querySelector('.gallery__caption');
+    if (!img) return;
+
+    // quickTo, not a fresh tween per mousemove: it retargets a single running
+    // tween, which is what keeps the drift smooth instead of steppy
+    const driftX = gsap.quickTo(img, 'x', { duration: 0.9, ease: 'power3' });
+    const driftY = gsap.quickTo(img, 'y', { duration: 0.9, ease: 'power3' });
+
+    // overwrite:'auto' matters here — a fast in/out leaves the enter and
+    // leave tweens running concurrently, and without it the longer one (in)
+    // finishes last and strands the caption visible. 'auto' rather than
+    // true so it only kills the conflicting properties and leaves the
+    // drift's own x/y tweens on this same image alone.
+    frame.addEventListener('mouseenter', () => {
+      gsap.to(img, { scale: 1.05, duration: 0.7, ease: 'power2.out', overwrite: 'auto' });
+      if (caption) gsap.to(caption, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out', overwrite: 'auto' });
+    });
+
+    frame.addEventListener('mousemove', (event) => {
+      const rect = frame.getBoundingClientRect();
+      const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+      const shift = GALLERY_HOVER_SHIFT * u;
+      // negated: the image pulls AWAY from the cursor
+      driftX(-(((event.clientX - rect.left) / rect.width) * 2 - 1) * shift);
+      driftY(-(((event.clientY - rect.top) / rect.height) * 2 - 1) * shift);
+    });
+
+    // 1.0s on the way out, longer than the drift's own 0.9s: at 0.7s the
+    // scale reached 1 while the drift was still 0.2s from centre, so for
+    // those 0.2s the image sat un-oversized but off-centre and showed a
+    // hairline of page along one edge. Outlasting the drift means the image
+    // is always still oversized whenever it is still off-centre.
+    frame.addEventListener('mouseleave', () => {
+      gsap.to(img, { scale: 1, duration: 1.0, ease: 'power2.out', overwrite: 'auto' });
+      driftX(0);
+      driftY(0);
+      if (caption) gsap.to(caption, { opacity: 0, y: 12, duration: 0.4, ease: 'sine.out', overwrite: 'auto' });
+    });
+  });
+}
+
+// ==========================================================================
+// OLIVE GRAIN — the film grain the mockup has over block 6's olive field
+//
+// Measured off Figma's render of node 978:1287 rather than eyeballed: a bare
+// patch of background there has a per-channel standard deviation of about
+// 3.4 levels at full resolution against the flat #9A9671. Generated as a
+// tile here rather than as an feTurbulence so that number can be set
+// directly. Mid-grey is the neutral point of the `overlay` blend the CSS
+// applies, so a tile centred on 128 leaves the base colour alone and only
+// contributes its deviations.
+// ==========================================================================
+
+const GRAIN_SD = 3;        // overlay roughly multiplies this by 2*base/255 (~1.2 here)
+const GRAIN_TILE = 160;
+
+function initOliveGrain() {
+  const section = document.querySelector('.philosophy');
+  if (!section) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = GRAIN_TILE;
+  canvas.height = GRAIN_TILE;
+
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(GRAIN_TILE, GRAIN_TILE);
+  const data = image.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    // Box-Muller, so the grain is gaussian like real film rather than the
+    // flat distribution Math.random() alone would give
+    const u1 = Math.random() || 1e-6;
+    const u2 = Math.random();
+    const gauss = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    const v = Math.max(0, Math.min(255, Math.round(128 + gauss * GRAIN_SD)));
+    data[i] = v;
+    data[i + 1] = v;
+    data[i + 2] = v;
+    data[i + 3] = 255;
+  }
+
+  ctx.putImageData(image, 0, 0);
+  section.style.setProperty('--grain', `url(${canvas.toDataURL('image/png')})`);
+}
+
+// ==========================================================================
+// GALLERY CAROUSEL — variant A, scroll-scrubbed
+//
+// The row drifts sideways across the whole time the section is on screen,
+// on the same scrub recipe the craft images and the clay video already use.
+// No control to click: the site is scroll-driven throughout, and the one
+// button the mockup had became the glass cursor.
+//
+// The track overhangs 409u past each edge of the 1920u viewport, so 409u in
+// each direction is exactly the travel that takes it from "first card flush
+// left" to "last card flush right" and back. Running from +409 to -409 puts
+// the mockup's own framing at the midpoint of the scroll.
+//
+// .gallery__note is NOT in here — it was lifted out of the track so it can
+// stay put while the cards pass behind its beige panel.
+// ==========================================================================
+
+const GALLERY_TRAVEL = 409;
+
+function initGalleryCarousel() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+
+  const track = document.querySelector('.gallery__track');
+  const section = document.querySelector('.gallery');
+  if (!track || !section) return;
+
+  // read through --u each time so a resize re-solves it; invalidateOnRefresh
+  // is what makes ScrollTrigger re-run these on refresh rather than caching
+  // the pixel values it computed at load
+  const travel = () => GALLERY_TRAVEL
+    * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1);
+
+  gsap.fromTo(track,
+    { x: () => travel() },
+    {
+      x: () => -travel(),
+      ease: 'none',
+      scrollTrigger: {
+        trigger: section,
+        start: 'top bottom',
+        // 'bottom center', not the 'bottom top' the other scrubs on this
+        // site use: the gallery is the second-to-last section and there is
+        // no footer yet, so the page runs out of scroll before its bottom
+        // can reach the viewport top and the last ~7% of the travel was
+        // simply unreachable. Ending at centre only needs half a viewport of
+        // content below the section, which block 6 comfortably provides.
+        end: 'bottom center',
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    });
 }
 
 // ==========================================================================
@@ -364,36 +1386,10 @@ function openMenu() {
   }
 
   gsap.set(menuStaggerItems, { opacity: 0, y: 12 });
-  // reset the close icon's bars to the resting hamburger so the hamburger
-  // -> X morph below can replay cleanly on every open
-  const closeIconBar1 = document.querySelector('.menu-overlay__close-icon-bar--1');
-  const closeIconBar2 = document.querySelector('.menu-overlay__close-icon-bar--2');
-  if (closeIconBar1) closeIconBar1.style.transform = '';
-  if (closeIconBar2) closeIconBar2.style.transform = '';
   menuTl = gsap.timeline();
   menuTl
     .to(menuOverlay, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.2, ease: 'power3.out' })
     .to(menuStaggerItems, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'sine.out' }, '+=0.15');
-
-  // The hamburger -> X morph plays once automatically here, no hover
-  // involved. Driven as a plain numeric progress value (not GSAP's rotate/
-  // x shorthand) because GSAP computes its own SVG transform-origin for
-  // those, ignoring the CSS transform-box: view-box / transform-origin:
-  // 18px 18px setup and landing the pivot in the wrong place. Writing the
-  // exact same transform string that already works correctly via pure CSS
-  // sidesteps that entirely.
-  if (closeIconBar1 && closeIconBar2) {
-    const morph = { p: 0 };
-    menuTl.to(morph, {
-      p: 1,
-      duration: 0.5,
-      ease: 'expo.out',
-      onUpdate: () => {
-        closeIconBar1.style.transform = `rotate(${45 * morph.p}deg) translateX(${10.2163 * morph.p}px)`;
-        closeIconBar2.style.transform = `rotate(${-45 * morph.p}deg) translateX(${-10.2163 * morph.p}px)`;
-      },
-    }, '<');
-  }
 }
 
 function closeMenu() {
@@ -407,10 +1403,10 @@ function closeMenu() {
     return;
   }
 
-  // If closed before the open timeline's hamburger->X morph finished
-  // playing, killing menuTl above leaves the bars frozen mid-rotation —
-  // snap them straight to the clean, fully-formed X so closing never
-  // shows a half-turned, asymmetric icon while it fades out.
+  // Whatever state the hover morph was in (mid-hover, mid-unhover,
+  // interrupted), force the bars straight to the clean, fully-formed X —
+  // clicking close always means "closing from the X", so there's no
+  // ambiguity about which end state is correct here.
   const closeIconBar1 = document.querySelector('.menu-overlay__close-icon-bar--1');
   const closeIconBar2 = document.querySelector('.menu-overlay__close-icon-bar--2');
   if (closeIconBar1) closeIconBar1.style.transform = 'rotate(45deg) translateX(10.2163px)';
@@ -438,8 +1434,34 @@ function initMenuOverlay() {
   });
 
   if (closeIcon) {
-    // Static X, no hover morph — just closes the menu. Nothing else to
-    // animate or lock here.
+    const bar1 = closeIcon.querySelector('.menu-overlay__close-icon-bar--1');
+    const bar2 = closeIcon.querySelector('.menu-overlay__close-icon-bar--2');
+    let morphTween;
+
+    // Hover plays the hamburger -> X morph forward; moving away plays it
+    // back. Deliberately NOT GSAP's rotate shorthand and NOT a CSS
+    // transition — both failed to reliably respect this icon's custom
+    // transform-origin during the actual animated tween. Instead: tween a
+    // plain numeric proxy and write the full `transform` string directly
+    // on every frame, so the browser applies transform-origin the same
+    // way it would for any static rotate()/translateX() string.
+    const morph = { p: 0 };
+    function applyMorph() {
+      if (bar1) bar1.style.transform = `rotate(${45 * morph.p}deg) translateX(${10.2163 * morph.p}px)`;
+      if (bar2) bar2.style.transform = `rotate(${-45 * morph.p}deg) translateX(${-10.2163 * morph.p}px)`;
+    }
+
+    if (bar1 && bar2 && !reducedMotion) {
+      closeIcon.addEventListener('mouseenter', () => {
+        if (morphTween) morphTween.kill();
+        morphTween = gsap.to(morph, { p: 1, duration: 0.4, ease: 'power2.out', onUpdate: applyMorph });
+      });
+      closeIcon.addEventListener('mouseleave', () => {
+        if (morphTween) morphTween.kill();
+        morphTween = gsap.to(morph, { p: 0, duration: 0.4, ease: 'power2.out', onUpdate: applyMorph });
+      });
+    }
+
     closeIcon.addEventListener('click', () => {
       trigger.setAttribute('aria-expanded', 'false');
       closeMenu();
@@ -482,17 +1504,186 @@ function initPreloader() {
 }
 
 // ==========================================================================
+// CLAY VIDEO — half-speed scroll parallax
+// Reference: rejouice.com's hero reel. Measured mechanic there (not
+// guessed): the reel container tracks scroll 1:1 while the video inside it
+// translates at exactly HALF the scroll rate — 150px of drift per 300px
+// scrolled — so the footage visibly lags the page and lingers on screen.
+// Verified there are no sticky/fixed sections on that page and no parallax
+// at all on its second video block, so this drift is the whole of the
+// effect, not part of some larger stacking mechanism.
+//
+// Values are copied verbatim from their source (Nuxt chunk BdSAQIjB.js),
+// not inferred from measurements:
+//
+//   gsap.timeline({scrollTrigger:{trigger: reel, scrub:true,
+//     start:"top bottom", end:"bottom top"}})
+//     .fromTo(video, {yPercent:-50}, {yPercent:50, ease:"none", duration:1})
+//
+// with the video element sized to 100% of its container. An earlier pass
+// here used a 200%-tall box with ±25% instead, reasoning that spare height
+// was needed to avoid bare edges — it isn't, and it halved the drift,
+// which is why the effect looked like it wasn't there at all.
+// ==========================================================================
+
+function initClayVideoParallax() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !clayVideo) return;
+
+  gsap.fromTo(clayVideo,
+    { yPercent: -50 },
+    {
+      yPercent: 50,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: claySection,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: true,
+      },
+    });
+}
+
+// ==========================================================================
+// GALLERY FILTER — selected-state toggle
+// Visual state only: clicking moves the 60%-opacity "selected" mark. It does
+// NOT yet filter which works are shown — that needs her spec for which
+// pieces belong to Ліплення / Гончарне коло / Декор, and the gallery is
+// still a single flat track.
+// ==========================================================================
+
+function initGalleryFilter() {
+  const items = document.querySelectorAll('.js-gallery-filter');
+  if (!items.length) return;
+
+  items.forEach((item) => {
+    item.addEventListener('click', () => {
+      items.forEach((other) => {
+        other.classList.remove('is-active');
+        other.removeAttribute('aria-pressed');
+      });
+      item.classList.add('is-active');
+      item.setAttribute('aria-pressed', 'true');
+    });
+  });
+}
+
+// ==========================================================================
+// SCROLL-DOWN ARROWS
+// Every section except the footer carries one; clicking it jumps to the
+// next section with no wheel/trackpad input. The target is resolved as
+// "next section in document order" rather than from each link's href, so
+// adding a block later needs no rewiring (and the last section's arrow is
+// simply inert until something follows it).
+// ==========================================================================
+
+function initScrollDownArrows() {
+  const links = document.querySelectorAll('.js-scroll-down');
+  if (!links.length) return;
+
+  const sections = Array.from(document.querySelectorAll('.hero, .craft, .clay'));
+
+  links.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const current = link.closest('.hero, .craft, .clay');
+      const next = sections[sections.indexOf(current) + 1];
+      if (!next) {
+        // nothing below yet — swallow the click so the href doesn't jump
+        event.preventDefault();
+        return;
+      }
+
+      event.preventDefault();
+
+      // Plain document offset — no sections are pinned any more (the holds
+      // were removed after they introduced a visible jolt on arrival), so
+      // there is no pin-spacer to measure around and no held framing to
+      // land on.
+      const target = window.scrollY + next.getBoundingClientRect().top;
+
+      if (lenis) {
+        lenis.scrollTo(target, { duration: 1.4 });
+      } else {
+        window.scrollTo({ top: target, behavior: reducedMotion ? 'auto' : 'smooth' });
+      }
+    });
+  });
+}
+
+// ==========================================================================
+// CLAY SECTION — video play/pause toggle
+// ==========================================================================
+
+function initClayVideoToggle() {
+  const toggle = document.querySelector('.clay__video-toggle');
+  const video = document.querySelector('.clay__bg');
+  if (!toggle || !video) return;
+
+  const cursor = document.getElementById('cursor');
+  const cursorLabel = cursor && cursor.querySelector('.cursor__media-label');
+
+  function setState(isPlaying) {
+    const label = isPlaying ? 'стоп' : 'грати';
+    toggle.dataset.cursorLabel = label;
+    toggle.setAttribute('aria-label', isPlaying ? 'Зупинити відео' : 'Відтворити відео');
+    // mouseenter (initCustomCursor) only reads dataset.cursorLabel at the
+    // moment the pointer ENTERS — clicking without leaving the element
+    // needs the already-visible bubble text updated live too
+    if (cursorLabel && cursor.classList.contains('is-media')) {
+      cursorLabel.textContent = label;
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    if (video.paused) {
+      video.play();
+      setState(true);
+    } else {
+      video.pause();
+      setState(false);
+    }
+  });
+}
+
+// ==========================================================================
 // INIT
 // ==========================================================================
 
 cacheHeroRefs();
 cacheMenuRefs();
+cacheCraftRefs();
+cacheClayRefs();
+cacheMaterialRefs();
+cacheGalleryRefs();
+cachePhilosophyRefs();
 if (hasGSAP) {
   setInitialHeroStates();
   setInitialMenuState();
+  setInitialCraftStates();
+  setInitialClayStates();
+  setInitialMaterialStates();
+  setInitialGalleryStates();
+  setInitialPhilosophyStates();
 }
 initPreloader();
+initGlassCursor();
 initCustomCursor();
 initMenuOverlay();
-// initParallax() is triggered by runHeroEntrance() once the master
-// entrance timeline finishes, not eagerly here.
+runCraftEntrance();
+initMediaImageHover();
+initMediaImageParallax();
+runGalleryEntrance();
+runPhilosophyEntrance();
+initGalleryPhotoHover();
+initGalleryCarousel();
+initOliveGrain();
+runClayEntrance();
+runMaterialEntrance();
+initClayVideoParallax();
+initClayVideoToggle();
+initScrollDownArrows();
+initGalleryFilter();
+initSectionScrollLag();
+// initParallax() and initHeroScrollLag() are both triggered by
+// runHeroEntrance() once the master entrance timeline finishes, not
+// eagerly here — see runHeroEntrance()'s own comment for why
+// initHeroScrollLag() specifically can't run any earlier.

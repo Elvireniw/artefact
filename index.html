@@ -16,6 +16,62 @@
     </div>
   </div>
 
+  <!-- GLASS REFRACTION FILTER for .cursor__media's backdrop-filter.
+       Ported from Figma's own refraction shader (the "Pattern refraction"
+       effect in the account library, whose WGSL source is the same model
+       the built-in Glass effect uses): a height field is turned into
+       surface normals, each colour channel is refracted through its own
+       IOR, and the backdrop is sampled at the refracted offset.
+
+         iorR = 1.333 + d,  iorG = 1.333,  iorB = 1.333 - d
+         d    = (Dispersion / 100) * 0.25
+
+       For Figma's Dispersion 35 that gives d = 0.0875. Since refract()
+       with a near-flat normal bends by roughly (ior - 1), the three
+       channels displace in the ratio 1.26 / 1.00 / 0.74 — the numbers on
+       the three feDisplacementMap passes below. feImage's normal map and
+       every `scale` are written by initGlassCursor() in script.js, which
+       also rebuilds them whenever --u changes.
+
+       color-interpolation-filters="sRGB" is required: the default
+       linearRGB would gamma-convert the normal map's channel values
+       before feDisplacementMap reads them as offsets, bending everything
+       by the wrong amount. -->
+  <svg class="glass-defs" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="glass-refraction" filterUnits="objectBoundingBox"
+              x="-25%" y="-25%" width="150%" height="150%"
+              color-interpolation-filters="sRGB">
+        <!-- no subregion on purpose: feImage then fills the whole filter
+             region, so the normal map canvas is generated at 150% of the
+             bubble (neutral grey in the margin) and no primitive-subregion
+             maths is needed. The margin is what lets the rim pull in real
+             backdrop from outside the circle instead of transparent black. -->
+        <feImage id="glass-normal-map" preserveAspectRatio="none" result="NMAP" />
+
+        <feDisplacementMap id="glass-disp-r" in="SourceGraphic" in2="NMAP"
+                           xChannelSelector="R" yChannelSelector="G" result="CHR" />
+        <feDisplacementMap id="glass-disp-g" in="SourceGraphic" in2="NMAP"
+                           xChannelSelector="R" yChannelSelector="G" result="CHG" />
+        <feDisplacementMap id="glass-disp-b" in="SourceGraphic" in2="NMAP"
+                           xChannelSelector="R" yChannelSelector="G" result="CHB" />
+
+        <!-- keep one channel from each pass, then screen them back together
+             (disjoint channels, so screen is an exact recombination and it
+             leaves alpha at 1 rather than clamping like additive would) -->
+        <feColorMatrix in="CHR" type="matrix" result="ONLYR"
+                       values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" />
+        <feColorMatrix in="CHG" type="matrix" result="ONLYG"
+                       values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" />
+        <feColorMatrix in="CHB" type="matrix" result="ONLYB"
+                       values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" />
+
+        <feBlend in="ONLYR" in2="ONLYG" mode="screen" result="RG" />
+        <feBlend in="RG" in2="ONLYB" mode="screen" />
+      </filter>
+    </defs>
+  </svg>
+
   <!-- PRELOADER — "The Focusing Logo" -->
   <div class="preloader" id="preloader" role="presentation" aria-hidden="true">
     <div class="preloader__logo" role="img" aria-label="Artefact">
@@ -31,7 +87,7 @@
   </div>
 
   <!-- HERO SECTION -->
-  <section class="hero" id="hero">
+  <section class="hero" id="hero" data-cursor-theme="dark">
 
     <img class="hero__bg" src="img/hero-bg.png" alt="" aria-hidden="true">
 
@@ -91,12 +147,303 @@
       </span>
     </a>
 
-    <a href="#philosophy" class="hero__scroll" aria-label="Прокрутити вниз">
+    <a href="#method" class="hero__scroll js-scroll-down" aria-label="Прокрутити вниз">
       <svg class="hero__scroll-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M8 0V23M8 23L1 16M8 23L15 16" stroke="currentColor" stroke-width="1.4"/>
       </svg>
       <span class="hero__scroll-tail" aria-hidden="true"></span>
     </a>
+
+  </section>
+
+  <!-- CRAFT SECTION — "2_мистецтво" (Figma node 978:1223). Entrance is
+       ScrollTrigger-driven (script.js runCraftEntrance()); no pin/scrub/
+       curtain between this section and the Hero. -->
+  <section class="craft" id="method" data-cursor-theme="light">
+
+    <!-- .section-inner exists purely so the scroll-lag drift has an element
+         of its own to move: it animates `y` on this wrapper while the
+         entrance timeline animates `y` on the individual children. Without
+         it both wrote `y` to the same elements and fought, which stopped
+         the images ever settling into place. -->
+    <div class="section-inner">
+
+    <p class="craft__heading-line craft__heading-line--1">мистецтво — яке</p>
+    <p class="craft__heading-line craft__heading-line--2">об'єднує</p>
+    <p class="craft__heading-line craft__heading-line--3">покоління</p>
+    <h2 class="visually-hidden">Мистецтво — яке об'єднує покоління</h2>
+
+    <div class="craft__art-1">
+      <img class="craft__art-1-img craft__art-1-img--a" src="img/craft-art-1a.png" alt="Ручне формування глини на гончарному крузі">
+      <img class="craft__art-1-img craft__art-1-img--b" src="img/craft-art-1b.png" alt="" aria-hidden="true">
+    </div>
+
+    <p class="craft__body">ви навчитеся втілювати цифрові задуми в унікальні вироби, де кожна лінія буде промовляти мовою вашої душі</p>
+
+    <a href="#" class="craft__cta js-line-hover">
+      <span class="craft__cta-text">free вебинар</span>
+      <span class="craft__cta-plus" aria-hidden="true">
+        <span class="craft__cta-plus-track">
+          <span class="craft__cta-plus-char craft__cta-plus-char--out">+</span>
+          <span class="craft__cta-plus-char craft__cta-plus-char--in">+</span>
+        </span>
+      </span>
+    </a>
+
+    <div class="craft__art-2-frame">
+      <img class="craft__art-2" src="img/craft-art-2.png" alt="Готові керамічні вироби на камені">
+    </div>
+
+    <p class="craft__side-text">
+      <span class="craft__side-text-line--1">розвиває творчість</span><br>
+      <span class="craft__side-text-line--2">і дає справжню </span>терапію для душі
+    </p>
+
+    </div>
+
+  </section>
+
+  <!-- CLAY SECTION — "3_мова глини" (Figma node 978:1237). Pixel Perfect
+       pass only for now; motion/effects come later. -->
+  <section class="clay" id="clay" data-cursor-theme="dark">
+
+    <video class="clay__bg" autoplay muted loop playsinline aria-hidden="true">
+      <source src="img/clay-bg.mp4" type="video/mp4">
+    </video>
+
+    <!-- the video stays OUTSIDE .section-inner: it has its own ±50% drift
+         (initClayVideoParallax) and must keep moving independently of the
+         content lag -->
+    <div class="section-inner">
+
+    <button class="clay__video-toggle js-cursor-media" type="button" data-cursor-label="стоп" aria-label="Зупинити відео"></button>
+
+    <img class="clay__title" src="img/mova-clay.png" alt="Мова глини" width="1707" height="268">
+    <h2 class="visually-hidden">Мова глини</h2>
+
+    <p class="clay__word clay__word--vashi">ваші</p>
+    <p class="clay__word clay__word--ruky">руки</p>
+    <p class="clay__word clay__word--ozhivlyayut">оживляють</p>
+    <p class="clay__word clay__word--u">у</p>
+    <p class="clay__word clay__word--formu">форму</p>
+    <p class="clay__word clay__word--ta">та</p>
+    <p class="clay__word clay__word--napovnyuyut">наповнюють</p>
+    <p class="clay__word clay__word--ii">її</p>
+    <p class="clay__word clay__word--istoriyeyu">історією</p>
+
+    <p class="clay__caption">
+      як тисячолітнє<br>ремесло стає сучасним мистецтвом
+    </p>
+
+    </div>
+
+  </section>
+
+  <!-- MATERIAL SECTION — "4_глина це" (Figma node 978:1257). Pixel Perfect
+       pass only for now; the (richer) motion pass comes later. The blurred
+       copy behind the main paragraph is the SAME sentence at a larger size
+       and 10% opacity — a decorative echo, hence aria-hidden. -->
+  <section class="material" id="material" data-cursor-theme="light">
+
+    <div class="section-inner">
+
+    <p class="material__echo" aria-hidden="true">це живий матеріал що шепоче історіями майстрів минулого. вона <span class="material__tier-2">вчить вас терпінню, відкриває</span> <span class="material__tier-2">мудрість рук і нагадує, що</span><span class="material__tier-3"> справжня краса часто криється в легкій недосконалості</span></p>
+
+    <p class="material__label"><span class="italic-symbol">(</span>глина<span class="italic-symbol">)</span></p>
+
+    <p class="material__text">це живий матеріал що шепоче історіями майстрів минулого. вона <span class="material__tier-2">вчить вас терпінню, відкриває</span> <span class="material__tier-2">мудрість рук і нагадує, що</span><span class="material__tier-3"> справжня краса часто криється в легкій недосконалості</span></p>
+
+    </div>
+
+  </section>
+
+  <!-- GALLERY SECTION — "5_галерея робіт" (Figma node 978:1261). Pixel
+       Perfect pass only; motion comes after. The track is deliberately
+       wider than the viewport (2738u starting at -409u) — it is a
+       horizontal carousel, and .gallery's overflow:hidden is what crops it
+       to the mockup's framing. -->
+  <section class="gallery" id="gallery" data-cursor-theme="light">
+
+    <div class="section-inner">
+
+    <p class="gallery__eyebrow"><span class="italic-symbol">(</span>роботи студентів</p>
+
+    <h2 class="gallery__title"><span class="gallery__title-a">Ваш слід у </span><span class="gallery__title-b">тисячолітті</span></h2>
+
+    <p class="gallery__lead">кожна робота тут — це унікальна історія, створена руками наших студентів</p>
+
+    <div class="gallery__filter">
+      <button class="gallery__filter-item js-gallery-filter" type="button">
+        <span class="gallery__filter-text">Ліплення</span>
+        <span class="gallery__filter-underline" aria-hidden="true"></span>
+      </button>
+      <button class="gallery__filter-item js-gallery-filter is-active" type="button" aria-pressed="true">
+        <span class="gallery__filter-text">Гончарне коло</span>
+        <span class="gallery__filter-underline" aria-hidden="true"></span>
+      </button>
+      <button class="gallery__filter-item js-gallery-filter" type="button">
+        <span class="gallery__filter-text">Декор</span>
+        <span class="gallery__filter-underline" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="gallery__track">
+
+      <!-- .gallery__photo is a <button> rather than a <div> because each work
+           opens a lightbox (main shot + 2-3 other angles of the same piece);
+           that lightbox is a separate build, so the click handler does not
+           exist yet. The element is already the real control so the custom
+           cursor's "далі" bubble (.js-cursor-media) never promises an
+           interaction to a non-focusable div. The "+" marks are the work's
+           difficulty rating and are unrelated to the cursor. -->
+      <article class="gallery__card">
+        <button class="gallery__photo js-cursor-media" type="button"
+                data-cursor-label="далі" aria-label="Переглянути роботу: керамічна чашка ручної роботи">
+          <img src="img/gallery-1.jpg" alt="Керамічна чашка ручної роботи">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 6 тижні</p>
+      </article>
+
+      <article class="gallery__card">
+        <button class="gallery__photo js-cursor-media" type="button"
+                data-cursor-label="далі" aria-label="Переглянути роботу: керамічна чаша">
+          <img src="img/gallery-2.jpg" alt="Керамічна чаша в руках майстрині">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 4 тижні</p>
+      </article>
+
+      <article class="gallery__card">
+        <button class="gallery__photo js-cursor-media" type="button"
+                data-cursor-label="далі" aria-label="Переглянути роботу: ваза за склом">
+          <img src="img/gallery-3.jpg" alt="Ваза за склом">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 8 тижні</p>
+      </article>
+
+      <article class="gallery__card">
+        <button class="gallery__photo js-cursor-media" type="button"
+                data-cursor-label="далі" aria-label="Переглянути роботу: скульптурна керамічна форма">
+          <img src="img/gallery-4.png" alt="Скульптурна керамічна форма">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 5 тижні</p>
+      </article>
+
+      <article class="gallery__card">
+        <button class="gallery__photo js-cursor-media" type="button"
+                data-cursor-label="далі" aria-label="Переглянути роботу: керамічний виріб ручної роботи">
+          <img src="img/gallery-5.jpg" alt="Керамічний виріб ручної роботи">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 3 тижні</p>
+      </article>
+
+      <!-- PLACEHOLDER — sixth work. Reuses gallery-2.jpg until the real
+           export lands; swap the src, the alt and both aria-labels then. -->
+      <article class="gallery__card">
+        <button class="gallery__photo js-cursor-media" type="button"
+                data-cursor-label="далі" aria-label="Переглянути роботу">
+          <img src="img/gallery-2.jpg" alt="">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 7 тижні</p>
+      </article>
+
+    </div>
+
+    <!-- Lifted OUT of .gallery__track on purpose: the track scrubs sideways
+         with the scroll and this note has to stay put while the cards slide
+         behind it, so it is absolutely placed in the section instead of
+         being a flex item in the moving row. Its beige panel (::before) is
+         what the cards disappear behind — that panel is in the mockup. -->
+    <div class="gallery__note">
+      <p>дозвольте цим образам розповісти, які неймовірні речі ви також зможете створити вже за кілька тижнів навчання</p>
+    </div>
+
+    <!-- the mockup's circular "next" control (node 978:1273) is intentionally
+         absent: that circle is now the glass cursor -->
+
+    <div class="gallery__bar" aria-hidden="true"></div>
+
+    </div>
+
+  </section>
+
+  <!-- PHILOSOPHY SECTION — "6_філософія" (Figma node 978:1287). Reads as one
+       continuous surface with the gallery above it, so it deliberately gets
+       NO section scroll-lag (see initSectionScrollLag) — per her note that
+       these two blocks flow into each other by design. Inner structure is
+       flex, mirroring how the frame is actually built in Figma, rather than
+       the absolute-in-u layout the earlier sections use. -->
+  <section class="philosophy" id="philosophy" data-cursor-theme="dark">
+
+    <div class="section-inner">
+
+      <div class="philosophy__group philosophy__group--top">
+        <div class="philosophy__row">
+          <div class="philosophy__imgh">
+            <div class="philosophy__img philosophy__img--main">
+              <img src="img/phil-main.png" alt="Руки майстра формують глину на гончарному крузі">
+            </div>
+            <div class="philosophy__head">
+              <p class="philosophy__eyebrow philosophy__eyebrow--light"><span class="italic-symbol">(</span>наша філософія</p>
+              <h2 class="philosophy__title philosophy__title--dark">більше,<br><span class="philosophy__title-dim">ніж ремесло</span></h2>
+            </div>
+          </div>
+          <p class="philosophy__note philosophy__note--dark">вчимо відчувати історію<br>в кожному дотику до глини, розуміти мову предків і додавати до<br>неї власний голос.<br>це не просто навичка —<br>це міст між епохами, який ви будуєте своїми руками </p>
+        </div>
+        <div class="philosophy__img philosophy__img--p1">
+          <img src="img/phil-p1.jpg" alt="Керамічна скульптурна форма">
+        </div>
+      </div>
+
+      <div class="philosophy__group philosophy__group--bottom">
+        <div class="philosophy__col-left">
+          <div class="philosophy__head">
+            <p class="philosophy__eyebrow philosophy__eyebrow--dark"><span class="italic-symbol">(</span>наш підхід</p>
+            <h2 class="philosophy__title philosophy__title--light">мова <span class="philosophy__title-dim-light">творця</span></h2>
+          </div>
+          <div class="philosophy__img philosophy__img--p2">
+            <img src="img/phil-p2.png" alt="Руки, що місять глину">
+          </div>
+        </div>
+
+        <div class="philosophy__col-right">
+          <div class="philosophy__row-lower">
+            <div class="philosophy__lead-wrap">
+              <p class="philosophy__lead">тут ви навчитеся не техніці, а мові глини. відчуєте, як тисячолітня мудрість майстрів оживає у ваших руках, перетворюючись на унікальні речі, що несуть відбиток вашої особистості</p>
+            </div>
+            <div class="philosophy__img-frame">
+              <div class="philosophy__img philosophy__img--p3">
+                <img src="img/phil-p3.png" alt="Керамічні свічники ручної роботи">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
 
   </section>
 
@@ -133,9 +480,8 @@
       <img src="img/logo-green.svg" alt="Artefact" width="200" height="28">
     </a>
 
-    <!-- flush against the right edge (same right: var(--grid-margin)
-         convention as .hero__scroll), vertically centered on the logo
-         row -->
+    <!-- positioned exactly where .hero__menu-btn ("меню") sits in the
+         header, so it reads as that control turning into this icon -->
     <button class="menu-overlay__close-icon js-menu-stagger" type="button" aria-label="Закрити меню">
       <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
         <path class="menu-overlay__close-icon-bar menu-overlay__close-icon-bar--1" d="M0 17.0002H15.5674V19.0002H0L0 17.0002Z" fill="currentColor"/>
