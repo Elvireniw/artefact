@@ -1279,14 +1279,6 @@ body.is-preloading .hero__btn {
   margin: 0;
   background-color: var(--beige-100);
   color: #2B3D2D;
-  /* While this section is pinned (initGalleryCarousel) it is position:fixed,
-     so its bottom edge sits at a fractional device pixel and a hairline of
-     whatever is behind it showed through under the olive caption strip. This
-     paints 2px of that same olive just OUTSIDE the box — outside means it
-     survives this element's own overflow:hidden — filling the crack. Off the
-     pin it is covered by .philosophy, which is the same colour, so it costs
-     nothing the rest of the time. */
-  box-shadow: 0 2px 0 var(--olive-100);
 }
 
 /* --- heading group (Figma frame "H" at 51,237; its children are placed
