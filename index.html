@@ -538,6 +538,63 @@
 
   </section>
 
+  <!-- FREE LESSON SECTION — "8_free lesson" (Figma node 978:1326, file
+       6tA1k2sLpFm5U7cLn9p9rZ). Motion reuses existing recipes verbatim,
+       per her spec: heading lines -> .craft__heading-line's fade+rise;
+       "почніть з.." eyebrow -> .steps__subheading's splitWords() stagger;
+       "( отримайте.." txt -> .craft__side-text's splitWords() stagger;
+       media -> .craft__art-1's fade+rise + hover-scale + scroll-parallax
+       (registered in mediaImageGroups()); CTA -> .craft__cta verbatim,
+       including its plus-swap hover (see runFreeLessonEntrance() in
+       script.js for the exact beat order). -->
+  <section class="free-lesson" id="free-lesson" data-cursor-theme="dark">
+
+    <div class="section-inner">
+
+      <div class="free-lesson__gradient" aria-hidden="true"></div>
+
+      <h2 class="visually-hidden">ще не готові до повноцінного курсу? отримайте вводний 2-годинний відео-урок</h2>
+
+      <div class="free-lesson__content">
+
+        <div class="free-lesson__heading">
+          <p class="free-lesson__line free-lesson__line--1">
+            <span class="free-lesson__word free-lesson__word--nohe">ще не</span>
+            <span class="free-lesson__mark">?</span>
+          </p>
+          <p class="free-lesson__line free-lesson__line--2">
+            <span class="free-lesson__word free-lesson__word--gotovi">готові</span>
+            <span class="free-lesson__eyebrow">почніть з безкоштовного уроку</span>
+            <span class="free-lesson__word free-lesson__word--do">до</span>
+          </p>
+          <p class="free-lesson__line free-lesson__line--3">
+            <span class="free-lesson__word free-lesson__word--povno">повноцінного</span>
+            <span class="free-lesson__word free-lesson__word--course">курсу</span>
+          </p>
+        </div>
+
+        <div class="free-lesson__media">
+          <img class="free-lesson__media-img" src="img/free-lesson-course.png" alt="Керамічна ваза на тканинному тлі">
+        </div>
+
+        <p class="free-lesson__txt"><span class="italic-symbol free-lesson__txt-paren">(</span> отримайте<br>вводний 2-годинний<br>відео-урок <span class="italic-symbol free-lesson__txt-paren free-lesson__txt-paren--close">)</span></p>
+
+        <a href="#" class="free-lesson__cta js-line-hover">
+          <span class="free-lesson__cta-label">free вебинар</span>
+          <span class="free-lesson__cta-plus" aria-hidden="true">
+            <span class="free-lesson__cta-plus-track">
+              <span class="free-lesson__cta-plus-char free-lesson__cta-plus-char--out">+</span>
+              <span class="free-lesson__cta-plus-char free-lesson__cta-plus-char--in">+</span>
+            </span>
+          </span>
+        </a>
+
+      </div>
+
+    </div>
+
+  </section>
+
   <!-- Lives outside .hero on purpose: .hero__nav carries a leftover GSAP
        transform (identity matrix, harmless visually) from the entrance
        timeline, and any transformed ancestor becomes the containing block

@@ -1006,6 +1006,7 @@ function mediaImageGroups() {
     { frame: document.querySelector('.craft__art-1'), imgs: document.querySelectorAll('.craft__art-1-img'), drift: -15 },
     { frame: document.querySelector('.craft__art-2-frame'), imgs: document.querySelectorAll('.craft__art-2'), drift: -15 },
     { frame: document.querySelector('.steps__art'), imgs: document.querySelectorAll('.steps__art-img'), drift: -15 },
+    { frame: document.querySelector('.free-lesson__media'), imgs: document.querySelectorAll('.free-lesson__media-img'), drift: -15 },
   ];
 
   document.querySelectorAll('.philosophy__img').forEach((frame) => {
@@ -1107,10 +1108,34 @@ let galleryPinTrigger;
 // top:864u; .philosophy's own height is 1762u, then .steps__heading
 // top:150u and .steps__list top:650u within .steps. Keep these in sync with
 // style.css if those sections' layout changes.
+//
+// The STEPS_* values below carry a +1118u correction the original PHIL_*
+// pair still lacks: "galleryPinTrigger.end ≈ .philosophy's top" turned out
+// to undershoot the section's REAL top by ~1118u (measured live: pin.end
+// was 4438px while .philosophy's actual document top was 5236px, a gap
+// this file's own comment didn't account for — likely non-pinned trailing
+// space inside .gallery after its pinned carousel). That +1118u was
+// invisible on its own (steps' cards just fired somewhat earlier than
+// their exact natural position, easy to miss), but became a real bug once
+// .free-lesson (block 8) landed directly after .steps: its own trigger,
+// positioned from .free-lesson's real DOM top with no such correction
+// needed, fired at scrollY 5533 — BEFORE steps__heading (5758, pre-fix)
+// and well before steps__list (6087, pre-fix), so the free-lesson entrance
+// could finish while steps' cards hadn't even started. Fixing PHIL_* too
+// would move .philosophy's (block 6, not requested here) timing as a side
+// effect, so only STEPS_* is corrected — confirmed against a live
+// getBoundingClientRect() measurement of .steps__heading/.steps__list, not
+// recalculated by formula, so it's exact rather than an estimate.
 const PHIL_TOP_OFFSET_U = 150;
 const PHIL_BOTTOM_OFFSET_U = 864;
-const STEPS_HEADER_OFFSET_U = 1762 + 150;
-const STEPS_LIST_OFFSET_U = 1762 + 650;
+const STEPS_HEADER_OFFSET_U = 1762 + 150 + 1118;
+const STEPS_LIST_OFFSET_U = 1762 + 650 + 1118;
+// .free-lesson's own top: philosophy's height (1762u) + .steps' full height
+// (1623u, its own `height: calc(var(--u) * 1623)` in style.css) + the same
+// +1118u correction as the STEPS_* pair above (this is a correction to the
+// shared "pin.end ≈ philosophy's top" base, not something that varies per
+// downstream element — confirmed live, see runFreeLessonEntrance()).
+const FREE_LESSON_OFFSET_U = 1762 + 1623 + 1118;
 
 // Returns a ScrollTrigger `start` FUNCTION (not a fixed number/string) that
 // places philosophy's/steps' entrance triggers a fixed --u distance after
@@ -1353,16 +1378,59 @@ function runStepsEntrance() {
 
   if (!stepsList) return;
 
+  // Scroll-SCRUBBED, not time-based — this replaces two prior attempts that
+  // both still went stale: a 5.9s once-triggered timeline, then a "just
+  // make it faster" pass down to 3.2s, and it was STILL outrun by a normal
+  // scroll (her report: block 7 unchanged, still mid-reveal when block 8
+  // arrives). A fixed-duration timeline can ALWAYS be outscrolled at some
+  // speed, no matter how much it's trimmed — it runs on its own clock, not
+  // on scroll position. Same recipe as .material's own scrubbed word-reveal
+  // (materialEchoWords/materialTextWords above): `scrub: true` ties progress
+  // 1:1 to scroll distance, so it is mathematically impossible for this to
+  // still be "revealing" once the user has scrolled past its end — and
+  // impossible for it to look "done" before she's scrolled far enough into
+  // it, either. `end` gives it a full extra .steps__list-height (823u) of
+  // scroll runway beyond `start` — her "increase the height so I have room
+  // to scroll while it reveals" ask, implemented as scroll DISTANCE for the
+  // reveal rather than changing the section's actual Figma-specified height.
+  // start/end are viewport-relative (like a normal 'top 80%'/'top 20%'
+  // pair), NOT a flat --u offset from STEPS_LIST_OFFSET_U's base — that
+  // first version started the scrub only once .steps__list's top hit the
+  // very top of the viewport (STEPS_LIST_OFFSET_U's own "top 0%"-equivalent
+  // calibration, right for a once-trigger but not for a scrub range) and
+  // ended 823u later, which is roughly the list's OWN height — meaning the
+  // list had almost entirely scrolled OFF the top of the screen by the time
+  // the reveal finished. Confirmed live: card labels were still fading in
+  // while only a sliver of the list was left on screen. Anchoring both ends
+  // to STEPS_LIST_OFFSET_U's reliable base (see its own comment) but offset
+  // by viewport height instead — start while .steps__list is still mostly
+  // below the fold (90% down), end while its top has only scrolled to 15%
+  // above the viewport (list is shorter than one viewport, so this is still
+  // comfortably on-screen) — keeps the whole reveal within the window where
+  // the cards are actually visible to look at.
   const listTl = gsap.timeline({
-    scrollTrigger: { trigger: stepsList, start: galleryFloorStart(STEPS_LIST_OFFSET_U), once: true },
+    scrollTrigger: {
+      trigger: stepsList,
+      start: () => {
+        if (!galleryPinTrigger) return 999999;
+        const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+        return galleryPinTrigger.end + 60 + STEPS_LIST_OFFSET_U * u - window.innerHeight * 0.9;
+      },
+      end: () => {
+        if (!galleryPinTrigger) return 999999;
+        const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+        return galleryPinTrigger.end + 60 + STEPS_LIST_OFFSET_U * u + window.innerHeight * 0.15;
+      },
+      scrub: true,
+      invalidateOnRefresh: true,
+    },
   });
 
   listTl.to(stepsArtImgs, {
     opacity: 1,
     y: 0,
-    duration: 1.4,
+    duration: 0.8,
     ease: 'power4.out',
-    onComplete: () => gsap.set(stepsArtImgs, { clearProps: 'transform' }),
   });
 
   // Each card enters fully on its own, one after another — card2/card3 used
@@ -1370,14 +1438,16 @@ function runStepsEntrance() {
   // bodies staggered together), which read as neither "each card arrives
   // separately" nor "everything appears at once", just an ambiguous partial
   // overlap. All three cards now share the exact same two-beat shape
-  // (label, then caption+text) her spec.
-  // durations/stagger/gaps all scaled by 0.7 (30% faster), per her request —
-  // keeps the same rhythm, just compressed
+  // (label, then caption+text) her spec. Durations/staggers below are now
+  // relative weights across the scrubbed scroll range, not literal seconds
+  // — kept at their already-compressed values from the previous (time-based)
+  // pass since that relative rhythm (label, pause, body, pause, next card)
+  // still reads the same, just mapped onto scroll distance instead of a clock.
   stepsCards.forEach((card) => {
     if (!card) return;
     listTl
-      .to(card.labelWords, { opacity: 1, duration: 0.7, stagger: 0.06, ease: 'sine.out' }, '+=0.1')
-      .to([card.caption, card.text], { opacity: 1, y: 0, duration: 0.42, stagger: 0.07, ease: 'sine.out' }, '+=0.1');
+      .to(card.labelWords, { opacity: 1, duration: 0.35, stagger: 0.03, ease: 'sine.out' }, '+=0.06')
+      .to([card.caption, card.text], { opacity: 1, y: 0, duration: 0.25, stagger: 0.04, ease: 'sine.out' }, '+=0.06');
   });
 }
 
@@ -1935,6 +2005,100 @@ function initClayVideoToggle() {
 }
 
 // ==========================================================================
+// FREE LESSON SECTION — "8_free lesson" scroll-triggered entrance
+// Every beat reuses an existing recipe verbatim, per her spec:
+//   heading lines (.free-lesson__line, incl. the "?" mark)
+//                                 -> .craft__heading-line's fade+rise
+//   "почніть з.." eyebrow         -> .steps__subheading's splitWords() stagger
+//   "( отримайте.." txt           -> .craft__side-text's splitWords() stagger
+//   media                        -> .craft__art-1's fade+rise (its hover-scale
+//     + scroll-drift come from mediaImageGroups() already)
+//   CTA                          -> .craft__cta's fade+rise (plus-swap hover
+//     is pure CSS via .js-line-hover, no JS needed beyond the class)
+// ==========================================================================
+
+let freeLessonSection, freeLessonLines, freeLessonEyebrowWords,
+  freeLessonMedia, freeLessonTxtWords, freeLessonCta;
+
+function cacheFreeLessonRefs() {
+  freeLessonSection = document.querySelector('.free-lesson');
+  freeLessonLines = document.querySelectorAll('.free-lesson__line');
+  freeLessonMedia = document.querySelector('.free-lesson__media');
+  freeLessonCta = document.querySelector('.free-lesson__cta');
+
+  const eyebrow = document.querySelector('.free-lesson__eyebrow');
+  freeLessonEyebrowWords = eyebrow ? splitWords(eyebrow) : [];
+
+  const txt = document.querySelector('.free-lesson__txt');
+  freeLessonTxtWords = txt ? splitWords(txt) : [];
+}
+
+function setInitialFreeLessonStates() {
+  if (reducedMotion) return;
+
+  gsap.set(freeLessonLines, { opacity: 0, y: 30 });
+  gsap.set(freeLessonEyebrowWords, { opacity: 0 });
+  gsap.set(freeLessonMedia, { opacity: 0, y: 120 });
+  gsap.set(freeLessonTxtWords, { opacity: 0 });
+  gsap.set(freeLessonCta, { opacity: 0, y: 30 });
+}
+
+// Kept to ~2s total, per the starter kit's own rule: a slower 6s+ sequence
+// (the first version of this was ~5s, chaining all 5 beats with '+=0.15'
+// gaps back to back) can still be running when a normal scroll carries the
+// user past the section — which read as "no motion at all" since by the
+// time the scroll settles, the once-only timeline has already finished.
+// Beats now overlap on absolute time offsets instead of sequential '+='.
+//
+// start: a FUNCTION replicating 'top 80%', not the plain string every
+// other block uses, and NOT a live getBoundingClientRect() read either —
+// both were tried and both fired too early, verified live (driving real
+// scroll and reading ScrollTrigger's isActive/progress, not just .start
+// after the page settles, per the gallery-pin gotcha's own instrumentation
+// rule):
+//   1. plain 'top 80%' string: resolved to scrollY ~5373.
+//   2. `scrollY + getBoundingClientRect().top - vh*0.2`, re-read on every
+//      refresh: resolved to ~5853 — better, but still fires before
+//      .steps__heading/.steps__list. GSAP's refresh pass evidently
+//      re-measures with the gallery's pin-spacer in a different (probably
+//      collapsed) state than its final pinned layout, so even a "live"
+//      read during refresh doesn't reflect the true final document
+//      position.
+// What actually works is STEPS_*/PHIL_*'s own approach: anchor to
+// `galleryPinTrigger.end`, which — despite not literally equaling
+// philosophy's top (see the +1118u correction note on FREE_LESSON_OFFSET_U
+// above) — is the one reference point GSAP keeps stable across refreshes.
+// The -vh*0.2 term is the only difference from STEPS_*/PHIL_*'s own use of
+// this pattern: they fire at "top 0%" (a point trigger), this replicates
+// the project's normal "top 80%" convention instead.
+function runFreeLessonEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !freeLessonSection) return;
+
+  gsap.timeline({
+    scrollTrigger: {
+      trigger: freeLessonSection,
+      start: () => {
+        if (!galleryPinTrigger) return 999999;
+        const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+        return galleryPinTrigger.end + 60 + FREE_LESSON_OFFSET_U * u - window.innerHeight * 0.2;
+      },
+      once: true,
+    },
+  })
+    .to(freeLessonLines, { opacity: 1, y: 0, duration: 0.9, stagger: 0.08, ease: 'power2.out' }, 0)
+    .to(freeLessonEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, 0.35)
+    .to(freeLessonMedia, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      ease: 'power4.out',
+      onComplete: () => gsap.set(freeLessonMedia, { clearProps: 'transform' }),
+    }, 0.5)
+    .to(freeLessonTxtWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, 0.5)
+    .to(freeLessonCta, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 1.6);
+}
+
+// ==========================================================================
 // INIT
 // ==========================================================================
 
@@ -1946,6 +2110,7 @@ cacheMaterialRefs();
 cacheGalleryRefs();
 cachePhilosophyRefs();
 cacheStepsRefs();
+cacheFreeLessonRefs();
 if (hasGSAP) {
   setInitialHeroStates();
   setInitialMenuState();
@@ -1955,6 +2120,7 @@ if (hasGSAP) {
   setInitialGalleryStates();
   setInitialPhilosophyStates();
   setInitialStepsStates();
+  setInitialFreeLessonStates();
 }
 initPreloader();
 initGlassCursor();
@@ -1967,6 +2133,7 @@ runGalleryEntrance();
 runPhilosophyEntrance();
 runStepsEntrance();
 initStepHoverGuard();
+runFreeLessonEntrance();
 initGalleryPhotoHover();
 initGalleryCarousel();
 initOliveGrain();

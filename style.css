@@ -2655,3 +2655,257 @@ body.menu-is-open {
     height: 36px;
   }
 }
+
+/* ==========================================================================
+   FREE LESSON SECTION — "8_free lesson" (Figma node 978:1326, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Pixel Perfect only for now — no entrance or
+   hover motion wired yet, verstka pass.
+   ========================================================================== */
+
+.free-lesson {
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 1207);
+  overflow: hidden;
+  /* same fractional-devicePixelRatio hairline gotcha as every other block
+     seam so far (5/6, 6/7) — .steps is beige, this section is dark brown,
+     so a 1px gap here would be far more visible than most. */
+  margin: -2px 0 0;
+  background-color: #5E4133;
+}
+
+/* Figma's "gradient" group is 4 heavily Gaussian-blurred (feGaussianBlur
+   100-250) rotated ellipses composited together — a real blur filter,
+   which is off-limits here (project hard rule). Approximated instead with
+   layered radial-gradients in the same 4 hues at roughly the same screen
+   positions: no filter, same soft warm diagonal wash. Flag to her if the
+   fit needs to be tighter — the exact Figma asset route (pre-baked blur,
+   same precedent as mova-clay.png) is the fallback if this reads too flat. */
+.free-lesson__gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 70% 85% at 55% 62%, rgba(126, 100, 84, 0.55) 0%, rgba(126, 100, 84, 0) 70%),
+    radial-gradient(ellipse 60% 75% at 82% 52%, rgba(100, 71, 55, 0.5) 0%, rgba(100, 71, 55, 0) 70%),
+    radial-gradient(ellipse 45% 55% at 60% 88%, rgba(91, 64, 50, 0.55) 0%, rgba(91, 64, 50, 0) 70%),
+    radial-gradient(ellipse 55% 60% at 6% 4%, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0) 65%);
+}
+
+.free-lesson__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 150);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+.free-lesson__heading {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(var(--u) * 402);
+}
+
+.free-lesson__line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(var(--u) * 128);
+  margin: 0;
+}
+
+.free-lesson__line--2 {
+  top: calc(var(--u) * 128);
+}
+
+.free-lesson__line--3 {
+  top: calc(var(--u) * 256);
+  height: calc(var(--u) * 146);
+}
+
+.free-lesson__word {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.free-lesson__word--nohe {
+  left: 0;
+  color: var(--beige-100);
+}
+
+.free-lesson__mark {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+  color: var(--beige-100);
+}
+
+.free-lesson__word--gotovi {
+  left: 0;
+  color: var(--beige-80);
+}
+
+.free-lesson__word--do {
+  left: calc(var(--u) * 1177);
+  color: var(--beige-40);
+}
+
+.free-lesson__word--povno {
+  left: 0;
+  color: var(--beige-60);
+}
+
+.free-lesson__word--course {
+  right: 0;
+  color: var(--beige-60);
+}
+
+.free-lesson__eyebrow {
+  position: absolute;
+  left: calc(var(--u) * 568);
+  top: calc(var(--u) * 77);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -0.6);
+  color: var(--beige-100);
+  white-space: nowrap;
+}
+
+.free-lesson__media {
+  position: absolute;
+  left: calc(var(--u) * 458);
+  top: calc(var(--u) * 612);
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+}
+
+/* oversized + centered, same as .craft__art-1-img: covers the scroll-linked
+   yPercent:-15 drift (mediaImageGroups() in script.js) without exposing
+   empty space at the frame's bottom edge. */
+.free-lesson__media-img {
+  position: absolute;
+  left: 0;
+  top: -25%;
+  width: 100%;
+  height: 150%;
+  object-fit: cover;
+}
+
+.free-lesson__txt {
+  position: absolute;
+  left: calc(var(--u) * 914);
+  top: calc(var(--u) * 612);
+  width: calc(var(--u) * 580);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  /* Figma has 0.9 leading per line PLUS a 7u gap between lines; merged into
+     one line-height now that it's a single <p> with <br> (needed so
+     splitWords() can stagger every word — see runFreeLessonEntrance() in
+     script.js) instead of 3 separate <p> lines. */
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -1.28);
+  color: var(--beige-100);
+}
+
+/* small fixed gaps beside italic parens are literal px, not --u, by
+   project convention */
+.free-lesson__txt-paren {
+  margin-right: 12px;
+}
+
+.free-lesson__txt-paren--close {
+  margin-right: 0;
+  margin-left: 40px;
+}
+
+.free-lesson__cta {
+  position: absolute;
+  left: calc(var(--u) * 918.5);
+  top: calc(var(--u) * 865);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  /* same 8u drop as .craft__cta / .hero__btn-line-track — her Figma spec
+     literally says pb-[2px], but that reads too tight against the text
+     compared to every other CTA underline on the site; matching the
+     established convention instead, per her explicit correction. */
+  padding-bottom: calc(var(--u) * 8);
+  border-bottom: 1px solid var(--beige-100);
+}
+
+.free-lesson__cta-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1.1;
+  color: var(--beige-100);
+  white-space: nowrap;
+}
+
+/* two-line icon swap — same recipe as .craft__cta-plus verbatim (track +
+   two stacked chars, one hidden below), just this block's own 40u size. */
+.free-lesson__cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+  color: var(--beige-100);
+}
+
+.free-lesson__cta-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.free-lesson__cta-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.free-lesson__cta-plus-char--out {
+  transform: translateY(0%);
+}
+
+.free-lesson__cta-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .free-lesson__cta-plus-char--out {
+  transform: translateY(-100%);
+}
+
+.js-line-hover:hover .free-lesson__cta-plus-char--in {
+  transform: translateY(0%);
+}
