@@ -1652,7 +1652,13 @@ body.is-preloading .hero__btn {
   width: 100%;
   height: calc(var(--u) * 1762);
   overflow: hidden;
-  margin: 0;
+  /* .gallery's own bottom edge lands 0.4px above this box's top in exact
+     math — close enough that under fractional dpr the two edges can round
+     to different device pixels and let a hairline of the (transparent)
+     page background show through between them. A 2px real overlap, pulled
+     up over .gallery's trailing pixels, can't produce a gap at any
+     rounding: this section's own background paints over them regardless. */
+  margin: -2px 0 0;
   background-color: var(--olive-100);
 }
 
