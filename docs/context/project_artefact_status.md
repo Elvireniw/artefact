@@ -5,12 +5,12 @@ metadata:
   node_type: memory
   type: project
   originSessionId: a18d892f-efdb-4bc1-a09f-fefca0a5b6e4
-  modified: 2026-07-31T14:01:02.245Z
+  modified: 2026-07-31T14:43:34.939Z
 ---
 
 Snapshot as of 2026-07-29, end of a long multi-day session. Read this before starting new work so established patterns get reused and known landmines get avoided.
 
-> **Next session starts with [[project-artefact-pending-fixes]]** — an OPEN visual bug (two hairlines in the gallery, two failed attempts, her own diagnosis recorded) plus the four fixes that did land on 2026-07-31.
+> Blocks 5 and 6 (gallery + philosophy) are now **fully done** — layout, motion, and both gallery hairlines fixed and confirmed by her on 2026-07-31. Full history and the reusable lessons from that bug are in [[project-artefact-pending-fixes]]. **She now works one block per new chat** — the next new chat's job is block 7 ("7_кроки" per the Figma frame names), which has no layout at all yet.
 
 > **Gallery carousel is now PINNED** (`start:'bottom bottom'`, `end:'+=...'`, `scrub:1`) with a hand-rolled Lenis settle, not the unpinned `bottom center` scrub described further down. **Never use ScrollTrigger's `snap` on this site** — it animates the native scroll position and fights Lenis; the stutter shows up on every scrubbed tween on the page. Details in [[project-artefact-pending-fixes]].
 
@@ -37,6 +37,29 @@ Snapshot as of 2026-07-29, end of a long multi-day session. Read this before sta
 - **Olive grain added** (`initOliveGrain`) — canvas tile, gaussian, mid-grey, `mix-blend-mode: overlay` on `.philosophy::before`. Amplitude was measured off Figma's render (sd ~3.4/channel on the bare olive), not guessed; ours lands at 3.63. Background only, not over the photos. See [[ref-figma-glass-refraction]] for the same measure-the-mockup approach.
 - **Next up: the lightbox.** Each gallery work opens its main shot plus 2-3 other angles of the same piece. The `<button>`s exist with no click handler yet. She'll supply the extra angle photos; stub or repeat the main shot until then.
 - **Watch for this class of bug:** entrance tweens that end at `opacity: 1` silently destroy any designed sub-1 opacity in the CSS (`.gallery__lead` is 0.8, `.gallery__filter-item.is-active` is 0.6). Animate to the CSS value and `clearProps` afterwards. Also give paired hover tweens `overwrite: 'auto'` — without it a fast in/out leaves the longer (enter) tween finishing last and stranding the element revealed.
+
+## CRITICAL gotcha — full-bleed sections can show a hairline at their shared edge
+Two adjacent full-height sections (e.g. `.gallery`/`.philosophy`) can show a
+faint line exactly on their shared boundary even when their computed rects
+overlap in exact math, IF `body`/`html` have a transparent background. At
+fractional `devicePixelRatio` (she runs **1.5**) each edge rounds to a device
+pixel independently, and the two roundings can land a physical pixel apart,
+letting the page's default white flash through the transparent body for that
+one row of pixels. Fix by forcing a real overlap larger than any rounding
+error — e.g. `margin: -2px 0 0` on the lower section — not by trying to make
+the edges land exactly flush (that's fighting sub-pixel arithmetic you don't
+control) and not by assuming it's a colour/texture mismatch (a hairline that's
+pale/white rather than a duller shade of the section colour is this bug, not
+a grain/texture one). Full incident write-up in
+[[project-artefact-pending-fixes]] — worth reading in full before any new
+block's boundary shows a similar line, since blocks 7-14 are all going to be
+edge-to-edge the same way.
+
+**Verifying any hairline**: resize the preview to **800x450** before
+screenshotting — larger viewports get downscaled and 1px lines disappear
+before you ever see them. `getBoundingClientRect` alone can mislead (identical
+or near-identical numbers can still hide a real gap depending on how each
+independently rounds) — also check `body`/`html` background-color.
 
 ## CRITICAL gotcha — read before touching Hero's scroll/parallax behavior again
 **Never apply a GSAP transform directly to `.hero` itself** (or any ancestor of `.hero__bg`) — not even a scrub-driven one that's identity at rest. Any transform on `.hero` makes it establish a new CSS stacking context for its descendants, which silently breaks the preloader→curtain mechanic (`.hero__bg` gets a temporary `z-index: 10000` boost to outrank the preloader's `z-index: 9999`, which lives as a body-level sibling outside `.hero` — that comparison stops working across a new stacking-context boundary). This has now bitten this project twice. **Correct pattern, confirmed working:** for the Hero's scroll-out fade/fly-away effect, target `.hero`'s individual children directly (e.g. `.hero > *:not(.hero__bg):not(.hero__vase-scene)`), never `.hero` itself — and still only initialize any such ScrollTrigger from inside `runHeroEntrance()`'s final `.call()`, after the preloader/curtain sequence has completed, not eagerly at script load.
@@ -70,12 +93,22 @@ The automated browser tab used for live verification in this environment is freq
 ## Close icon (dropdown menu) — RESOLVED, see [[project-artefact-close-icon-bug]] for full history
 Real SVG `<path>` bars, `transform-box: view-box; transform-origin: 18px 18px`, hover-triggered (JS `mouseenter`/`mouseleave`), manual `transform` string written in a GSAP-proxy `onUpdate` (not GSAP's `rotate`/`x` shorthand). Positioned to match `.hero__menu-btn` exactly. Working and confirmed by her.
 
-## Pending work for next session
+## Pending work
 1. ~~Gallery carousel~~ — DONE 2026-07-31, variant A (scroll-scrubbed), see above.
 2. **Real card filtering** by Ліплення / Гончарне коло / Декор — only the visual active state exists. Still the biggest unbuilt piece in block 5.
 3. ~~Motion pass for blocks 5 and 6~~ — DONE 2026-07-31. Still no section scroll-lag on these two, by her design.
 4. ~~Glass cursor upgrade~~ — DONE 2026-07-31, see the additions above and [[ref-figma-glass-refraction]].
-5. `.philosophy__lead` deliberately overhangs its column (356u text in a 295u wrapper, per Figma) — confirm that's intended.
-6. Mobile menu content — built per Figma spec, still not verified live on an actual mobile viewport/device.
-3. [[ref-kasiasiwosz-text-reveals]]'s scroll-scrubbed per-word emphasis (`animate="word"`) — still not used anywhere; the craft image scroll-parallax this session is the first *scrubbed* (as opposed to trigger-once) scroll effect in the project, could reuse similar ScrollTrigger scrub setup for this if she wants it later.
-4. Extend the `--u`/breakpoint system beyond the menu overlay to the rest of the site as more sections get built.
+5. ~~Two gallery hairlines~~ — DONE 2026-07-31, confirmed by her. See [[project-artefact-pending-fixes]] and the CRITICAL gotcha above.
+6. `.philosophy__lead` deliberately overhangs its column (356u text in a 295u wrapper, per Figma) — confirm that's intended.
+7. Mobile menu content — built per Figma spec, still not verified live on an actual mobile viewport/device.
+8. [[ref-kasiasiwosz-text-reveals]]'s scroll-scrubbed per-word emphasis (`animate="word"`) — still not used anywhere; the craft image scroll-parallax this session is the first *scrubbed* (as opposed to trigger-once) scroll effect in the project, could reuse similar ScrollTrigger scrub setup for this if she wants it later.
+9. Extend the `--u`/breakpoint system beyond the menu overlay to the rest of the site as more sections get built.
+10. **Lightbox** — each gallery work should open its main shot + 2-3 other angles. The `<button>`s exist with no click handler. She'll supply the extra angle photos.
+
+## Blocks not yet built at all
+Per the Figma frame names (mockup exports for these were intentionally
+removed from the repo — she gives node links on request when a block starts):
+**7 кроки** (steps — next up), **8 free lesson**, **9 історії учнів** (student
+stories), **10 тарифи** (pricing), **11 СТА** (CTA), **12 FAQ**, **13 соц
+мережі** (social), **14 футер** (footer). No layout exists for any of these
+yet — each starts from zero.
