@@ -1420,6 +1420,7 @@ body.is-preloading .hero__btn {
    captions (z-index 1) read on top of it rather than being covered --- */
 
 .gallery__bar {
+  isolation: isolate;
   position: absolute;
   z-index: 0;
   left: 0;
@@ -1427,6 +1428,22 @@ body.is-preloading .hero__btn {
   width: 100%;
   height: calc(var(--u) * 46);
   background-color: var(--olive-100);
+}
+
+/* Same film grain .philosophy carries — see the note above .philosophy::before.
+   This strip and block 6 are both --olive-100 and meet at the section
+   boundary, so a grained olive against a flat one put a visible seam there.
+   `overlay` against the mid-grey tile also lifts the base by ~0.4 levels, so
+   matching the texture matters for the mean colour as well as the noise.
+   `isolation: isolate` above keeps the blend inside this strip. */
+.gallery__bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--grain, none);
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
 }
 
 /* --- horizontal carousel track. Starts at -409u and runs 2738u wide, so
@@ -1571,10 +1588,17 @@ body.is-preloading .hero__btn {
   content: '';
   position: absolute;
   z-index: 0;
-  top: 0;
+  /* Overshoot the top by a whole device pixel instead of trying to land on
+     659u exactly. The panel and the photos beside it share that line, so at
+     any fractional --u the card that parks behind the panel rounded up one
+     pixel earlier than the panel did and a hairline of its photo showed
+     above the panel's top edge, running the panel's full width. The pixel it
+     gains is beige on beige — .gallery's own background — so nothing above
+     changes; the height compensates so the bottom edge stays on 1107u. */
+  top: -1px;
   left: -10px;
   right: 0;
-  height: calc(var(--u) * 448);
+  height: calc(var(--u) * 448 + 1px);
   background-color: var(--beige-100);
 }
 

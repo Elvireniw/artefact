@@ -1286,9 +1286,6 @@ const GRAIN_SD = 3;        // overlay roughly multiplies this by 2*base/255 (~1.
 const GRAIN_TILE = 160;
 
 function initOliveGrain() {
-  const section = document.querySelector('.philosophy');
-  if (!section) return;
-
   const canvas = document.createElement('canvas');
   canvas.width = GRAIN_TILE;
   canvas.height = GRAIN_TILE;
@@ -1311,7 +1308,14 @@ function initOliveGrain() {
   }
 
   ctx.putImageData(image, 0, 0);
-  section.style.setProperty('--grain', `url(${canvas.toDataURL('image/png')})`);
+  // set on the root, not on .philosophy: the same tile is now also used by
+  // .gallery__bar (block 5's olive caption strip). Both are --olive-100, and
+  // a grained olive meeting a flat one reads as a seam along the block 5/6
+  // boundary, which is exactly the hairline she was seeing.
+  document.documentElement.style.setProperty(
+    '--grain',
+    `url(${canvas.toDataURL('image/png')})`
+  );
 }
 
 // ==========================================================================
