@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "artefact",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["_serve.cjs"],
+      "port": 8000
+    }
+  ]
+}

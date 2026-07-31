@@ -1,0 +1,81 @@
+---
+name: project-artefact-status
+description: "Current build status of the Artefact landing page — what's done, established motion/code patterns to reuse, critical gotchas, and what's still pending. Read this FIRST in any new session on this project."
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: a18d892f-efdb-4bc1-a09f-fefca0a5b6e4
+  modified: 2026-07-31T14:01:02.245Z
+---
+
+Snapshot as of 2026-07-29, end of a long multi-day session. Read this before starting new work so established patterns get reused and known landmines get avoided.
+
+> **Next session starts with [[project-artefact-pending-fixes]]** — an OPEN visual bug (two hairlines in the gallery, two failed attempts, her own diagnosis recorded) plus the four fixes that did land on 2026-07-31.
+
+> **Gallery carousel is now PINNED** (`start:'bottom bottom'`, `end:'+=...'`, `scrub:1`) with a hand-rolled Lenis settle, not the unpinned `bottom center` scrub described further down. **Never use ScrollTrigger's `snap` on this site** — it animates the native scroll position and fights Lenis; the stutter shows up on every scrubbed tween on the page. Details in [[project-artefact-pending-fixes]].
+
+## What's built
+- **Hero section**: fully done — entrance choreography (preloader → curtain → header → eyebrow → H1 → vase/table → description → CTA → scroll arrow), pixel-matched to Figma. Also now has a scroll-OUT effect (see "Hero scroll-fade" pattern below).
+- **Dropdown menu overlay**: fully done and working — curtain-reveal (top-down), staggered content, desktop/tablet + mobile variants, close-icon hover-morph (working, see [[project-artefact-close-icon-bug]]), social-link hover now uses the project's signature easing curve.
+- **Craft section (block 2, Figma node 978:1223, "2_мистецтво")**: fully built, pixel-perfect + full effects pass done and iteratively tuned (see patterns below). This was the main focus of the second half of this session.
+
+### Added 2026-07-30 (second long session)
+- **Block 3 "3_мова глини" (`.clay`, node 978:1237)** — done, layout + motion. Background `<video>` with its own `yPercent ±50` scrub parallax and a separate `start:'top bottom'` fade-in (it must not wait for `top 40%`, that leaves 60% of a viewport of bare beige). Glass play/pause button + the custom cursor morphing into a "стоп"/"грати" glass bubble inside the centre zone (`.js-cursor-media` + `data-cursor-label`).
+- **Block 4 "4_глина це" (`.material`)** — motion approved and frozen, see [[project-artefact-block4-motion]]. Full viewport height (her explicit exception), background `#DDD8C8`.
+- **Block 5 "5_галерея робіт" (`.gallery`)** — pixel-perfect layout only. The carousel is NOT built: `.gallery__arrow` is wired to nothing, and `initGalleryFilter()` only toggles the visual active state — no real card filtering. Awaiting her spec (paging vs drag vs autoplay).
+- **Block 6 "6_філософія" (`.philosophy`)** — pixel-perfect layout only, no motion pass yet.
+- **Site-wide scroll-lag system** — content lags behind background at half speed, copied verbatim from rejouice.com's source, see [[ref-rejouice-half-speed-parallax]]. Applied to `.hero`, `.craft`, `.clay`, `.material` via `applySectionLag()`. **`.gallery` and `.philosophy` are deliberately excluded** — she reads those two as one continuous surface.
+- **`--u` calibration fix** — `--u` is now set from JS (`calibrateFluidUnit()` + `ResizeObserver`) using `documentElement.clientWidth`, because `100vw` includes the scrollbar and every section was systematically ~35px off. Top spacing unified at 150u across blocks 2/5/6.
+- **`_serve.cjs`** — local dev server; mp4 mime + HTTP Range (206) support added so video seeking works.
+
+### Added 2026-07-31 (glass cursor session)
+- **Glass cursor DONE** — `.cursor__media` now reproduces Figma's Glass (node 978:1272) via a real SVG refraction filter in `backdrop-filter`, not a blur. Rolled out to all 6 gallery works (`.gallery__photo` is now a `<button>` with `.js-cursor-media` + `data-cursor-label="далі"`), plus the existing block-3 video toggle. See [[ref-figma-glass-refraction]] for the maths and the calibration constants.
+- **Gallery is now 6 cards** — the 6th is a placeholder reusing `gallery-2.jpg`; she is supplying the real export. Swap `src`, `alt` and both aria-labels.
+- **Block 6 images got the craft treatment, NOT the cursor** — her call: philosophy images aren't clickable, so they get hover-scale 1.05 + scroll-drift instead of a bubble promising a destination. `initCraftImageHover/Parallax` were generalised into `initMediaImageHover/Parallax` + `mediaImageGroups()` with a per-group `drift`; craft stays -15, philosophy is -7 against a 125%/-12.5% oversize.
+- **Blocks 5 and 6 motion DONE** — every beat reuses an existing recipe by her explicit mapping: eyebrows = `.hero__eyebrow` word stagger; headings = `.craft__heading-line`; body copy + filter items + hover captions = `.craft__body`; `.gallery__note` = `.craft__side-text` word stagger; block 6 images = the craft image beat (y120 / 1.4s / power4.out). Captions ("створено на N тижні") are hover-only now.
+- **Gallery carousel DONE — variant A, scroll-scrubbed** (`initGalleryCarousel`): track drifts +409u -> -409u over the section, mockup framing at the midpoint. `.gallery__note` was lifted OUT of `.gallery__track` and absolutely placed with a beige `::before` panel, because she wants it to stay put on screen while cards pass behind it (she confirmed the panel is in the mockup). Its `end` is `'bottom center'`, not the site's usual `'bottom top'` — the gallery is second-to-last and with no footer yet the page runs out of scroll before `bottom top` is reachable. **Revisit that once a footer exists.**
+- **Olive grain added** (`initOliveGrain`) — canvas tile, gaussian, mid-grey, `mix-blend-mode: overlay` on `.philosophy::before`. Amplitude was measured off Figma's render (sd ~3.4/channel on the bare olive), not guessed; ours lands at 3.63. Background only, not over the photos. See [[ref-figma-glass-refraction]] for the same measure-the-mockup approach.
+- **Next up: the lightbox.** Each gallery work opens its main shot plus 2-3 other angles of the same piece. The `<button>`s exist with no click handler yet. She'll supply the extra angle photos; stub or repeat the main shot until then.
+- **Watch for this class of bug:** entrance tweens that end at `opacity: 1` silently destroy any designed sub-1 opacity in the CSS (`.gallery__lead` is 0.8, `.gallery__filter-item.is-active` is 0.6). Animate to the CSS value and `clearProps` afterwards. Also give paired hover tweens `overwrite: 'auto'` — without it a fast in/out leaves the longer (enter) tween finishing last and stranding the element revealed.
+
+## CRITICAL gotcha — read before touching Hero's scroll/parallax behavior again
+**Never apply a GSAP transform directly to `.hero` itself** (or any ancestor of `.hero__bg`) — not even a scrub-driven one that's identity at rest. Any transform on `.hero` makes it establish a new CSS stacking context for its descendants, which silently breaks the preloader→curtain mechanic (`.hero__bg` gets a temporary `z-index: 10000` boost to outrank the preloader's `z-index: 9999`, which lives as a body-level sibling outside `.hero` — that comparison stops working across a new stacking-context boundary). This has now bitten this project twice. **Correct pattern, confirmed working:** for the Hero's scroll-out fade/fly-away effect, target `.hero`'s individual children directly (e.g. `.hero > *:not(.hero__bg):not(.hero__vase-scene)`), never `.hero` itself — and still only initialize any such ScrollTrigger from inside `runHeroEntrance()`'s final `.call()`, after the preloader/curtain sequence has completed, not eagerly at script load.
+
+## Established patterns — reuse these, don't reinvent
+- **Curtain reveal**: `clip-path: inset(...)`. Hero bottom-up (merged with preloader per the gotcha above); menu overlay top-down, `power3.out`, 1.2s.
+- **Word-reveal stagger**: `splitWords()`/`splitChars()`. `opacity 0→1`, `sine.out`, ~0.08 stagger. Hero eyebrow/description, craft side-text.
+- **Fade+rise stagger** (menu-contact style): `opacity 0→1, y:12→0, sine.out`. Menu contact info, craft body paragraph.
+- **`.italic-symbol` hover pattern**: italic "(" + 10px literal-px gap (em-based shift on the label itself when the label also moves — see social-link hover below).
+- **Line-hover sweep** (`js-line-hover` + `heroLineSweep` keyframe): nav links, Hero CTA, menu trigger underline. 1px thickness project-wide. Signature easing curve for ALL hover transitions project-wide: `cubic-bezier(0.16, 1, 0.3, 1)` — use this instead of generic `ease` whenever adding a new hover transition (this was retrofitted onto the menu's social-link hover this session specifically because it was using plain `ease` and felt off next to everything else).
+- **CTA plus-icon swap** (`-plus-track` + `-plus-char--out/--in`): Hero CTA and craft's "free вебинар" both use this. Keep the swap separate from whatever underline treatment that button has (static border vs. line-sweep are independent per-button choices).
+- **Custom cursor, section-themed color**: `data-cursor-theme="dark"`/`"light"` on themed sections, `body.cursor-on-light` toggled in `initCustomCursor()`'s mousemove via `closest('[data-cursor-theme]')`. Add this attribute to any new section.
+- **Scroll-triggered section entrance**: `ScrollTrigger`, trigger-once, NOT scrubbed, mirrors Hero's own beat order (heading/message → visuals → supporting content → CTA last). **Keep total sequence duration short (~2-3s)** — this bit the craft section: an initial ~6s sequence meant the CTA (last in line) hadn't appeared by the time a normal-speed scroll reached the bottom of the section. Tuned down, then per her request slowed back down slightly for smoothness — there's a real tension between "smooth/slow" and "finishes before scroll-past" for any future scroll-triggered section; ask which she prioritizes if it's not obvious.
+- **Image hover + scroll-parallax** (craft images, final version): NO cursor-tracking — that was tried first and was wrong (see "research lesson" below). Final: plain hover scale (`gsap.to(imgs, {scale:1.05, duration:0.7})` on mouseenter/mouseleave, no mousemove at all) + a SEPARATE scroll-scrubbed `yPercent` drift on the same image (`ScrollTrigger scrub:true`, `start:'top bottom', end:'bottom top'`), with the inner image sized taller than its frame (e.g. `height:120%`) so the drift never exposes an empty edge within the `overflow:hidden` frame. Both effects compose fine on the same element since GSAP tracks scale/x/y as independent channels.
+- **Fluid units**: `--u` scales from 1920px reference. Only breakpoint (`max-width:768px`) still scoped to the menu overlay's mobile variant.
+
+## Research lesson — verify reference-site mechanics precisely, don't generalize
+When asked to copy an effect from a reference site, find the EXACT element/page being referenced, not a similar-looking one elsewhere on the same site. This session spent real effort building a "magnetic cursor-parallax" image hover based on a generic project-grid hover found on olgaprudka.com's homepage — turned out to be the wrong element entirely. The specific photo she'd referenced (linking to a "dasha" project page) actually used a plain CSS-style hover scale (1.05, no cursor tracking) plus a SCROLL-linked parallax (Locomotive Scroll's `data-scroll-speed`), found only by locating that exact `<a href=".../dasha/">` link and reading its real markup. Always locate the precise element first.
+
+## Testing-environment lesson (still relevant)
+The automated browser tab used for live verification in this environment is frequently backgrounded (`document.hidden === true`), which stalls `requestAnimationFrame` — GSAP `.to()` tweens silently never progress, while `gsap.set()` (instant, no ticker needed) still works fine. This produced multiple false "still broken" readings this session. When verifying a live fix: prefer instant/forced-state checks (`gsap.set` + `getBoundingClientRect`) over waiting on a real-time tween to play out, and don't trust a "frozen mid-tween" observation as a real bug without checking `document.hidden` first. Also: `getComputedStyle(el).transform` never reflects a custom `transform-origin`'s effect (it only shows the raw transform-function matrix evaluated around 0,0) — to verify a custom pivot point visually, compare `getBoundingClientRect()` before/after, not the transform matrix string.
+
+## Style/collaboration preferences (confirmed repeatedly)
+- No blur effects anywhere, ever.
+- "Pixel" requests are literal CSS px, not scaled through `--u`, unless she says otherwise.
+- Prefers lighter/thinner visual weight generally, but will explicitly ask to strengthen something back up if a reduction goes too far (happened with the craft image hover scale: 1.12 → asked to reduce → 1.04 caused a real edge-peeking bug → reverted to 1.12, then the whole mechanism was replaced anyway).
+- `HelveticaNeueRoman.otf` at weight 400 IS the correct "Regular" for this font family — don't swap it.
+- [[feedback-prompt-timing]] + [[feedback-debugging-pace]]: diagnose in chat first, don't write the full Claude Code prompt until she explicitly asks; after repeated failed fixes on the same symptom, check the testing setup itself before writing more code; watch for frustration signals as a hard stop.
+- For scroll/animation timing requests, she iterates fast in small increments ("faster", "slower", "smoother") — expect several quick rounds on any new timing-sensitive feature, don't over-engineer the first pass.
+
+## Close icon (dropdown menu) — RESOLVED, see [[project-artefact-close-icon-bug]] for full history
+Real SVG `<path>` bars, `transform-box: view-box; transform-origin: 18px 18px`, hover-triggered (JS `mouseenter`/`mouseleave`), manual `transform` string written in a GSAP-proxy `onUpdate` (not GSAP's `rotate`/`x` shorthand). Positioned to match `.hero__menu-btn` exactly. Working and confirmed by her.
+
+## Pending work for next session
+1. ~~Gallery carousel~~ — DONE 2026-07-31, variant A (scroll-scrubbed), see above.
+2. **Real card filtering** by Ліплення / Гончарне коло / Декор — only the visual active state exists. Still the biggest unbuilt piece in block 5.
+3. ~~Motion pass for blocks 5 and 6~~ — DONE 2026-07-31. Still no section scroll-lag on these two, by her design.
+4. ~~Glass cursor upgrade~~ — DONE 2026-07-31, see the additions above and [[ref-figma-glass-refraction]].
+5. `.philosophy__lead` deliberately overhangs its column (356u text in a 295u wrapper, per Figma) — confirm that's intended.
+6. Mobile menu content — built per Figma spec, still not verified live on an actual mobile viewport/device.
+3. [[ref-kasiasiwosz-text-reveals]]'s scroll-scrubbed per-word emphasis (`animate="word"`) — still not used anywhere; the craft image scroll-parallax this session is the first *scrubbed* (as opposed to trigger-once) scroll effect in the project, could reuse similar ScrollTrigger scrub setup for this if she wants it later.
+4. Extend the `--u`/breakpoint system beyond the menu overlay to the rest of the site as more sections get built.

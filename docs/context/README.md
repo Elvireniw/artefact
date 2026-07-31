@@ -1,0 +1,16 @@
+# Memory Index
+
+- [Olgaprudka.com underline-hover reference](ref_olgaprudka_underline_hover.md) — two CSS underline-hover techniques (draw-in vs. permanent-underline sweep); the sweep one is still needed for Artefact's footer/contact links.
+- [Kasiasiwosz.com text-reveal reference](ref_kasiasiwosz_text_reveals.md) — GSAP/ScrollTrigger per-line heading reveal + per-word scroll-scrubbed emphasis; user wants both reused across the whole Artefact landing page.
+- [Prompt-timing feedback](feedback_prompt_timing.md) — don't write the Claude Code prompt until explicitly asked/all pieces approved; discussion and prompt-writing are separate phases.
+- [Blocks 5/6 fixes — all 5 implemented](project_artefact_pending_fixes.md) — the two gallery hairlines are fixed on her own diagnosis (grain on `.gallery__bar`, panel raised 1px), awaiting her confirmation; also holds the dpr-1.5 / 800x450 verification rules for any future hairline.
+- [Artefact project status](project_artefact_status.md) — START HERE each session. What's built (Hero + menu + blocks 2–6 + site-wide scroll-lag), reusable patterns, a CRITICAL stacking-context gotcha, style prefs, pending work.
+- [Usage economy — remind her](feedback_usage_economy.md) — her limits are tight; one block per session, batch fixes, measure instead of screenshotting, cheaper model for layout work. She asked to be reminded.
+- [Close-icon bug (RESOLVED, working)](project_artefact_close_icon_bug.md) — dropdown menu X-icon hover-morph works now (real SVG + manual transform-string technique); read this before implementing any similar custom-pivot rotation elsewhere.
+- [Scroll transition options (A and B both built)](project_artefact_scroll_transition_options.md) — Hero→block2: Variant A (craft's own scroll-reveal) and Variant B (Hero fade+lag on scroll-out) are both implemented now.
+- [Debugging pace feedback](feedback_debugging_pace.md) — after 2 failed fixes on the same symptom, check the testing setup (file:// vs localhost, verification method) before writing more code; watch for frustration signals as a hard stop.
+- [Block 4 motion — APPROVED settings](project_artefact_block4_motion.md) — her signed-off three-beat choreography + kasiasiwosz word-reveal, exact values; scrubbed tweens are paced by scroll DISTANCE, not duration.
+- [Rejouice.com scroll reference](ref_rejouice_half_speed_parallax.md) — their ACTUAL source: two scrubbed timelines (top-block content lags down half a section height + video yPercent ±50); read the bundle, don't measure the DOM.
+- [Read the source, don't measure](feedback_read_the_source.md) — when copying a reference-site effect, fetch and read its JS bundle first; DOM measurement cost 5 failed rounds on rejouice.
+- [Figma Glass / refraction reference](ref_figma_glass_refraction.md) — how Figma's Glass actually works (from its shader source), the exact dispersion ratios, and the calibration factors used for Artefact's glass cursor; read before touching glass anywhere.
+- [Creative Tech Lead workflow](project_artefact_tech_lead_tooling.md) — Pixel Perfect → Motion → Behance stages per block, tool mapping (Figma MCP, Browser, video limits), Behance = end-of-project case-page help; active until project ends.

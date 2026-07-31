@@ -1,1 +1,5 @@
-.claude/
+# Claude Code local state — account- and machine-specific, must not travel.
+.claude/*
+
+# ...except the dev-server config, which is part of how the project runs.
+!.claude/launch.json
