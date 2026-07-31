@@ -1279,6 +1279,14 @@ body.is-preloading .hero__btn {
   margin: 0;
   background-color: var(--beige-100);
   color: #2B3D2D;
+  /* While this section is pinned (initGalleryCarousel) it is position:fixed,
+     so its bottom edge sits at a fractional device pixel and a hairline of
+     whatever is behind it showed through under the olive caption strip. This
+     paints 2px of that same olive just OUTSIDE the box — outside means it
+     survives this element's own overflow:hidden — filling the crack. Off the
+     pin it is covered by .philosophy, which is the same colour, so it costs
+     nothing the rest of the time. */
+  box-shadow: 0 2px 0 var(--olive-100);
 }
 
 /* --- heading group (Figma frame "H" at 51,237; its children are placed
@@ -1537,13 +1545,36 @@ body.is-preloading .hero__btn {
   height: calc(var(--u) * 494);
 }
 
-/* the beige panel from the mockup — a gap punched through the card row (and
-   through the olive caption strip below it) for the text to sit in */
+/* the beige panel from the mockup — a gap punched through the card row for
+   the text to sit in.
+
+   Height is the photo height (448u), not the full 494u card slot: the slot
+   runs past 1107u, where .gallery__bar starts, so a full-height panel cut a
+   notch through the olive caption strip. Cropped here it stops flush with
+   the bottom of the photos beside it and leaves the strip unbroken.
+
+   Left edge pulled 10px out (literal px) so the copy reads with a 10px
+   inset from it while the text itself stays on 965u, aligned with "ДЕКОР"
+   above. The RIGHT edge stays on the slot line rather than travelling with
+   it: the panel occupies exactly one card slot, so a card lands squarely
+   behind it as the row scrubs past, and a panel translated bodily left
+   would leave a 10px strip of that card's photo showing past its right
+   edge. The 10px it gains on the left falls in the gap between two cards,
+   which is this same beige — invisible either way.
+
+   z-index 0 with the paragraph lifted to 1, rather than the panel sitting at
+   -1 under unpositioned text: a negative z-index puts the panel on its own
+   layer behind its parent, and inside a pinned (position:fixed, composited)
+   section that layer's edge landed between device pixels and drew a hairline
+   along the top of the panel. Same paint order, no separate layer. */
 .gallery__note::before {
   content: '';
   position: absolute;
-  z-index: -1;
-  inset: 0;
+  z-index: 0;
+  top: 0;
+  left: -10px;
+  right: 0;
+  height: calc(var(--u) * 448);
   background-color: var(--beige-100);
 }
 
@@ -1554,6 +1585,8 @@ body.is-preloading .hero__btn {
    (canvas TextMetrics: half-leading + fontAscent - actualAscent) so the
    text's top edge reads flush with the photo's. */
 .gallery__note p {
+  position: relative;
+  z-index: 1;
   width: calc(var(--u) * 356);
   margin: calc(var(--u) * -11.4) 0 0;
   font-family: 'Helvetica Neue', sans-serif;
@@ -1682,22 +1715,21 @@ body.is-preloading .hero__btn {
   overflow: hidden;
 }
 
-/* 125%/-12.5% rather than a flush fit: these images get the craft section's
+/* 150%/-25% rather than a flush fit: these images get the craft section's
    hover-zoom + scroll-drift treatment (initMediaImageParallax), and the
-   drift needs spare image above and below the frame or the -7% yPercent
-   would expose the frame's bottom edge. The drift eats 8.75% of the frame
-   (7% of an image 1.25x its height) against 12.5% of overhang, leaving a
-   3.75% margin — 120%/-10% was tried first and left only half a pixel.
-   Still deliberately shallower than craft's 150%/-25% so the Figma crops
-   shift as little as possible. */
+   drift needs spare image above and below the frame or the -15% yPercent
+   would expose the frame's bottom edge. The drift eats 22.5% of the frame
+   (15% of an image 1.5x its height) against 25% of overhang. These are
+   craft's own numbers: this block ran shallower (125%/-12.5% at -7) until
+   she asked for block 2's effect exactly. */
 .philosophy__img img {
   position: absolute;
-  top: -12.5%;
+  top: -25%;
   right: 0;
   bottom: auto;
   left: 0;
   width: 100%;
-  height: 125%;
+  height: 150%;
   object-fit: cover;
   display: block;
 }

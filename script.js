@@ -430,9 +430,9 @@ function initParallax() {
 // Always targets a section's CHILDREN, never the section element itself.
 // For .hero that is critical rather than stylistic: a transform on .hero
 // gives it its own stacking context and re-breaks the preloader/curtain
-// z-index trick (see runHeroEntrance()). .hero__bg and .hero__vase-scene
-// are excluded so the backdrop keeps moving at full page speed — that
-// difference in rate IS the effect. .clay__bg is likewise left outside its
+// z-index trick (see runHeroEntrance()). .hero__bg is excluded so the
+// backdrop keeps moving at full page speed — that difference in rate IS
+// the effect. .clay__bg is likewise left outside its
 // section's wrapper: it has its own ±50% drift in initClayVideoParallax().
 //
 // For every section except .hero the target is a single `.section-inner`
@@ -499,7 +499,20 @@ function initHeroScrollLag() {
   // clampToSection:false — .hero has no .section-inner to measure against
   // (its bg/vase must stay outside any wrapper), and this is the one block
   // whose motion she has already signed off on, so it keeps the full 0.5.
-  applySectionLag('.hero', '.hero > *:not(.hero__bg):not(.hero__vase-scene)', { clampToSection: false });
+  //
+  // .hero__vase-scene is IN the lag now. What makes the next section's beige
+  // field appear to cover the Hero on scroll-out is not z-order — .hero is
+  // overflow:hidden, nothing can escape it — it is the lag: the children
+  // hang back while the section's own bottom edge rises past them, so they
+  // are eaten by that edge. The vase and table were the one group excluded,
+  // so they simply scrolled away at page speed and were never covered.
+  // Only .hero__bg stays out; it is the backdrop the lag is measured against.
+  //
+  // Safe despite the stacking-context rule above: that rule is about .hero
+  // itself and any ANCESTOR of .hero__bg. .hero__vase-scene is .hero__bg's
+  // sibling, so a transform on it cannot come between .hero__bg and the
+  // body-level preloader.
+  applySectionLag('.hero', '.hero > *:not(.hero__bg)', { clampToSection: false });
 }
 
 function initSectionScrollLag() {
@@ -956,11 +969,12 @@ function runMaterialEntrance() {
 
 // The philosophy section (block 6) gets this same treatment rather than the
 // glass cursor — its images are not clickable, so the hover reads as
-// "alive" without promising a destination. Its drift is shallower (-7 vs
-// -15) because its inner images are only oversized to 125%/-12.5% instead
-// of craft's 150%/-25%: the frame's bottom edge stays covered as long as
-// the drift in frame-% (yPercent * height/100) stays under the 12.5% of
-// overhang below, i.e. 7 * 1.25 = 8.75%. See the .philosophy__img img rule.
+// "alive" without promising a destination. It ran at a deliberately
+// shallower -7 at first; she asked for block 2's effect exactly, so it is
+// now the same -15, and .philosophy__img img was re-oversized to craft's
+// 150%/-25% to pay for it: the frame's bottom edge stays covered as long as
+// the drift in frame-% (yPercent * height/100) stays under the overhang
+// below, and 15 * 1.5 = 22.5% against 25% is craft's own margin.
 function mediaImageGroups() {
   const groups = [
     { frame: document.querySelector('.craft__art-1'), imgs: document.querySelectorAll('.craft__art-1-img'), drift: -15 },
@@ -968,7 +982,7 @@ function mediaImageGroups() {
   ];
 
   document.querySelectorAll('.philosophy__img').forEach((frame) => {
-    groups.push({ frame, imgs: frame.querySelectorAll('img'), drift: -7 });
+    groups.push({ frame, imgs: frame.querySelectorAll('img'), drift: -15 });
   });
 
   return groups;
@@ -1308,16 +1322,50 @@ function initOliveGrain() {
 // No control to click: the site is scroll-driven throughout, and the one
 // button the mockup had became the glass cursor.
 //
-// The track overhangs 409u past each edge of the 1920u viewport, so 409u in
-// each direction is exactly the travel that takes it from "first card flush
-// left" to "last card flush right" and back. Running from +409 to -409 puts
-// the mockup's own framing at the midpoint of the scroll.
-//
 // .gallery__note is NOT in here — it was lifted out of the track so it can
 // stay put while the cards pass behind its beige panel.
+//
+// SNAP GRID. The note panel occupies exactly one card slot: its left edge
+// sits on the same 965u the 4th card lands on in the mockup framing. So the
+// only track positions where the panel does not cut a card in half are the
+// ones a whole number of card pitches away from that framing — there every
+// card is either entirely behind the panel or entirely clear of it, and the
+// two cards flanking the panel land flush against its edges. Any other
+// position leaves a card straddling an edge. That makes the card pitch the
+// snap grid, with the mockup framing (x = 0) one of its stops.
+//
+// TRAVEL. One pitch either side of the mockup = 3 defined stops. The track's
+// own overhang is only 818u (2738u of cards in a 1920u viewport), 49u short
+// of the 916u this needs, so each end stop leaves a 49u strip of the page's
+// beige at the outer edge. That reads as the end of the row, which is what
+// it is — the alternative (staying inside 818u) has no clean stop but the
+// middle one.
+//
+// PACING. The section is pinned for the run instead of being scrubbed by its
+// own passage through the viewport. It decouples how long the paging takes
+// from how tall the section happens to be, and it is what lets the row hold
+// still on a stop instead of drifting off it.
+//
+// SETTLING IS DONE THROUGH LENIS, NOT ScrollTrigger's `snap` — do not swap it
+// back. This page's scroll belongs to Lenis, driven from the GSAP ticker
+// (initLenis). ScrollTrigger's `snap` settles by animating the NATIVE scroll
+// position, so it and Lenis write the same value every frame and fight over
+// it — the exact conflict the initLenis comment warns about for
+// window.scrollTo. It was tried, and the stutter it caused showed up on every
+// scrubbed tween on the page, not just this one. So the tween below keeps a
+// plain scrub, and the settle is a separate idle-detector that hands the move
+// to lenis.scrollTo(), leaving one library in charge of the scroll position.
 // ==========================================================================
 
-const GALLERY_TRAVEL = 409;
+const GALLERY_PITCH = 448 + 10;       // card + gap; the snap grid
+const GALLERY_TRAVEL = GALLERY_PITCH; // one pitch each way -> 3 stops
+const GALLERY_PAGES = 2;              // gaps between those stops
+const GALLERY_PAGE_SCROLL = 1100;     // scroll per page, in u
+// Lenis keeps emitting scroll while its own glide decays, so this only has to
+// outlast the frame gap, not the glide — the settle lands when the page has
+// actually come to rest.
+const GALLERY_SETTLE_IDLE = 120;      // ms of stillness before settling
+const GALLERY_SETTLE_DURATION = 0.5;  // s, the settle itself
 
 function initGalleryCarousel() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
@@ -1329,28 +1377,72 @@ function initGalleryCarousel() {
   // read through --u each time so a resize re-solves it; invalidateOnRefresh
   // is what makes ScrollTrigger re-run these on refresh rather than caching
   // the pixel values it computed at load
-  const travel = () => GALLERY_TRAVEL
-    * (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1);
+  const u = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
 
-  gsap.fromTo(track,
-    { x: () => travel() },
+  const tween = gsap.fromTo(track,
+    { x: () => GALLERY_TRAVEL * u() },
     {
-      x: () => -travel(),
+      x: () => -GALLERY_TRAVEL * u(),
       ease: 'none',
       scrollTrigger: {
         trigger: section,
-        start: 'top bottom',
-        // 'bottom center', not the 'bottom top' the other scrubs on this
-        // site use: the gallery is the second-to-last section and there is
-        // no footer yet, so the page runs out of scroll before its bottom
-        // can reach the viewport top and the last ~7% of the travel was
-        // simply unreachable. Ending at centre only needs half a viewport of
-        // content below the section, which block 6 comfortably provides.
-        end: 'bottom center',
-        scrub: true,
+        // pinned from the moment the section's bottom reaches the viewport
+        // bottom — that framing has the whole card row and the olive caption
+        // strip on screen, which 'top top' would cut off.
+        start: 'bottom bottom',
+        end: () => `+=${GALLERY_PAGES * GALLERY_PAGE_SCROLL * u()}`,
+        pin: true,
+        anticipatePin: 1,
+        scrub: 1,
         invalidateOnRefresh: true,
       },
     });
+
+  initGallerySettle(tween.scrollTrigger);
+}
+
+// The settle. Runs only while the pin is active, so it can never tug at the
+// scroll on the way into or out of the section — outside that range this does
+// nothing at all and the page scrolls exactly as it does everywhere else.
+function initGallerySettle(st) {
+  if (!st || !lenis) return;
+
+  const stops = [];
+  for (let i = 0; i <= GALLERY_PAGES; i += 1) stops.push(i / GALLERY_PAGES);
+
+  let idleTimer;
+
+  // No "am I settling" flag and no Lenis `lock`, deliberately. Both were
+  // tried: a flag has to be cleared by an onComplete that never fires if the
+  // settle gets interrupted, and `lock` then leaves Lenis locked, which stops
+  // it emitting scroll — at which point every scrubbed tween on the page
+  // freezes. This version needs neither, because it is self-terminating: the
+  // settle's own motion re-arms the idle timer, and when it fires again the
+  // page is already on a stop, so the tolerance check below returns. The user
+  // can interrupt with the wheel at any point, which is the behaviour we want
+  // anyway.
+  const settle = () => {
+    if (!st.isActive) return;
+
+    const progress = st.progress;
+    const nearest = stops.reduce((best, s) => (
+      Math.abs(s - progress) < Math.abs(best - progress) ? s : best
+    ), stops[0]);
+
+    const target = st.start + (st.end - st.start) * nearest;
+    if (Math.abs(target - window.scrollY) < 2) return;
+
+    lenis.scrollTo(target, {
+      duration: GALLERY_SETTLE_DURATION,
+      // the site's signature curve, as an easing function
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+    });
+  };
+
+  lenis.on('scroll', () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(settle, GALLERY_SETTLE_IDLE);
+  });
 }
 
 // ==========================================================================
