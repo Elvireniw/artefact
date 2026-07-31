@@ -447,6 +447,97 @@
 
   </section>
 
+  <!-- STEPS SECTION — "7_кроки" (Figma node 978:1310, file
+       6tA1k2sLpFm5U7cLn9p9rZ). Pixel Perfect + first motion pass together,
+       per her spec: heading images reuse .hero__title-img's entrance, the
+       photo reuses block 2's fade+rise/hover-scale/scroll-parallax (added
+       to mediaImageGroups() in script.js), the subheading and each card's
+       small caption reuse .clay__word's opacity stagger, and the "(N)"
+       numbers reuse .hero__eyebrow's word stagger. Card hover (number ->
+       stage name, closing paren sliding to the card's right edge) is
+       plain CSS transitions, same convention as .craft__cta-plus-char's
+       swap — see style.css. -->
+  <section class="steps" id="steps" data-cursor-theme="light">
+
+    <div class="section-inner">
+
+      <div class="steps__heading">
+        <div class="steps__heading-imgs">
+          <img class="steps__heading-img steps__heading-img--1" src="img/h-step-1.png" alt="Як народжується">
+          <img class="steps__heading-img steps__heading-img--2" src="img/h-step-2.png" alt="кераміка">
+        </div>
+        <h2 class="visually-hidden">Як народжується кераміка</h2>
+        <p class="steps__subheading">шлях                             від              задуму                                        до готової                         роботи</p>
+      </div>
+
+      <div class="steps__list">
+
+        <div class="steps__art">
+          <img class="steps__art-img" src="img/step-art-1.jpg" alt="Гончарні інструменти на робочому столі">
+        </div>
+
+        <div class="step step--1">
+          <p class="step__label">
+            <span class="step__label-left">
+              <span class="italic-symbol step__label-paren">(</span>
+              <span class="step__label-value">
+                <span class="step__label-value-rest">1</span>
+                <span class="step__label-value-hover" aria-hidden="true">проєктування</span>
+              </span>
+            </span>
+            <span class="step__label-spacer" aria-hidden="true"></span>
+            <span class="italic-symbol step__label-paren step__label-paren--close">)</span>
+          </p>
+          <div class="step__body">
+            <p class="step__caption">від     образа  в  уяві           до       ескіза</p>
+            <p class="step__text">перш ніж глина торкнеться ваших рук, ми допоможемо втілити задум. ви навчитеся переносити свої ідеї в прості програми, щоб побачити форму, відчути пропорції та створити ідеальний прототип майбутнього творіння</p>
+          </div>
+        </div>
+
+        <div class="steps__row">
+          <div class="step step--2">
+            <p class="step__label">
+              <span class="step__label-left">
+                <span class="italic-symbol step__label-paren">(</span>
+                <span class="step__label-value">
+                  <span class="step__label-value-rest">2</span>
+                  <span class="step__label-value-hover" aria-hidden="true">втілення</span>
+                </span>
+              </span>
+              <span class="step__label-spacer" aria-hidden="true"></span>
+              <span class="italic-symbol step__label-paren step__label-paren--close">)</span>
+            </p>
+            <div class="step__body">
+              <p class="step__caption">діалог          з        матерією</p>
+              <p class="step__text">саме час оживити ваш ескіз. під нашим проводом ви опануєте танець гончарного круга, навчитеся розуміти «дихання» глини та направляти її в форму, що стане продовженням ваших думок</p>
+            </div>
+          </div>
+
+          <div class="step step--3">
+            <p class="step__label">
+              <span class="step__label-left">
+                <span class="italic-symbol step__label-paren">(</span>
+                <span class="step__label-value">
+                  <span class="step__label-value-rest">3</span>
+                  <span class="step__label-value-hover" aria-hidden="true">завершення</span>
+                </span>
+              </span>
+              <span class="step__label-spacer" aria-hidden="true"></span>
+              <span class="italic-symbol step__label-paren step__label-paren--close">)</span>
+            </p>
+            <div class="step__body">
+              <p class="step__caption">додаємо         душу</p>
+              <p class="step__text">на цьому етапі ми допоможемо вашому твору знайти свій голос. ви освоїте мистецтво фінішного декору, роботи з фактурами та професійної подачі, щоб ваше творіння стало вашою головною історією</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
   <!-- Lives outside .hero on purpose: .hero__nav carries a leftover GSAP
        transform (identity matrix, harmless visually) from the entrance
        timeline, and any transformed ancestor becomes the containing block

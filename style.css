@@ -2267,6 +2267,294 @@ body.menu-is-open {
   transform: translateX(calc(0.5em + 10px));
 }
 
+/* ==========================================================================
+   STEPS SECTION — "7_кроки" (Figma node 978:1310, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Pixel Perfect + first motion pass together.
+   ========================================================================== */
+
+.steps {
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 1623);
+  overflow: hidden;
+  /* .philosophy's bottom edge lands at the exact same fractional y as this
+     section's top in exact math (confirmed: both compute to the identical
+     sub-pixel value) — the same precondition documented for the
+     gallery/philosophy seam. Under fractional devicePixelRatio the two
+     edges can still round to different device pixels and let the
+     (transparent) page background show through as a hairline. Same fix:
+     a real 2px overlap no rounding combination can defeat. */
+  margin: -2px 0 0;
+  background-color: var(--beige-100);
+  color: #2B3D2D;
+}
+
+.steps__heading {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  right: calc(var(--u) * 50);
+  top: calc(var(--u) * 150);
+  height: calc(var(--u) * 400);
+}
+
+.steps__heading-imgs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: calc(var(--u) * 2);
+  width: 100%;
+}
+
+.steps__heading-img {
+  display: block;
+}
+
+/* h-step-1.png carries both "ЯК" and "народжується" already laid out
+   full-width (left/right flush, per Figma's justify-between row) — sized
+   to the container edge-to-edge so there is no rounding guesswork. */
+.steps__heading-img--1 {
+  width: 100%;
+  height: auto;
+}
+
+/* h-step-2.png ("кераміка") is the shorter second line, right-aligned by
+   the parent's align-items:flex-end. Sized off the SAME px-per-u scale as
+   line 1 (source 3703px -> 1817u, so 1773px -> ~870u) so both lines read
+   at one consistent type size instead of each filling its own box. */
+.steps__heading-img--2 {
+  width: calc(var(--u) * 870);
+  height: auto;
+  /* pulled 20px closer to line 1 per her review passes (10px, then another 10px) */
+  margin-top: -20px;
+}
+
+.steps__subheading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 370);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1;
+  text-align: right;
+  color: var(--olive-100);
+  /* preserves the manually-typed multi-space gaps between words (Figma's
+     own way of spreading this line across the full width) */
+  white-space: pre;
+}
+
+.steps__subheading .word {
+  display: inline-block;
+  will-change: opacity;
+}
+
+.steps__list {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  right: calc(var(--u) * 50);
+  top: calc(var(--u) * 650);
+  height: calc(var(--u) * 823);
+}
+
+/* --- photo: same oversized-image + hover-scale + scroll-drift treatment
+   as .craft__art-1 (mediaImageGroups() in script.js), her explicit spec
+   ("такие же еффекты как в 2 блоке") --- */
+
+.steps__art {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * -276);
+  width: calc(var(--u) * 377);
+  height: calc(var(--u) * 518);
+  overflow: hidden;
+}
+
+.steps__art-img {
+  position: absolute;
+  left: 0;
+  top: -25%;
+  width: 100%;
+  height: 150%;
+  object-fit: cover;
+}
+
+.step {
+  position: absolute;
+  top: 0;
+  width: calc(var(--u) * 450);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 60);
+}
+
+/* :hover re-evaluates purely from where content sits under a stationary
+   cursor — scrolling card 1 up past a cursor that never moved was enough to
+   trigger its hover. initStepHoverGuard() in script.js toggles this class on
+   <body> for the duration of any scroll (native scroll event, works whether
+   Lenis or the browser itself is driving it), which blocks hover from
+   engaging until scrolling has actually stopped. */
+.is-scrolling .step {
+  pointer-events: none;
+}
+
+.step--1 {
+  right: 0;
+}
+
+.steps__row {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 490);
+  width: calc(var(--u) * 1365);
+  display: flex;
+  justify-content: space-between;
+}
+
+.steps__row .step {
+  position: relative;
+}
+
+/* --- "(N)" / hover swap: same family as .craft__cta-plus-char's swap — a
+   plain CSS-transition hover, not GSAP, per the project's convention that
+   simple hover interactions live in CSS while GSAP is reserved for
+   scroll/entrance work. The spacer's flex-grow is what pushes the closing
+   paren out to the card's right edge: flexbox recomputes the remaining
+   space itself, so this works regardless of how wide the label text is,
+   with no manual pixel measurement needed.
+
+   The number/word swap is a pure opacity crossfade between two stacked,
+   independently-sized spans (.step__label-value-rest/-hover) rather than a
+   JS textContent swap animated by a font-size transition. That combination
+   used to jitter: a static webfont (Helvetica Neue's separate weight
+   files, not a variable font) can't actually interpolate font-weight, so
+   the paren's weight change snapped instead of easing, and the JS content
+   swap landed at the START of the font-size transition, so the box jumped
+   to the full word's width at the small size before growing — two visible
+   jumps stacked on one hover. Removing the paren weight change and the
+   font-size animation (replaced by two statically-sized crossfading
+   spans) removes both jump sources; only continuous, GPU-cheap opacity
+   and flex-grow are now animated, on one shared slower/softer ease. */
+
+.step__label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  color: #2B3D2D;
+}
+
+.step__label-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.step__label-spacer {
+  flex-grow: 0;
+  flex-shrink: 0;
+  /* the project's signature fast-start/slow-settle hover curve read wrong
+     on this specific crossfade — her call was to go back to a symmetric
+     ease-in-out (smooth start AND smooth end) instead, which is what this
+     component used originally */
+  transition: flex-grow 0.75s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.step:hover .step__label-spacer {
+  flex-grow: 1;
+}
+
+.step__label-paren {
+  display: block;
+  font-weight: 100;
+  line-height: 1;
+  font-size: calc(var(--u) * 64);
+  letter-spacing: calc(var(--u) * -1.28);
+}
+
+.step__label-value {
+  position: relative;
+  display: block;
+}
+
+/* The crossfade duration is direction-aware, not per-element: whichever span
+   is DISAPPEARING always takes the fast 0.25s, whichever is APPEARING always
+   takes the slow 0.85s. Giving each element one fixed duration regardless of
+   direction (the original approach) only worked for the hover-IN direction —
+   on hover-OUT it was backwards (the reappearing number used the fast
+   duration, the disappearing word the slow one), so the number visibly
+   popped back in before the word had finished fading out. Base rules below
+   cover hover-OUT (returning to rest); `.step:hover` overrides the duration
+   (not the whole `transition` shorthand, so the shared easing curve stays
+   one declaration) for hover-IN. Easing is a symmetric ease-in-out (smooth
+   start AND smooth end) — the project's usual fast-start/slow-settle hover
+   curve was tried here first and didn't read right on this crossfade. */
+.step__label-value-rest {
+  display: block;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1.1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  transition: opacity 0.85s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.step__label-value-hover {
+  position: absolute;
+  left: 0;
+  /* bottom-aligned against the container's own bottom (set by
+     .step__label-value-rest, the only normal-flow child) so the two stay on
+     the same baseline through the crossfade even if their sizing ever
+     diverges again */
+  bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.8);
+  white-space: nowrap;
+  transition: opacity 0.25s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.step:hover .step__label-value-rest {
+  opacity: 0;
+  transition-duration: 0.25s;
+}
+
+.step:hover .step__label-value-hover {
+  opacity: 1;
+  transition-duration: 0.85s;
+}
+
+.step__body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 18);
+}
+
+.step__caption {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 32);
+  line-height: 1.1;
+  color: var(--olive-100);
+  white-space: pre;
+}
+
+.step__text {
+  margin: 0;
+  width: 100%;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  color: #2B3D2D;
+}
+
 /* --- mobile-only breakpoint (first in the project, scoped to the menu
    overlay only) — Figma node 1189:2267, 375px reference, plain px --- */
 

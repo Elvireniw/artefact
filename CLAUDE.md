@@ -18,20 +18,26 @@ preview pane.
 
 ## Read this before working
 
-`docs/context/` carries the full accumulated project context — everything
-learned across previous sessions that is not derivable from the code. Start
-with:
+Which doc to read depends on what you're being asked to do — she now works
+one block per chat, and wants a **new block** started without reading the
+full accumulated history of the ones already built.
 
-1. **`docs/context/project_artefact_status.md`** — what's built, established
-   motion patterns to reuse, pending work. Read first, always.
-2. **`docs/context/project_artefact_pending_fixes.md`** — most recent session's
-   work and open items.
-3. `docs/context/README.md` — index of all the rest.
-
-The `ref_*.md` files record how reference-site effects actually work, read
-from their real source. The `feedback_*.md` files record how the owner wants
-to be worked with. Both were expensive to produce — consult them before
-re-deriving anything they cover.
+- **Starting a brand-new block (8-14, no layout yet)?** Read
+  **`docs/context/BLOCK_STARTER_KIT.md`** only. It's a self-contained
+  design-system reference — structure, colors, fonts, grid, every reusable
+  motion recipe with exact values — built specifically so a fresh chat
+  doesn't need the rest of `docs/context/` or a full read of `style.css`/
+  `script.js`. Build your block as a self-contained, appendable addition
+  (see that file's "Working model" section); she merges blocks herself
+  afterward.
+- **Continuing, fixing, or reviewing one of the 7 already-built blocks?**
+  Read `docs/context/project_artefact_status.md` first (what's built,
+  pending work, critical gotchas), then `docs/context/project_artefact_pending_fixes.md`
+  (most recent incident log), then `docs/context/README.md` (index of the
+  rest). The `ref_*.md` files record how reference-site effects actually
+  work, read from their real source; the `feedback_*.md` files record how
+  the owner wants to be worked with. Both were expensive to produce —
+  consult them before re-deriving anything they cover.
 
 ## Hard rules
 
@@ -62,7 +68,8 @@ still scoped to the menu overlay.
 
 Sections, in order, matching the Figma frame names: `.hero`, `.craft`
 (2_мистецтво), `.clay` (3_мова глини), `.material` (4_глина це), `.gallery`
-(5_галерея робіт), `.philosophy` (6_філософія). Blocks 7+ are not built.
+(5_галерея робіт), `.philosophy` (6_філософія), `.steps` (7_кроки). Blocks
+8+ are not built — see `docs/context/BLOCK_STARTER_KIT.md` before starting one.
 
 ## Verifying visual fixes
 

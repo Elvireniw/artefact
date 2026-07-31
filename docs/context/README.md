@@ -1,5 +1,6 @@
 # Memory Index
 
+- [Block starter kit — read this for any NEW block](BLOCK_STARTER_KIT.md) — self-contained structure/colors/fonts/grid/motion-recipe reference for starting block 8+ from a fresh chat, without reading the rest of this index.
 - [Olgaprudka.com underline-hover reference](ref_olgaprudka_underline_hover.md) — two CSS underline-hover techniques (draw-in vs. permanent-underline sweep); the sweep one is still needed for Artefact's footer/contact links.
 - [Kasiasiwosz.com text-reveal reference](ref_kasiasiwosz_text_reveals.md) — GSAP/ScrollTrigger per-line heading reveal + per-word scroll-scrubbed emphasis; user wants both reused across the whole Artefact landing page.
 - [Prompt-timing feedback](feedback_prompt_timing.md) — don't write the Claude Code prompt until explicitly asked/all pieces approved; discussion and prompt-writing are separate phases.

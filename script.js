@@ -52,6 +52,31 @@ if (typeof ResizeObserver !== 'undefined') {
 
 window.addEventListener('resize', calibrateFluidUnit);
 
+// The ResizeObserver above only re-triggers ScrollTrigger.refresh() when
+// clientWidth changes — calibrateFluidUnit() explicitly skips a height-only
+// change. But images without reserved dimensions (steps__art-img, the
+// philosophy/gallery photos, etc.) keep growing the document's total
+// height as they finish loading, well after the init-time refresh() at the
+// bottom of this file already ran and cached every ScrollTrigger's
+// position. Every trigger below the last image to load ends up measured
+// against a page that's shorter than its final height — the exact same
+// symptom as the gallery-pin timing bug, just from a different cause. One
+// unconditional refresh once every asset has actually loaded corrects it.
+window.addEventListener('load', () => {
+  if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
+});
+
+// Same reasoning, different cause: the 16 custom Helvetica Neue weights
+// swap in via @font-face after the fallback font has already laid text
+// out, and that swap isn't guaranteed to happen before 'load' fires. Any
+// metric difference between the fallback and the real face reflows text
+// height further, again after ScrollTrigger has already cached positions.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
+  });
+}
+
 // ==========================================================================
 // SMOOTH SCROLL — Lenis, wired into the GSAP ticker + ScrollTrigger
 // ==========================================================================
@@ -523,6 +548,7 @@ function initSectionScrollLag() {
   applySectionLag('.craft', '.craft > .section-inner');
   applySectionLag('.clay', '.clay > .section-inner');
   applySectionLag('.material', '.material > .section-inner');
+  applySectionLag('.steps', '.steps > .section-inner');
 }
 
 // ==========================================================================
@@ -979,6 +1005,7 @@ function mediaImageGroups() {
   const groups = [
     { frame: document.querySelector('.craft__art-1'), imgs: document.querySelectorAll('.craft__art-1-img'), drift: -15 },
     { frame: document.querySelector('.craft__art-2-frame'), imgs: document.querySelectorAll('.craft__art-2'), drift: -15 },
+    { frame: document.querySelector('.steps__art'), imgs: document.querySelectorAll('.steps__art-img'), drift: -15 },
   ];
 
   document.querySelectorAll('.philosophy__img').forEach((frame) => {
@@ -1061,6 +1088,59 @@ let gallerySection, galleryEyebrowWords, galleryTitle, galleryLead,
 let philTopGroup, philBottomGroup, philEyebrowTopWords, philEyebrowBottomWords,
   philTitleTop, philTitleBottom, philNote, philLead,
   philImgMain, philImgP1, philImgP2, philImgP3;
+
+// Set once initGalleryCarousel() creates the pinned carousel's own
+// ScrollTrigger. Philosophy's and steps' entrance triggers get clamped
+// against its `.end` (see clampStartAfterGalleryPin() below) so they can't
+// fire while the gallery is still pinned — a plain 'top 80%' on those
+// sections fires at whatever raw scroll position their own layout implies,
+// with no awareness that the gallery's pin holds the viewport still for a
+// long stretch of that same scroll distance. Without this, her scroll wheel
+// keeps advancing window.scrollY while she's still visually parked on the
+// pinned gallery, both entrance timelines fire and finish off-screen, and
+// blocks 6/7 show up already-revealed the moment the pin releases.
+let galleryPinTrigger;
+
+// Document-flow offsets (in --u) from the gallery's release point (≈
+// .philosophy's top) to each downstream trigger element's own top, per the
+// CSS: .philosophy__group--top top:150u; .philosophy__group--bottom
+// top:864u; .philosophy's own height is 1762u, then .steps__heading
+// top:150u and .steps__list top:650u within .steps. Keep these in sync with
+// style.css if those sections' layout changes.
+const PHIL_TOP_OFFSET_U = 150;
+const PHIL_BOTTOM_OFFSET_U = 864;
+const STEPS_HEADER_OFFSET_U = 1762 + 150;
+const STEPS_LIST_OFFSET_U = 1762 + 650;
+
+// Returns a ScrollTrigger `start` FUNCTION (not a fixed number/string) that
+// places philosophy's/steps' entrance triggers a fixed --u distance after
+// the gallery's pin releases.
+//
+// Two approaches were tried and both failed live, confirmed by instrumenting
+// the actual ScrollTriggers and driving a real simulated scroll (reading
+// `.start`/`.end` after the page settled looked correct both times — the
+// bug only showed up watching `isActive` fire in real time):
+//   1. A shared `galleryPinTrigger.end + 60` floor for all four — collapsed
+//      them onto the same point, so 6 and 7 revealed together.
+//   2. Per-trigger offsets applied by mutating `self.start` from `onRefresh`
+//      (or later from a global `ScrollTrigger.addEventListener('refresh', …)`
+//      pass) — `.start` read back correctly afterwards, but the triggers
+//      still fired at their ORIGINAL too-early positions (block 6 firing at
+//      ~30% and ~60% into the gallery's pinned scroll). Mutating `.start`
+//      after the fact doesn't reliably rewire GSAP's own internal firing
+//      check in this setup.
+// This is GSAP's own documented pattern for a trigger whose position depends
+// on another (pinned) trigger's resolved geometry: hand it a FUNCTION, and
+// ScrollTrigger calls it fresh on every refresh instead of reusing a
+// snapshot taken at creation time — which is also why this needs no
+// separate onRefresh/global-listener plumbing at all.
+function galleryFloorStart(offsetU) {
+  return () => {
+    if (!galleryPinTrigger) return 999999; // pin not created yet: never fire
+    const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+    return galleryPinTrigger.end + 60 + offsetU * u;
+  };
+}
 
 function cacheGalleryRefs() {
   gallerySection = document.querySelector('.gallery');
@@ -1186,7 +1266,9 @@ function runPhilosophyEntrance() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
 
   if (philTopGroup) {
-    gsap.timeline({ scrollTrigger: { trigger: philTopGroup, start: 'top 80%', once: true } })
+    gsap.timeline({
+      scrollTrigger: { trigger: philTopGroup, start: galleryFloorStart(PHIL_TOP_OFFSET_U), once: true },
+    })
       .to(philEyebrowTopWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' })
       .to(philTitleTop, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
       .to(philImgMain, philImageBeat(philImgMain), '-=0.35')
@@ -1195,13 +1277,124 @@ function runPhilosophyEntrance() {
   }
 
   if (philBottomGroup) {
-    gsap.timeline({ scrollTrigger: { trigger: philBottomGroup, start: 'top 80%', once: true } })
+    gsap.timeline({
+      scrollTrigger: { trigger: philBottomGroup, start: galleryFloorStart(PHIL_BOTTOM_OFFSET_U), once: true },
+    })
       .to(philEyebrowBottomWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' })
       .to(philTitleBottom, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
       .to(philLead, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.35')
       .to(philImgP2, philImageBeat(philImgP2), '-=0.25')
       .to(philImgP3, philImageBeat(philImgP3), '-=1.05');
   }
+}
+
+// ==========================================================================
+// STEPS SECTION — "7_кроки" scroll-triggered entrance
+// Two triggers, same reason the gallery needed two: at 1623u this section
+// is tall enough that a single 'top 80%' trigger on the section root would
+// fire the card row while it is still most of a viewport below the fold.
+// Every beat reuses an existing recipe verbatim, per her spec:
+//   heading images (h-step-1/2)   -> .hero__title-img (y30 fade+rise)
+//   subheading + each card's "(N)" -> .hero__eyebrow's word stagger
+//     (the label's own DIRECT children — the paren+number group, the
+//     spacer, the closing paren — are what splitWords() staggers here,
+//     same as it does with .material__label's "(" / word / ")")
+//   the photo                     -> .craft__art-1's fade+rise (its
+//     hover-scale + scroll-drift come from mediaImageGroups() already)
+//   card caption + body copy      -> .craft__body's fade+rise
+// ==========================================================================
+
+let stepsHeadingImgs, stepsSubheadingWords, stepsList, stepsArtImgs, stepsCards;
+
+function cacheStepsRefs() {
+  stepsHeadingImgs = document.querySelectorAll('.steps__heading-img');
+
+  const subheading = document.querySelector('.steps__subheading');
+  stepsSubheadingWords = subheading ? splitWords(subheading) : [];
+
+  stepsList = document.querySelector('.steps__list');
+  stepsArtImgs = document.querySelectorAll('.steps__art-img');
+
+  stepsCards = Array.from(document.querySelectorAll('.step')).map((step) => {
+    const label = step.querySelector('.step__label');
+    return {
+      step,
+      labelWords: label ? splitWords(label) : [],
+      caption: step.querySelector('.step__caption'),
+      text: step.querySelector('.step__text'),
+    };
+  });
+}
+
+function setInitialStepsStates() {
+  if (reducedMotion) return;
+
+  gsap.set(stepsHeadingImgs, { y: 30, opacity: 0 });
+  gsap.set(stepsSubheadingWords, { opacity: 0 });
+  gsap.set(stepsArtImgs, { opacity: 0, y: 120 });
+
+  stepsCards.forEach(({ labelWords, caption, text }) => {
+    gsap.set(labelWords, { opacity: 0 });
+    gsap.set([caption, text], { opacity: 0, y: 12 });
+  });
+}
+
+function runStepsEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+
+  const header = document.querySelector('.steps__heading');
+  if (header) {
+    gsap.timeline({
+      scrollTrigger: { trigger: header, start: galleryFloorStart(STEPS_HEADER_OFFSET_U), once: true },
+    })
+      .to(stepsHeadingImgs, { y: 0, opacity: 1, duration: 1.0, stagger: 0.12, ease: 'power2.out' })
+      .to(stepsSubheadingWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' }, '+=0.15');
+  }
+
+  if (!stepsList) return;
+
+  const listTl = gsap.timeline({
+    scrollTrigger: { trigger: stepsList, start: galleryFloorStart(STEPS_LIST_OFFSET_U), once: true },
+  });
+
+  listTl.to(stepsArtImgs, {
+    opacity: 1,
+    y: 0,
+    duration: 1.4,
+    ease: 'power4.out',
+    onComplete: () => gsap.set(stepsArtImgs, { clearProps: 'transform' }),
+  });
+
+  // Each card enters fully on its own, one after another — card2/card3 used
+  // to enter as a combined pair (their labels staggered together, then their
+  // bodies staggered together), which read as neither "each card arrives
+  // separately" nor "everything appears at once", just an ambiguous partial
+  // overlap. All three cards now share the exact same two-beat shape
+  // (label, then caption+text) her spec.
+  // durations/stagger/gaps all scaled by 0.7 (30% faster), per her request —
+  // keeps the same rhythm, just compressed
+  stepsCards.forEach((card) => {
+    if (!card) return;
+    listTl
+      .to(card.labelWords, { opacity: 1, duration: 0.7, stagger: 0.06, ease: 'sine.out' }, '+=0.1')
+      .to([card.caption, card.text], { opacity: 1, y: 0, duration: 0.42, stagger: 0.07, ease: 'sine.out' }, '+=0.1');
+  });
+}
+
+// Blocks .step's :hover from engaging while a scroll is in flight — see the
+// CSS comment on .is-scrolling .step for why this is needed at all. Plain
+// window 'scroll', not lenis.on('scroll'): Lenis here drives real native
+// scroll (script.js reads window.scrollY directly elsewhere), so the native
+// event fires regardless of whether Lenis or the browser is the one moving
+// it, and this needs no `lenis` reference or reduced-motion guard.
+function initStepHoverGuard() {
+  if (!document.querySelector('.step')) return;
+  let idleTimer;
+  window.addEventListener('scroll', () => {
+    document.body.classList.add('is-scrolling');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => document.body.classList.remove('is-scrolling'), 120);
+  }, { passive: true });
 }
 
 // ==========================================================================
@@ -1402,6 +1595,7 @@ function initGalleryCarousel() {
       },
     });
 
+  galleryPinTrigger = tween.scrollTrigger;
   initGallerySettle(tween.scrollTrigger);
 }
 
@@ -1751,6 +1945,7 @@ cacheClayRefs();
 cacheMaterialRefs();
 cacheGalleryRefs();
 cachePhilosophyRefs();
+cacheStepsRefs();
 if (hasGSAP) {
   setInitialHeroStates();
   setInitialMenuState();
@@ -1759,6 +1954,7 @@ if (hasGSAP) {
   setInitialMaterialStates();
   setInitialGalleryStates();
   setInitialPhilosophyStates();
+  setInitialStepsStates();
 }
 initPreloader();
 initGlassCursor();
@@ -1769,6 +1965,8 @@ initMediaImageHover();
 initMediaImageParallax();
 runGalleryEntrance();
 runPhilosophyEntrance();
+runStepsEntrance();
+initStepHoverGuard();
 initGalleryPhotoHover();
 initGalleryCarousel();
 initOliveGrain();
@@ -1779,6 +1977,13 @@ initClayVideoToggle();
 initScrollDownArrows();
 initGalleryFilter();
 initSectionScrollLag();
+
+// Settles the page's final layout, including the gallery's pin spacer —
+// philosophy's and steps' entrance triggers read galleryPinTrigger.end
+// directly via their own start functions (galleryFloorStart()) on this and
+// every later refresh, so no separate correction pass is needed here.
+if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
+
 // initParallax() and initHeroScrollLag() are both triggered by
 // runHeroEntrance() once the master entrance timeline finishes, not
 // eagerly here — see runHeroEntrance()'s own comment for why

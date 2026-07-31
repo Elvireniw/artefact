@@ -64,6 +64,9 @@ independently rounds) — also check `body`/`html` background-color.
 ## CRITICAL gotcha — read before touching Hero's scroll/parallax behavior again
 **Never apply a GSAP transform directly to `.hero` itself** (or any ancestor of `.hero__bg`) — not even a scrub-driven one that's identity at rest. Any transform on `.hero` makes it establish a new CSS stacking context for its descendants, which silently breaks the preloader→curtain mechanic (`.hero__bg` gets a temporary `z-index: 10000` boost to outrank the preloader's `z-index: 9999`, which lives as a body-level sibling outside `.hero` — that comparison stops working across a new stacking-context boundary). This has now bitten this project twice. **Correct pattern, confirmed working:** for the Hero's scroll-out fade/fly-away effect, target `.hero`'s individual children directly (e.g. `.hero > *:not(.hero__bg):not(.hero__vase-scene)`), never `.hero` itself — and still only initialize any such ScrollTrigger from inside `runHeroEntrance()`'s final `.call()`, after the preloader/curtain sequence has completed, not eagerly at script load.
 
+## CRITICAL gotcha — mutating a ScrollTrigger's `.start` after creation does not reliably work
+When one ScrollTrigger's position must depend on another (pinned) trigger's resolved geometry — e.g. blocks 6/7's entrance triggers needing to fire only after the gallery's pinned carousel (`galleryPinTrigger`, a long `invalidateOnRefresh` pin, 2200u of scroll) releases — **do not** create the trigger with a static `start: 'top 80%'` and then correct `self.start = floor` later, whether from that trigger's own `onRefresh` callback or from a global `ScrollTrigger.addEventListener('refresh', …)` pass. Both were tried here and both looked fixed in a static post-load check (`ScrollTrigger.getAll().map(st => st.start)` read clean, correctly-staggered numbers) but **still fired at the original, too-early position live** — confirmed by instrumenting `st.isActive` transitions during an actual simulated scroll, which showed block 6 revealing at ~25–60% into the gallery's pinned scroll both times, not after it. Mutating the public `.start` property after the trigger already exists does not reliably rewire GSAP's internal firing check in this setup, even though the property reads back correctly afterwards — a real trap, since the "obviously correct" verification (read `.start` once things settle) passes anyway. **Working fix:** give the trigger a `start` **function** at creation time (GSAP's documented pattern for exactly this dependency) — `start: () => galleryPinTrigger.end + 60 + offsetU * u()` — so ScrollTrigger recomputes it fresh on every refresh instead of reusing a value fixed at creation or patched after the fact. See `galleryFloorStart()` in `script.js`, used by all four of blocks 6/7's entrance triggers. **Any future block whose entrance timing depends on another pinned/scrubbed element upstream should use this same function-start pattern from the start, and should be verified by simulating real scroll and watching `isActive`, not just reading `.start`/`.end` after the page settles.**
+
 ## Established patterns — reuse these, don't reinvent
 - **Curtain reveal**: `clip-path: inset(...)`. Hero bottom-up (merged with preloader per the gotcha above); menu overlay top-down, `power3.out`, 1.2s.
 - **Word-reveal stagger**: `splitWords()`/`splitChars()`. `opacity 0→1`, `sine.out`, ~0.08 stagger. Hero eyebrow/description, craft side-text.
@@ -106,9 +109,27 @@ Real SVG `<path>` bars, `transform-box: view-box; transform-origin: 18px 18px`, 
 10. **Lightbox** — each gallery work should open its main shot + 2-3 other angles. The `<button>`s exist with no click handler. She'll supply the extra angle photos.
 
 ## Blocks not yet built at all
-Per the Figma frame names (mockup exports for these were intentionally
-removed from the repo — she gives node links on request when a block starts):
-**7 кроки** (steps — next up), **8 free lesson**, **9 історії учнів** (student
-stories), **10 тарифи** (pricing), **11 СТА** (CTA), **12 FAQ**, **13 соц
-мережі** (social), **14 футер** (footer). No layout exists for any of these
-yet — each starts from zero.
+**Block 7 "7_кроки" (steps) is now DONE and fully iterated** (2026-07-31,
+layout + motion + hover cards, plus a same-day follow-up polish pass —
+crossfade direction/easing fix, cards entering fully separately at 30%
+faster, and a new scroll-hover guard). Full final state, exact values, and
+what was tried and rejected along the way: [[project-artefact-block7-motion]].
+The gallery-pin entrance-timing bug (blocks 6/7 revealing during/right
+after the gallery's pinned scroll instead of after it) needed **two
+follow-up rounds** after the first "fix" — see the CRITICAL gotcha below,
+`galleryFloorStart()` in `script.js` is the version that actually works,
+confirmed by live scroll instrumentation, not just a static post-refresh
+read. Remaining,
+per the Figma frame names (mockup exports intentionally removed from the
+repo — she gives node links on request when a block starts): **8 free
+lesson**, **9 історії учнів** (student stories), **10 тарифи** (pricing),
+**11 СТА** (CTA), **12 FAQ**, **13 соц мережі** (social), **14 футер**
+(footer). No layout exists for any of these yet.
+
+**Starting one of these in a new chat?** She now wants each new block built
+in its own chat, without reading this whole file. Point that chat at
+`docs/context/BLOCK_STARTER_KIT.md` instead — it's a distilled,
+self-contained reference (structure, colors, fonts, grid, every reusable
+motion recipe with values) built specifically so a fresh session doesn't
+need this file, `project_artefact_pending_fixes.md`, or a full read of
+`style.css`/`script.js`. She merges finished blocks herself afterward.
