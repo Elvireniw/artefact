@@ -549,6 +549,13 @@ function initSectionScrollLag() {
   applySectionLag('.clay', '.clay > .section-inner');
   applySectionLag('.material', '.material > .section-inner');
   applySectionLag('.steps', '.steps > .section-inner');
+  // .stories is deliberately NOT lagged, same reason .gallery isn't: both
+  // are pinned for a scrubbed carousel, and a second scrub trying to drift
+  // the same section's content on top of that pin fights it — visible as
+  // the header/cards drifting vertically while the carousel is also
+  // panning them horizontally. Added once when this was still a static
+  // block, removed again the moment initStoriesCarousel() made it a
+  // pinned one.
 }
 
 // ==========================================================================
@@ -1091,80 +1098,57 @@ let philTopGroup, philBottomGroup, philEyebrowTopWords, philEyebrowBottomWords,
   philImgMain, philImgP1, philImgP2, philImgP3;
 
 // Set once initGalleryCarousel() creates the pinned carousel's own
-// ScrollTrigger. Philosophy's and steps' entrance triggers get clamped
-// against its `.end` (see clampStartAfterGalleryPin() below) so they can't
-// fire while the gallery is still pinned — a plain 'top 80%' on those
-// sections fires at whatever raw scroll position their own layout implies,
-// with no awareness that the gallery's pin holds the viewport still for a
-// long stretch of that same scroll distance. Without this, her scroll wheel
-// keeps advancing window.scrollY while she's still visually parked on the
-// pinned gallery, both entrance timelines fire and finish off-screen, and
-// blocks 6/7 show up already-revealed the moment the pin releases.
+// ScrollTrigger. Every entrance trigger from philosophy onward reads its
+// `.end` (see startAfterFloor() below) so none of them can fire while the
+// gallery is still pinned — a plain 'top 80%' on those sections fires at
+// whatever raw scroll position their own layout implies, with no awareness
+// that the gallery's pin holds the viewport still for a long stretch of
+// that same scroll distance. Without this, her scroll wheel keeps
+// advancing window.scrollY while she's still visually parked on the pinned
+// gallery, the entrance timelines fire and finish off-screen, and the
+// section shows up already-revealed the moment the pin releases.
 let galleryPinTrigger;
 
-// Document-flow offsets (in --u) from the gallery's release point (≈
-// .philosophy's top) to each downstream trigger element's own top, per the
-// CSS: .philosophy__group--top top:150u; .philosophy__group--bottom
-// top:864u; .philosophy's own height is 1762u, then .steps__heading
-// top:150u and .steps__list top:650u within .steps. Keep these in sync with
-// style.css if those sections' layout changes.
+// A PREVIOUS, hardcoded `--u`-offset version of this (chaining fixed
+// "philosophy's top is roughly pin.end + 1118u, steps is philosophy's
+// height further, free-lesson is steps' height further still" constants)
+// was tried and is what shipped right before this fix — it's what broke:
+// every one of those offset formulas skipped the `- viewportHeight * 0.8`
+// term a real "top 80%" trigger needs, so each trigger fired only once the
+// element's top reached the very TOP of the viewport (0%) instead of 80%
+// down it — visually indistinguishable from "doesn't animate until you've
+// scrolled almost past the whole section", which is exactly what she saw
+// on blocks 7 and 8. The hardcoded offsets were also a maintenance trap:
+// they silently go stale the moment any upstream block's height changes
+// (which is exactly how block 8 broke them for block 7 — its own offset
+// needed a manual "+1118u correction" nobody could derive without
+// re-measuring live).
 //
-// The STEPS_* values below carry a +1118u correction the original PHIL_*
-// pair still lacks: "galleryPinTrigger.end ≈ .philosophy's top" turned out
-// to undershoot the section's REAL top by ~1118u (measured live: pin.end
-// was 4438px while .philosophy's actual document top was 5236px, a gap
-// this file's own comment didn't account for — likely non-pinned trailing
-// space inside .gallery after its pinned carousel). That +1118u was
-// invisible on its own (steps' cards just fired somewhat earlier than
-// their exact natural position, easy to miss), but became a real bug once
-// .free-lesson (block 8) landed directly after .steps: its own trigger,
-// positioned from .free-lesson's real DOM top with no such correction
-// needed, fired at scrollY 5533 — BEFORE steps__heading (5758, pre-fix)
-// and well before steps__list (6087, pre-fix), so the free-lesson entrance
-// could finish while steps' cards hadn't even started. Fixing PHIL_* too
-// would move .philosophy's (block 6, not requested here) timing as a side
-// effect, so only STEPS_* is corrected — confirmed against a live
-// getBoundingClientRect() measurement of .steps__heading/.steps__list, not
-// recalculated by formula, so it's exact rather than an estimate.
-const PHIL_TOP_OFFSET_U = 150;
-const PHIL_BOTTOM_OFFSET_U = 864;
-const STEPS_HEADER_OFFSET_U = 1762 + 150 + 1118;
-const STEPS_LIST_OFFSET_U = 1762 + 650 + 1118;
-// .free-lesson's own top: philosophy's height (1762u) + .steps' full height
-// (1623u, its own `height: calc(var(--u) * 1623)` in style.css) + the same
-// +1118u correction as the STEPS_* pair above (this is a correction to the
-// shared "pin.end ≈ philosophy's top" base, not something that varies per
-// downstream element — confirmed live, see runFreeLessonEntrance()).
-const FREE_LESSON_OFFSET_U = 1762 + 1623 + 1118;
-
-// Returns a ScrollTrigger `start` FUNCTION (not a fixed number/string) that
-// places philosophy's/steps' entrance triggers a fixed --u distance after
-// the gallery's pin releases.
-//
-// Two approaches were tried and both failed live, confirmed by instrumenting
-// the actual ScrollTriggers and driving a real simulated scroll (reading
-// `.start`/`.end` after the page settled looked correct both times — the
-// bug only showed up watching `isActive` fire in real time):
-//   1. A shared `galleryPinTrigger.end + 60` floor for all four — collapsed
-//      them onto the same point, so 6 and 7 revealed together.
-//   2. Per-trigger offsets applied by mutating `self.start` from `onRefresh`
-//      (or later from a global `ScrollTrigger.addEventListener('refresh', …)`
-//      pass) — `.start` read back correctly afterwards, but the triggers
-//      still fired at their ORIGINAL too-early positions (block 6 firing at
-//      ~30% and ~60% into the gallery's pinned scroll). Mutating `.start`
-//      after the fact doesn't reliably rewire GSAP's own internal firing
-//      check in this setup.
-// This is GSAP's own documented pattern for a trigger whose position depends
-// on another (pinned) trigger's resolved geometry: hand it a FUNCTION, and
-// ScrollTrigger calls it fresh on every refresh instead of reusing a
-// snapshot taken at creation time — which is also why this needs no
-// separate onRefresh/global-listener plumbing at all.
-function galleryFloorStart(offsetU) {
+// This version goes back to a LIVE getBoundingClientRect() measurement for
+// the "top 80%" part (self-correcting — never needs updating when a
+// block's layout changes) and fixes the one real bug an earlier all-live
+// attempt in this file's history actually had: a single shared
+// `galleryPinTrigger.end` floor applied to every downstream trigger
+// collapses them onto the same point whenever more than one of them
+// naturally falls inside the gallery's pinned range (which philosophy's
+// two groups both do) — so blocks 6 and 7 revealed together instead of in
+// sequence. The fix is to chain the floor: each trigger's floor is the
+// PREVIOUS trigger's own resolved `.start` (plus a small gap), not a flat
+// shared constant — so elements whose natural position already clears the
+// previous one just use their own natural "top 80%" position untouched,
+// and only the ones that would otherwise fire too early (or out of order)
+// get pushed just past whatever comes before them.
+function startAfterFloor(el, floorFn) {
   return () => {
-    if (!galleryPinTrigger) return 999999; // pin not created yet: never fire
-    const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
-    return galleryPinTrigger.end + 60 + offsetU * u;
+    const rect = el.getBoundingClientRect();
+    const natural = rect.top + window.scrollY - window.innerHeight * 0.8;
+    const floor = floorFn ? floorFn() : 0;
+    return Math.max(natural, floor);
   };
+}
+
+function afterGalleryPin() {
+  return galleryPinTrigger ? galleryPinTrigger.end + 60 : 0;
 }
 
 function cacheGalleryRefs() {
@@ -1287,29 +1271,37 @@ function philImageBeat(target) {
   };
 }
 
+// Exposed so runStepsEntrance() can chain its own first trigger's floor to
+// wherever philosophy's bottom group actually ended up firing — see
+// startAfterFloor()'s header comment for why chaining beats a shared floor.
+let philTopTrigger, philBottomTrigger;
+
 function runPhilosophyEntrance() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
 
   if (philTopGroup) {
-    gsap.timeline({
-      scrollTrigger: { trigger: philTopGroup, start: galleryFloorStart(PHIL_TOP_OFFSET_U), once: true },
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: philTopGroup, start: startAfterFloor(philTopGroup, afterGalleryPin), once: true },
     })
       .to(philEyebrowTopWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' })
       .to(philTitleTop, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
       .to(philImgMain, philImageBeat(philImgMain), '-=0.35')
       .to(philNote, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.8')
       .to(philImgP1, philImageBeat(philImgP1), '-=0.3');
+    philTopTrigger = tl.scrollTrigger;
   }
 
   if (philBottomGroup) {
-    gsap.timeline({
-      scrollTrigger: { trigger: philBottomGroup, start: galleryFloorStart(PHIL_BOTTOM_OFFSET_U), once: true },
+    const floor = () => Math.max(afterGalleryPin(), philTopTrigger ? philTopTrigger.start + 80 : 0);
+    const tl = gsap.timeline({
+      scrollTrigger: { trigger: philBottomGroup, start: startAfterFloor(philBottomGroup, floor), once: true },
     })
       .to(philEyebrowBottomWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' })
       .to(philTitleBottom, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
       .to(philLead, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.35')
       .to(philImgP2, philImageBeat(philImgP2), '-=0.25')
       .to(philImgP3, philImageBeat(philImgP3), '-=1.05');
+    philBottomTrigger = tl.scrollTrigger;
   }
 }
 
@@ -1364,73 +1356,54 @@ function setInitialStepsStates() {
   });
 }
 
+// Exposed so runFreeLessonEntrance() can chain its own trigger's floor to
+// wherever steps' card list actually ended up firing.
+let stepsHeaderTrigger, stepsListTrigger;
+
 function runStepsEntrance() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
 
   const header = document.querySelector('.steps__heading');
   if (header) {
-    gsap.timeline({
-      scrollTrigger: { trigger: header, start: galleryFloorStart(STEPS_HEADER_OFFSET_U), once: true },
+    const floor = () => Math.max(afterGalleryPin(), philBottomTrigger ? philBottomTrigger.start + 80 : 0);
+    const headerTl = gsap.timeline({
+      scrollTrigger: { trigger: header, start: startAfterFloor(header, floor), once: true },
     })
       .to(stepsHeadingImgs, { y: 0, opacity: 1, duration: 1.0, stagger: 0.12, ease: 'power2.out' })
       .to(stepsSubheadingWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' }, '+=0.15');
+    stepsHeaderTrigger = headerTl.scrollTrigger;
   }
 
   if (!stepsList) return;
 
-  // Scroll-SCRUBBED, not time-based — this replaces two prior attempts that
-  // both still went stale: a 5.9s once-triggered timeline, then a "just
-  // make it faster" pass down to 3.2s, and it was STILL outrun by a normal
-  // scroll (her report: block 7 unchanged, still mid-reveal when block 8
-  // arrives). A fixed-duration timeline can ALWAYS be outscrolled at some
-  // speed, no matter how much it's trimmed — it runs on its own clock, not
-  // on scroll position. Same recipe as .material's own scrubbed word-reveal
-  // (materialEchoWords/materialTextWords above): `scrub: true` ties progress
-  // 1:1 to scroll distance, so it is mathematically impossible for this to
-  // still be "revealing" once the user has scrolled past its end — and
-  // impossible for it to look "done" before she's scrolled far enough into
-  // it, either. `end` gives it a full extra .steps__list-height (823u) of
-  // scroll runway beyond `start` — her "increase the height so I have room
-  // to scroll while it reveals" ask, implemented as scroll DISTANCE for the
-  // reveal rather than changing the section's actual Figma-specified height.
-  // start/end are viewport-relative (like a normal 'top 80%'/'top 20%'
-  // pair), NOT a flat --u offset from STEPS_LIST_OFFSET_U's base — that
-  // first version started the scrub only once .steps__list's top hit the
-  // very top of the viewport (STEPS_LIST_OFFSET_U's own "top 0%"-equivalent
-  // calibration, right for a once-trigger but not for a scrub range) and
-  // ended 823u later, which is roughly the list's OWN height — meaning the
-  // list had almost entirely scrolled OFF the top of the screen by the time
-  // the reveal finished. Confirmed live: card labels were still fading in
-  // while only a sliver of the list was left on screen. Anchoring both ends
-  // to STEPS_LIST_OFFSET_U's reliable base (see its own comment) but offset
-  // by viewport height instead — start while .steps__list is still mostly
-  // below the fold (90% down), end while its top has only scrolled to 15%
-  // above the viewport (list is shorter than one viewport, so this is still
-  // comfortably on-screen) — keeps the whole reveal within the window where
-  // the cards are actually visible to look at.
+  // Back to a plain once-triggered timeline, NOT scroll-scrubbed. Scrub was
+  // tried specifically to stop a fixed-duration timeline from being outrun
+  // by a fast scroll — but confirmed directly with her (she scrolls SLOWLY,
+  // reading each card): a scrub ties progress 1:1 to scroll DISTANCE, so it
+  // sits frozen every time she pauses to read, and only advances while she's
+  // actively moving the wheel. That reads as "still stuck", just for the
+  // opposite reason. A once-triggered timeline plays on its own clock
+  // regardless of whether she keeps scrolling, which is what a slow/reading
+  // scroll pattern actually needs.
+  //
+  // The ordering bug from the scrub attempt is real regardless of mechanism
+  // and stays fixed here: `start` is clamped to never fire before the
+  // heading trigger's own start (confirmed live from her recording — card 1
+  // was fading in while "ЯК НАРОДЖУЄТЬСЯ КЕРАМІКА" hadn't rendered at all
+  // yet), via the same startAfterFloor() chaining every other trigger here
+  // uses now.
+  const listFloor = () => Math.max(afterGalleryPin(), stepsHeaderTrigger ? stepsHeaderTrigger.start + 80 : 0);
   const listTl = gsap.timeline({
-    scrollTrigger: {
-      trigger: stepsList,
-      start: () => {
-        if (!galleryPinTrigger) return 999999;
-        const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
-        return galleryPinTrigger.end + 60 + STEPS_LIST_OFFSET_U * u - window.innerHeight * 0.9;
-      },
-      end: () => {
-        if (!galleryPinTrigger) return 999999;
-        const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
-        return galleryPinTrigger.end + 60 + STEPS_LIST_OFFSET_U * u + window.innerHeight * 0.15;
-      },
-      scrub: true,
-      invalidateOnRefresh: true,
-    },
+    scrollTrigger: { trigger: stepsList, start: startAfterFloor(stepsList, listFloor), once: true },
   });
+  stepsListTrigger = listTl.scrollTrigger;
 
   listTl.to(stepsArtImgs, {
     opacity: 1,
     y: 0,
     duration: 0.8,
     ease: 'power4.out',
+    onComplete: () => gsap.set(stepsArtImgs, { clearProps: 'transform' }),
   });
 
   // Each card enters fully on its own, one after another — card2/card3 used
@@ -1438,11 +1411,10 @@ function runStepsEntrance() {
   // bodies staggered together), which read as neither "each card arrives
   // separately" nor "everything appears at once", just an ambiguous partial
   // overlap. All three cards now share the exact same two-beat shape
-  // (label, then caption+text) her spec. Durations/staggers below are now
-  // relative weights across the scrubbed scroll range, not literal seconds
-  // — kept at their already-compressed values from the previous (time-based)
-  // pass since that relative rhythm (label, pause, body, pause, next card)
-  // still reads the same, just mapped onto scroll distance instead of a clock.
+  // (label, then caption+text) her spec. Total is ~3.2s (art + 3 cards),
+  // well inside the starter kit's ~2-3s guidance for a section entrance —
+  // plays out on its own regardless of scroll speed, so it can't be outrun
+  // by a fast scroll and can't stall for a slow/reading one either.
   stepsCards.forEach((card) => {
     if (!card) return;
     listTl
@@ -2019,6 +1991,11 @@ function initClayVideoToggle() {
 
 let freeLessonSection, freeLessonLines, freeLessonEyebrowWords,
   freeLessonMedia, freeLessonTxtWords, freeLessonCta;
+// resolved ScrollTrigger of runFreeLessonEntrance()'s own timeline, set the
+// moment that timeline is created — stories' entrance floors against this,
+// continuing the same startAfterFloor() chain philosophy/steps/free-lesson
+// already use (see runStoriesEntrance() below).
+let freeLessonEntranceTrigger;
 
 function cacheFreeLessonRefs() {
   freeLessonSection = document.querySelector('.free-lesson');
@@ -2043,59 +2020,302 @@ function setInitialFreeLessonStates() {
   gsap.set(freeLessonCta, { opacity: 0, y: 30 });
 }
 
-// Kept to ~2s total, per the starter kit's own rule: a slower 6s+ sequence
-// (the first version of this was ~5s, chaining all 5 beats with '+=0.15'
-// gaps back to back) can still be running when a normal scroll carries the
-// user past the section — which read as "no motion at all" since by the
-// time the scroll settles, the once-only timeline has already finished.
-// Beats now overlap on absolute time offsets instead of sequential '+='.
+// Beats run mostly in SEQUENCE now, each one starting just before the
+// previous finishes ('-=' overlaps) — matching the same recipe
+// runPhilosophyEntrance()/runStepsEntrance() use. An earlier version fired
+// media and the body text at the exact same absolute offset (both at 0.5s)
+// to keep the whole sequence under ~2s per the starter kit's own rule (a
+// slower 6s+ version could still be running when a normal scroll carried
+// the user past the section) — but bunching beats together to hit that
+// budget defeated the point of a staggered reveal: she saw the heading and
+// eyebrow, then everything else (photo, body text, CTA) landed together
+// too fast to register as separate beats. Total is now ~2.7s, still well
+// inside the "don't get outrun by scroll" budget, but each beat gets its
+// own moment.
 //
-// start: a FUNCTION replicating 'top 80%', not the plain string every
-// other block uses, and NOT a live getBoundingClientRect() read either —
-// both were tried and both fired too early, verified live (driving real
-// scroll and reading ScrollTrigger's isActive/progress, not just .start
-// after the page settles, per the gallery-pin gotcha's own instrumentation
-// rule):
-//   1. plain 'top 80%' string: resolved to scrollY ~5373.
-//   2. `scrollY + getBoundingClientRect().top - vh*0.2`, re-read on every
-//      refresh: resolved to ~5853 — better, but still fires before
-//      .steps__heading/.steps__list. GSAP's refresh pass evidently
-//      re-measures with the gallery's pin-spacer in a different (probably
-//      collapsed) state than its final pinned layout, so even a "live"
-//      read during refresh doesn't reflect the true final document
-//      position.
-// What actually works is STEPS_*/PHIL_*'s own approach: anchor to
-// `galleryPinTrigger.end`, which — despite not literally equaling
-// philosophy's top (see the +1118u correction note on FREE_LESSON_OFFSET_U
-// above) — is the one reference point GSAP keeps stable across refreshes.
-// The -vh*0.2 term is the only difference from STEPS_*/PHIL_*'s own use of
-// this pattern: they fire at "top 0%" (a point trigger), this replicates
-// the project's normal "top 80%" convention instead.
+// start: the same startAfterFloor() chain steps/philosophy use — natural
+// "top 80%" via a live getBoundingClientRect() read, floored to fire no
+// earlier than steps' own card list. See startAfterFloor()'s header
+// comment (near galleryPinTrigger, above runPhilosophyEntrance()) for why
+// this replaced an earlier hardcoded-offset version.
 function runFreeLessonEntrance() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !freeLessonSection) return;
 
-  gsap.timeline({
-    scrollTrigger: {
-      trigger: freeLessonSection,
-      start: () => {
-        if (!galleryPinTrigger) return 999999;
-        const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
-        return galleryPinTrigger.end + 60 + FREE_LESSON_OFFSET_U * u - window.innerHeight * 0.2;
-      },
-      once: true,
-    },
+  const floor = () => Math.max(afterGalleryPin(), stepsListTrigger ? stepsListTrigger.start + 80 : 0);
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: freeLessonSection, start: startAfterFloor(freeLessonSection, floor), once: true },
   })
-    .to(freeLessonLines, { opacity: 1, y: 0, duration: 0.9, stagger: 0.08, ease: 'power2.out' }, 0)
-    .to(freeLessonEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, 0.35)
+    .to(freeLessonLines, { opacity: 1, y: 0, duration: 0.9, stagger: 0.08, ease: 'power2.out' })
+    .to(freeLessonEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, '-=0.5')
     .to(freeLessonMedia, {
       opacity: 1,
       y: 0,
       duration: 1.0,
       ease: 'power4.out',
       onComplete: () => gsap.set(freeLessonMedia, { clearProps: 'transform' }),
-    }, 0.5)
-    .to(freeLessonTxtWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, 0.5)
-    .to(freeLessonCta, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 1.6);
+    }, '-=0.2')
+    .to(freeLessonTxtWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, '-=0.5')
+    .to(freeLessonCta, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.1');
+
+  freeLessonEntranceTrigger = tl.scrollTrigger;
+}
+
+// ==========================================================================
+// STORIES SECTION — "9_історії учнів"
+// ==========================================================================
+
+let storiesSection, storiesEyebrowWords, storiesTitle, storiesLead, storiesCards;
+
+function cacheStoriesRefs() {
+  storiesSection = document.querySelector('.stories');
+  storiesTitle = document.querySelector('.stories__title');
+  storiesLead = document.querySelector('.stories__lead');
+  // page 1 only — page 2 sits off-screen behind the carousel pan and
+  // doesn't need its own scroll-into-view entrance, see runStoriesEntrance()
+  storiesCards = document.querySelectorAll('.stories__page:first-child .stories__card');
+
+  const eyebrow = document.querySelector('.stories__eyebrow');
+  storiesEyebrowWords = eyebrow ? splitWords(eyebrow) : [];
+}
+
+function setInitialStoriesStates() {
+  if (reducedMotion) return;
+  gsap.set(storiesEyebrowWords, { opacity: 0 });
+  gsap.set(storiesTitle, { opacity: 0, y: 30 });
+  gsap.set(storiesLead, { opacity: 0, y: 12 });
+  gsap.set(storiesCards, { opacity: 0, y: 48 });
+}
+
+// Same startAfterFloor() chain philosophy/steps/free-lesson use: a live
+// "top 80%" read of this section's own position, floored to fire no
+// earlier than free-lesson's own resolved entrance start (+80), never a
+// hardcoded offset — see BLOCK_STARTER_KIT.md's "Entrance-timing-after-a-
+// pinned-section gotcha" for why that's the one approach that survives an
+// upstream block's height changing later.
+function runStoriesEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !storiesSection) return;
+
+  const floor = () => (freeLessonEntranceTrigger ? freeLessonEntranceTrigger.start + 80 : 0);
+  gsap.timeline({
+    scrollTrigger: { trigger: storiesSection, start: startAfterFloor(storiesSection, floor), once: true },
+  })
+    .to(storiesEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' })
+    .to(storiesTitle, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(storiesTitle, { clearProps: 'opacity,transform' }),
+    }, '-=0.4')
+    // .stories__lead is styled at opacity:0.8 at rest — animate TO that
+    // value, not blindly to 1 (project hard rule: a lazy to(1) destroys
+    // designed sub-1 opacity).
+    .to(storiesLead, {
+      opacity: 0.8,
+      y: 0,
+      duration: 0.6,
+      ease: 'sine.out',
+      onComplete: () => gsap.set(storiesLead, { clearProps: 'opacity,transform' }),
+    }, '-=0.5')
+    .to(storiesCards, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(storiesCards, { clearProps: 'opacity,transform' }),
+    }, '-=0.15');
+}
+
+// Photo hover: verbatim the same recipe as initGalleryPhotoHover() (scale
+// 1.05 + cursor-tracking parallax drift via gsap.quickTo), per her
+// instruction that stories' card photos hover exactly like block 5's. No
+// caption to fade here (stories cards have no .gallery__caption
+// equivalent), otherwise identical, including reusing GALLERY_HOVER_SHIFT
+// so the drift feels like the same effect, not a lookalike.
+function initStoriesPhotoHover() {
+  if (!hasGSAP) return;
+
+  const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!isFinePointer) return;
+
+  document.querySelectorAll('.stories__photo').forEach((frame) => {
+    const img = frame.querySelector('img');
+    if (!img) return;
+
+    const driftX = gsap.quickTo(img, 'x', { duration: 0.9, ease: 'power3' });
+    const driftY = gsap.quickTo(img, 'y', { duration: 0.9, ease: 'power3' });
+
+    frame.addEventListener('mouseenter', () => {
+      gsap.to(img, { scale: 1.05, duration: 0.7, ease: 'power2.out', overwrite: 'auto' });
+    });
+
+    frame.addEventListener('mousemove', (event) => {
+      const rect = frame.getBoundingClientRect();
+      const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+      const shift = GALLERY_HOVER_SHIFT * u;
+      driftX(-(((event.clientX - rect.left) / rect.width) * 2 - 1) * shift);
+      driftY(-(((event.clientY - rect.top) / rect.height) * 2 - 1) * shift);
+    });
+
+    frame.addEventListener('mouseleave', () => {
+      gsap.to(img, { scale: 1, duration: 1.0, ease: 'power2.out', overwrite: 'auto' });
+      driftX(0);
+      driftY(0);
+    });
+  });
+}
+
+// CLICK-TO-REVEAL REVIEWS — her spec. Every .stories__photo that carries
+// data-review-target toggles the matching .stories__review's `is-open`
+// class (the opacity transition itself is plain CSS, see .stories__review
+// in style.css). Which button maps to which panel — and why cards 2/3's
+// panels live inside each OTHER's .stories__card rather than their own —
+// is documented in index.html right above .stories__grid; nothing here
+// needs to know about that layout, it just follows the id each button
+// already carries.
+//
+// A second click on the SAME button (her answer for how to close) always
+// closes its own panel. Two different conflicts are handled beyond that:
+//
+// - cards 2/3 physically can't both be open at once (each one's own
+//   trigger stays visible/clickable throughout, since it's the SIBLING's
+//   photo that gets covered, never its own) — no code needed for that one,
+//   it falls out of the layout.
+// - row2's col3 is a genuinely SHARED slot — card 4's and card 5's review
+//   panels are both siblings inside the same .stories__slot (see the
+//   comment above .stories__grid for why). Those two are NOT mutually
+//   exclusive by layout, so opening one here explicitly closes any other
+//   .stories__review sharing its parent first.
+//
+// When a panel's host IS a .stories__card (the 2/3 pair, whose reviews
+// live inside each other's card rather than an empty .stories__slot), that
+// host's own "+ курс / ..." label hides for as long as the review is open
+// — per her note that a leftover label naming a different course than the
+// review now showing under it read wrong. .closest() returns null for the
+// .stories__slot-hosted panels (1/4/5), so this is a no-op there — those
+// never had a label to hide in the first place.
+function initStoriesReviews() {
+  document.querySelectorAll('.stories__photo[data-review-target]').forEach((btn) => {
+    const panel = document.getElementById(btn.dataset.reviewTarget);
+    if (!panel) return;
+
+    const hostCard = panel.closest('.stories__card');
+    const hostLabel = hostCard ? hostCard.querySelector('.stories__label') : null;
+    const siblingPanels = Array.from(panel.parentElement.querySelectorAll(':scope > .stories__review'))
+      .filter((sibling) => sibling !== panel);
+
+    btn.addEventListener('click', () => {
+      const willOpen = !panel.classList.contains('is-open');
+
+      if (willOpen) {
+        siblingPanels.forEach((sibling) => {
+          sibling.classList.remove('is-open');
+          sibling.setAttribute('aria-hidden', 'true');
+          const siblingBtn = document.querySelector(`[data-review-target="${sibling.id}"]`);
+          if (siblingBtn) siblingBtn.setAttribute('aria-expanded', 'false');
+        });
+      }
+
+      panel.classList.toggle('is-open', willOpen);
+      btn.setAttribute('aria-expanded', String(willOpen));
+      panel.setAttribute('aria-hidden', String(!willOpen));
+      if (hostLabel) hostLabel.classList.toggle('is-hidden', willOpen);
+    });
+  });
+}
+
+// ==========================================================================
+// STORIES CAROUSEL — her "variant A" pick: same mechanism as
+// initGalleryCarousel()/initGallerySettle() (pinned section, scrubbed x,
+// idle-triggered Lenis settle — never ScrollTrigger's `snap`, it fights
+// Lenis, project hard rule). Much simpler than gallery's version: only 2
+// pages, so the "snap grid" is just the 2 page boundaries, not a whole
+// card-pitch system.
+//
+// Pins/centres on the CARD GRID (.stories__grid, ~978u: the two rows,
+// header excluded), not the whole 1620u .stories section. Tried centring
+// the full section first ('center center' on storiesSection) — works on a
+// narrow/tall test viewport, but on any normal widescreen monitor the
+// section is TALLER than the viewport (1620u at a 1920-wide reference
+// against a ~1080-tall 16:9 viewport is already close, and this reference
+// assumes a much taller-than-wide test window), so centring the whole
+// thing crops real content off both ends — confirmed live, ~100px of row
+// 2 was clipped. The header (eyebrow/title/lead) doesn't need to still be
+// on screen once paging starts; only the cards do. Triggering off the
+// grid element instead — a much shorter box — actually fits inside a
+// normal viewport with room to spare, so 'center center' on IT gives the
+// symmetric top/bottom margins she asked for without cropping anything.
+// `pin` is still the whole section (so the header pins along with the
+// cards, just already scrolled past by the time this fires), only the
+// START/END position math is measured off the grid.
+// ==========================================================================
+
+const STORIES_PAGE_WIDTH = 1820;    // u, matches .stories__page's flex-basis
+const STORIES_PAGE_GAP = 50;        // u, matches .stories__grid's gap
+const STORIES_PAGE_SCROLL = 900;    // u of scroll consumed paging to page 2
+const STORIES_SETTLE_IDLE = 120;    // ms of stillness before settling
+const STORIES_SETTLE_DURATION = 0.5; // s, the settle itself
+
+let storiesPinTrigger;
+
+function initStoriesCarousel() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+
+  const track = document.querySelector('.stories__grid');
+  if (!track || !storiesSection) return;
+
+  const u = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+  const travel = () => (STORIES_PAGE_WIDTH + STORIES_PAGE_GAP) * u();
+
+  const tween = gsap.to(track, {
+    x: () => -travel(),
+    ease: 'none',
+    scrollTrigger: {
+      trigger: track,
+      pin: storiesSection,
+      start: 'center center',
+      end: () => `+=${STORIES_PAGE_SCROLL * u()}`,
+      anticipatePin: 1,
+      scrub: 1,
+      invalidateOnRefresh: true,
+    },
+  });
+
+  storiesPinTrigger = tween.scrollTrigger;
+  initStoriesSettle(tween.scrollTrigger);
+}
+
+// Only 2 stops (page 1 / page 2), unlike gallery's card-pitch grid — see
+// initGallerySettle()'s own header comment for why this settles through
+// lenis.scrollTo() rather than ScrollTrigger's `snap`.
+function initStoriesSettle(st) {
+  if (!st || !lenis) return;
+
+  const stops = [0, 1];
+  let idleTimer;
+
+  const settle = () => {
+    if (!st.isActive) return;
+
+    const progress = st.progress;
+    const nearest = stops.reduce((best, s) => (
+      Math.abs(s - progress) < Math.abs(best - progress) ? s : best
+    ), stops[0]);
+
+    const target = st.start + (st.end - st.start) * nearest;
+    if (Math.abs(target - window.scrollY) < 2) return;
+
+    lenis.scrollTo(target, {
+      duration: STORIES_SETTLE_DURATION,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+    });
+  };
+
+  lenis.on('scroll', () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(settle, STORIES_SETTLE_IDLE);
+  });
 }
 
 // ==========================================================================
@@ -2111,6 +2331,7 @@ cacheGalleryRefs();
 cachePhilosophyRefs();
 cacheStepsRefs();
 cacheFreeLessonRefs();
+cacheStoriesRefs();
 if (hasGSAP) {
   setInitialHeroStates();
   setInitialMenuState();
@@ -2121,6 +2342,7 @@ if (hasGSAP) {
   setInitialPhilosophyStates();
   setInitialStepsStates();
   setInitialFreeLessonStates();
+  setInitialStoriesStates();
 }
 initPreloader();
 initGlassCursor();
@@ -2130,12 +2352,26 @@ runCraftEntrance();
 initMediaImageHover();
 initMediaImageParallax();
 runGalleryEntrance();
+// Must run BEFORE runPhilosophyEntrance()/runStepsEntrance()/
+// runFreeLessonEntrance() — all three read galleryPinTrigger (set inside
+// this call) via afterGalleryPin()'s start functions. Those functions
+// only get INVOKED on a ScrollTrigger refresh, and the unconditional
+// refresh() at the bottom of this file happens after every init call here
+// regardless of order, so this "worked" even with the old order — but it
+// relied on that refresh papering over galleryPinTrigger being undefined
+// at the moment philosophy's/steps'/free-lesson's triggers were first
+// created, which is fragile or an implementation detail, not a documented
+// guarantee. Ordering it correctly removes the dependency on that entirely.
+initGalleryCarousel();
 runPhilosophyEntrance();
 runStepsEntrance();
 initStepHoverGuard();
 runFreeLessonEntrance();
+runStoriesEntrance();
 initGalleryPhotoHover();
-initGalleryCarousel();
+initStoriesPhotoHover();
+initStoriesReviews();
+initStoriesCarousel();
 initOliveGrain();
 runClayEntrance();
 runMaterialEntrance();
@@ -2146,9 +2382,9 @@ initGalleryFilter();
 initSectionScrollLag();
 
 // Settles the page's final layout, including the gallery's pin spacer —
-// philosophy's and steps' entrance triggers read galleryPinTrigger.end
-// directly via their own start functions (galleryFloorStart()) on this and
-// every later refresh, so no separate correction pass is needed here.
+// every entrance trigger from philosophy onward re-measures its own live
+// position via startAfterFloor() on this and every later refresh, so no
+// separate correction pass is needed here.
 if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
 
 // initParallax() and initHeroScrollLag() are both triggered by

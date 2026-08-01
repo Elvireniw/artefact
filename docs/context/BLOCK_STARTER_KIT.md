@@ -216,6 +216,17 @@ CTA last), and **keep the whole sequence to ~2-3s total** — a slower
 6s+ sequence can still be running when a normal scroll speed carries the
 user past the section's bottom.
 
+Chain the beats with `.to()` calls at **relative, sequential positions**
+(no position argument for the first beat, then `'-=0.2'`-to-`'-=0.5'`-style
+overlaps for each one after — matching how `runPhilosophyEntrance()` and
+`runStepsEntrance()` do it), not fixed absolute time offsets on every
+`.to()` call. Block 8's first pass used absolute offsets to hit the ~2s
+budget and ended up firing two unrelated beats (a photo and a body
+paragraph) at the exact same instant to save time — which read as "half
+the section pops in at once, too fast to see," not a staggered reveal. A
+sequential chain with small overlaps still fits the ~2-3s budget and keeps
+every beat visibly distinct.
+
 **Image hover-scale + scroll-parallax** (any photo that isn't a clickable
 link — craft's images, philosophy's, the steps photo):
 ```js
@@ -303,26 +314,50 @@ were deliberately excluded because she reads them as one continuous
 surface; it's not automatic for every block.
 
 **Entrance-timing-after-a-pinned-section gotcha**: if your new block comes
-directly after a section that uses ScrollTrigger `pin: true` (currently
-only the gallery carousel does), a plain `start: 'top 80%'` on your
-block's entrance can fire *while the pinned section is still visually
-holding the screen* — the pin only freezes what's on screen, not the
-underlying scroll position your trigger is watching. **Do not** "fix" this
-by mutating the trigger's resolved `self.start` after creation (from
-`onRefresh` or any later pass) — that was tried twice on blocks 6/7, read
-back as correct every time in a static post-load check, and still fired at
-the original too-early position live both times; see
-[[project-artefact-status]]'s CRITICAL gotcha for the full failure
-analysis. The pattern that actually works: give your trigger a `start`
-**function** instead of a fixed string/number — `start: () =>
-otherPinTrigger.end + buffer + offsetU * u()` — so ScrollTrigger
-recomputes it fresh on every refresh (GSAP's own documented pattern for
-this dependency). See `galleryFloorStart()` in `script.js` for the exact
-working version, used by all of blocks 6/7's entrance triggers. **Verify
-by simulating a real scroll and watching `ScrollTrigger` instances'
-`isActive` transitions** (`st.isActive` flipping true/false as you drive
-`window.scrollY`) — reading `.start`/`.end` after the page settles is not
-sufficient proof it fires correctly.
+directly (or a few blocks) after a section that uses ScrollTrigger
+`pin: true` (currently only the gallery carousel does), a plain
+`start: 'top 80%'` on your block's entrance can fire *while the pinned
+section is still visually holding the screen* — the pin only freezes what's
+on screen, not the underlying scroll position your trigger is watching.
+
+Two things that look like fixes but aren't:
+- **Don't** mutate the trigger's resolved `self.start` after creation (from
+  `onRefresh` or any later pass) — reads back as correct in a static
+  post-load check, still fires at the original too-early position live.
+- **Don't** anchor to a hardcoded `--u` distance from the pin's end (e.g.
+  "philosophy's top is roughly `pin.end + 1118u`, the next block is that
+  plus philosophy's own height, etc."). This is what actually shipped for
+  a while and broke blocks 7/8's entrances outright: every one of those
+  offset formulas is missing the `- viewportHeight * 0.8` a real "top 80%"
+  trigger needs, so instead of firing 80% of a viewport early it only fires
+  once the element's top hits the very TOP of the viewport — which reads
+  as "doesn't animate until you've scrolled almost past the whole section."
+  It also silently goes stale the moment any upstream block's height
+  changes, which is exactly how adding block 8 broke block 7's already-set
+  offset.
+
+**What actually works**: `startAfterFloor(el, floorFn)` in `script.js` — a
+`start` **function** (not a fixed string/number, so ScrollTrigger recomputes
+it fresh on every refresh — GSAP's own documented pattern for a trigger
+whose position depends on another) that takes the element's own LIVE
+`getBoundingClientRect()`-based "top 80%" position and floors it with
+`Math.max(natural, floor)`. Chain the floor to whatever comes immediately
+before your block in the page (that trigger's own resolved `.start + 80`),
+not to a single flat constant shared by everything downstream of the pin —
+a flat shared floor collapses multiple triggers onto the identical point
+whenever more than one of them naturally falls inside the pin's range, so
+they reveal together instead of in sequence. `runPhilosophyEntrance()` →
+`runStepsEntrance()` → `runFreeLessonEntrance()` in `script.js` is the
+reference chain: the first one floors against `galleryPinTrigger.end`,
+every one after floors against the immediately-preceding trigger. Copy that
+pattern for your own block if it needs this at all.
+
+**Verify by simulating a real scroll and watching `ScrollTrigger` instances'
+`.progress`/`isActive`** (drive `window.scrollTo()` + call
+`ScrollTrigger.update()`, then read `.progress` before and just after the
+resolved `.start`) — reading `.start`/`.end` once right after the page
+loads is not sufficient proof it fires correctly; this bug read as fine
+under that check every time it actually shipped broken.
 
 ## Per-block JS shape (script.js)
 

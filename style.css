@@ -2909,3 +2909,252 @@ body.menu-is-open {
 .js-line-hover:hover .free-lesson__cta-plus-char--in {
   transform: translateY(0%);
 }
+
+/* ==========================================================================
+   STORIES SECTION — "9_історії учнів" (Figma node 978:1359, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Pixel Perfect only for now — no entrance or
+   hover motion wired yet, verstka pass.
+   ========================================================================== */
+
+.stories {
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 1620);
+  overflow: hidden;
+  /* same fractional-devicePixelRatio hairline gotcha as every other block
+     seam so far — see BLOCK_STARTER_KIT.md. */
+  margin: -2px 0 0;
+  background-color: var(--beige-100);
+  color: #2B3D2D;
+}
+
+/* --- heading group (Figma frame "H" at 50,150) --- */
+
+.stories__eyebrow {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 150);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.5;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.stories__eyebrow .italic-symbol {
+  margin-right: calc(var(--u) * 18.3);
+}
+
+.stories__intro {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--u) * 508);
+  top: calc(var(--u) * 150);
+  width: calc(var(--u) * 685);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 40);
+}
+
+.stories__title {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  font-size: calc(var(--u) * 96);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -1.92);
+  text-transform: uppercase;
+}
+
+.stories__title-a { color: #2B3D2D; }
+.stories__title-b { color: rgba(43, 61, 45, 0.8); }
+
+.stories__lead {
+  margin: 0;
+  width: calc(var(--u) * 294);
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.24);
+  color: #2B3D2D;
+  opacity: 0.8;
+}
+
+/* --- horizontal carousel track — same mechanism as .gallery__track
+   (pinned section + scrubbed x + a Lenis-driven settle, see
+   initStoriesCarousel()/initStoriesSettle() in script.js; never
+   ScrollTrigger's `snap`, project hard rule). Two .stories__page blocks
+   sit side by side, each one page-width (1820u, the same content width
+   .stories__grid used to be before it became the wide track) plus one
+   grid-margin's worth of gap between them. Panning is the ONLY thing that
+   changed from the single-page build — each .stories__page still holds
+   the exact two-row grid from before, unmodified. --- */
+
+.stories__grid {
+  position: absolute;
+  z-index: 1;
+  left: var(--grid-margin);
+  top: calc(var(--u) * 490);
+  width: calc(var(--u) * 1820 * 2 + var(--u) * 50);
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 50);
+}
+
+/* --- one page: two rows of four grid slots each. Every slot that has no
+   photo of its own (row1 slot2, row2 slot1, row2 slot3) is a
+   .stories__slot — a pure click-to-reveal target, empty until its paired
+   card is clicked. Built off the shared --grid-margin/--grid-gutter tokens
+   rather than --col-1..4, since every slot here is an equal 1/4 share of
+   the row — no asymmetric columns. --- */
+
+.stories__page {
+  flex: 0 0 calc(var(--u) * 1820);
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gutter);
+}
+
+.stories__row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--grid-gutter);
+}
+
+.stories__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 10);
+}
+
+.stories__label {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 20);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.24);
+  color: #2B3D2D;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* hidden while a NEIGHBOUR's review is open on top of this card's own
+   photo (cards 2/3 only) — toggled from initStoriesReviews() */
+.stories__label.is-hidden {
+  opacity: 0;
+}
+
+/* the typographic "+" — same convention as .gallery__mark (Helvetica Neue
+   glyph standing in for the old design's SVG icon), per her instruction to
+   match block 5 exactly. */
+.stories__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 28);
+  line-height: 1;
+}
+
+/* button, not div — same reset .gallery__photo uses, so it can be a real
+   .js-cursor-media hover/click target */
+.stories__photo {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* +1px/bottom:auto — same hairline-on-hover-scale-settle fix as
+   .gallery__photo img (see that rule's comment) */
+.stories__photo img {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 1px);
+  object-fit: cover;
+  display: block;
+}
+
+/* --- click-to-reveal review panels ---
+   A .stories__slot is a dedicated empty grid cell reserved for one card's
+   review (row1 slot2, row2 slot1, row2 slot3). Cards 2/3 have no spare
+   cell, so per her spec their .stories__review lives INSIDE the
+   NEIGHBOURING .stories__card instead, absolutely positioned over that
+   sibling's own photo — see the index.html comment above .stories__grid
+   for the exact wiring. Either way the panel is positioned/sized the same:
+   opaque, full width, starting at the photo's own top edge (36u = the
+   label row's 26u height + the card's 10u internal gap, same offset used
+   for the row-2 quote before this became click-triggered) so it reads as
+   replacing the picture, never floating over the "курс / ..." label. */
+.stories__slot {
+  position: relative;
+}
+
+.stories__review {
+  position: absolute;
+  top: calc(var(--u) * 36);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 0;
+  padding: calc(var(--u) * 20);
+  background-color: var(--beige-100);
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  line-height: 1.1;
+  color: #2B3D2D;
+  opacity: 0;
+  pointer-events: none;
+  /* direction-aware duration: fast out, slow in (same convention as block
+     7's card crossfade) — the base rule is the CLOSE speed, .is-open
+     overrides it with the slower OPEN speed */
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stories__review.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transition-duration: 0.5s;
+}
+
+.stories__review-text {
+  margin: 0;
+  max-width: calc(var(--u) * 355);
+  font-size: calc(var(--u) * 30);
+  letter-spacing: calc(var(--u) * -0.3);
+  opacity: 0.6;
+  font-style: normal;
+}
+
+.stories__review-author {
+  margin: calc(var(--u) * 20) 0 0;
+  font-size: calc(var(--u) * 24);
+  letter-spacing: calc(var(--u) * -0.24);
+  opacity: 0.8;
+  font-style: normal;
+}

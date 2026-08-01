@@ -595,6 +595,252 @@
 
   </section>
 
+  <!-- STORIES SECTION — "9_історії учнів" (Figma node 978:1359, file
+       6tA1k2sLpFm5U7cLn9p9rZ). Verstka + motion, both approved by her.
+       The 3+3 card grid mirrors Figma's own structure (an invisible spacer
+       occupies the empty 4th slot in each row) but is built as a real CSS
+       grid off the site's shared --grid-margin/--grid-gutter tokens rather
+       than reproducing Figma's flex-row + hidden-rectangle trick.
+       Card "+" marks reuse .gallery__mark's typographic convention
+       (Helvetica Neue glyph, not the Figma-exported SVG asset) per her
+       instruction to match block 5.
+
+       CLICK-TO-REVEAL REVIEWS — her spec: hover on a card's photo behaves
+       exactly like .gallery__photo (scale + cursor-tracking drift +
+       "відгук" cursor bubble via .js-cursor-media); a CLICK opens that
+       card's testimonial as an opaque beige panel, positioned where the
+       grid has room for it, not on the card itself. Card POSITIONS are
+       Figma's own, untouched — only where each card's REVIEW lands moves:
+         - card 1 (наталія)  -> opens RIGHT, into the empty slot beside it (row1)
+         - card 4 (оксана)   -> opens RIGHT, into row2's col3 — the SAME
+           slot card 5's review uses (col3 sits between them; col1 stays a
+           plain, permanently-empty spacer, exactly Figma's layout). The
+           two reviews are sibling .stories__review panels inside that one
+           .stories__slot; initStoriesReviews() closes whichever one is
+           open before opening the other, so the slot only ever shows one
+           at a time. Do NOT "fix" this by moving card 4 to col1 — that
+           was tried and rejected, it broke the row1/row2 column rhythm.
+         - card 5 (олена)    -> opens LEFT, into that same shared row2/col3
+         - cards 2 (ірина) and 3 (андрій) have no empty neighbour, so per
+           her instruction they open INTO EACH OTHER's photo slot instead:
+           clicking ірина's photo covers андрій's photo with ірина's
+           review, and vice versa. Each of those two .stories__card
+           elements therefore carries its OWN photo/button plus the
+           OTHER's hidden review panel, toggled by the other's button via
+           data-review-target -> id. Second click on the same button
+           (her answer to "how does it close") toggles the same panel
+           shut — see initStoriesReviews() in script.js.
+
+       When a review opens ON A NEIGHBOURING CARD (the 2/3 pair above —
+       never the plain empty .stories__slot targets, which have no label
+       to begin with), that neighbour's own "+ курс / ..." label fades out
+       too, per her note that a leftover label reading a different course
+       than the review underneath it looked wrong. initStoriesReviews()
+       walks up from the opening panel to its hosting .stories__card and
+       toggles .is-hidden on THAT card's own .stories__label — a no-op
+       wherever the panel's host is a .stories__slot instead, since there's
+       no label there to begin with. -->
+  <section class="stories" id="stories" data-cursor-theme="light">
+
+    <div class="section-inner">
+
+      <p class="stories__eyebrow"><span class="italic-symbol">(</span>вироби студентів</p>
+
+      <div class="stories__intro">
+        <h2 class="stories__title"><span class="stories__title-a">Історії </span><span class="stories__title-b">успіху</span></h2>
+        <p class="stories__lead">вони такі ж люди, як і ви. вчителі, менеджери, коучі — усі змогли знайти щось своє у гончарстві</p>
+      </div>
+
+      <div class="stories__grid">
+
+        <div class="stories__page">
+
+          <div class="stories__row">
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / професійний</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-natalia" aria-controls="stories-review-natalia" aria-expanded="false"
+                      aria-label="Показати відгук: наталія, бухгалтерка, полтава">
+                <img src="img/stories-1.jpg" alt="Керамічна скульптурна форма, робота студента курсу «професійний»">
+              </button>
+            </article>
+
+            <div class="stories__slot">
+              <blockquote class="stories__review" id="stories-review-natalia" aria-hidden="true">
+                <p class="stories__review-text">«я бухгалтерка, двадцять років рахую чужі цифри. на курсі вперше зробила щось руками від початку до кінця — і зрозуміла, що це не хобі, а спосіб дихати»</p>
+                <cite class="stories__review-author">наталія, бухгалтерка,<br>полтава</cite>
+              </blockquote>
+            </div>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / перший дотик</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-iryna" aria-controls="stories-review-iryna" aria-expanded="false"
+                      aria-label="Показати відгук: ірина, медсестра, харків">
+                <img src="img/stories-2.jpg" alt="Набір керамічних тарілок ручної роботи в руках студентки">
+              </button>
+              <blockquote class="stories__review" id="stories-review-andriy" aria-hidden="true">
+                <p class="stories__review-text">«дванадцять років пишу код, цілий день дивлюся у монітор. а тут — глина, яка не компілюється з першого разу, і це чомусь заспокоює більше за будь-який дедлайн»</p>
+                <cite class="stories__review-author">андрій, it-спеціаліст,<br>чернігів</cite>
+              </blockquote>
+            </article>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / професійний</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-andriy" aria-controls="stories-review-andriy" aria-expanded="false"
+                      aria-label="Показати відгук: андрій, it-спеціаліст, чернігів">
+                <img src="img/stories-3.jpg" alt="Портрет випускника курсу «професійний» у майстерні">
+              </button>
+              <blockquote class="stories__review" id="stories-review-iryna" aria-hidden="true">
+                <p class="stories__review-text">«прийшла на перший урок просто зняти стрес після роботи. а вийшла з тарілкою, яку зробила сама вперше в житті — досі не вірю, що це я»</p>
+                <cite class="stories__review-author">ірина, медсестра,<br>харків</cite>
+              </blockquote>
+            </article>
+
+          </div>
+
+          <div class="stories__row">
+
+            <div class="stories__slot" aria-hidden="true"></div>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / мова глини</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-oksana" aria-controls="stories-review-oksana" aria-expanded="false"
+                      aria-label="Показати відгук: оксана, вчителька фізики, івано-франківськ">
+                <img src="img/stories-4.jpg" alt="Студентка формує виріб на гончарному крузі">
+              </button>
+            </article>
+
+            <!-- shared target slot: card 4's and card 5's reviews both land
+                 here (card 4 to its right, card 5 to its left) — see the big
+                 comment above .stories__grid for why they share one slot and
+                 how initStoriesReviews() keeps them mutually exclusive. -->
+            <div class="stories__slot">
+              <blockquote class="stories__review" id="stories-review-oksana" aria-hidden="true">
+                <p class="stories__review-text">«викладаю фізику в школі, цілий день — формули на дошці. глина стала протилежністю: тут нічого не треба доводити, просто відчувати руками»</p>
+                <cite class="stories__review-author">оксана, вчителька фізики,<br>івано-франківськ</cite>
+              </blockquote>
+              <blockquote class="stories__review" id="stories-review-olena" aria-hidden="true">
+                <p class="stories__review-text">«я архітектор. ця ваза — моя спроба перенести принципи форм з металу та скла на глину. ARTEFACT допоміг зрозуміти матеріал не як обмеження, а як новий простір для експериментів»</p>
+                <cite class="stories__review-author">олена, архітектор,<br>київ</cite>
+              </blockquote>
+            </div>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / мова глини</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-olena" aria-controls="stories-review-olena" aria-expanded="false"
+                      aria-label="Показати відгук: олена, архітектор, київ">
+                <img src="img/stories-5.jpg" alt="Керамічна миска на трьох ніжках, робота студента курсу «мова глини»">
+              </button>
+            </article>
+
+          </div>
+
+        </div>
+
+        <!-- PLACEHOLDER PAGE 2 — she wants 10 cards total, only has 5 real
+             students so far. This page verbatim-duplicates page 1's
+             photos/labels/reviews (same recipe .gallery used for its
+             missing 6th work) purely to prove the carousel mechanism end
+             to end; every id here is "-2" suffixed so initStoriesReviews()
+             wires it up exactly like page 1, independently. Swap all five
+             students' photos/courses/review text for real ones before
+             launch — nothing structural needs to change to do that. -->
+        <div class="stories__page">
+
+          <div class="stories__row">
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / професійний</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-natalia-2" aria-controls="stories-review-natalia-2" aria-expanded="false"
+                      aria-label="Показати відгук: наталія, бухгалтерка, полтава">
+                <img src="img/stories-1.jpg" alt="Керамічна скульптурна форма, робота студента курсу «професійний»">
+              </button>
+            </article>
+
+            <div class="stories__slot">
+              <blockquote class="stories__review" id="stories-review-natalia-2" aria-hidden="true">
+                <p class="stories__review-text">«я бухгалтерка, двадцять років рахую чужі цифри. на курсі вперше зробила щось руками від початку до кінця — і зрозуміла, що це не хобі, а спосіб дихати»</p>
+                <cite class="stories__review-author">наталія, бухгалтерка,<br>полтава</cite>
+              </blockquote>
+            </div>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / перший дотик</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-iryna-2" aria-controls="stories-review-iryna-2" aria-expanded="false"
+                      aria-label="Показати відгук: ірина, медсестра, харків">
+                <img src="img/stories-2.jpg" alt="Набір керамічних тарілок ручної роботи в руках студентки">
+              </button>
+              <blockquote class="stories__review" id="stories-review-andriy-2" aria-hidden="true">
+                <p class="stories__review-text">«дванадцять років пишу код, цілий день дивлюся у монітор. а тут — глина, яка не компілюється з першого разу, і це чомусь заспокоює більше за будь-який дедлайн»</p>
+                <cite class="stories__review-author">андрій, it-спеціаліст,<br>чернігів</cite>
+              </blockquote>
+            </article>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / професійний</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-andriy-2" aria-controls="stories-review-andriy-2" aria-expanded="false"
+                      aria-label="Показати відгук: андрій, it-спеціаліст, чернігів">
+                <img src="img/stories-3.jpg" alt="Портрет випускника курсу «професійний» у майстерні">
+              </button>
+              <blockquote class="stories__review" id="stories-review-iryna-2" aria-hidden="true">
+                <p class="stories__review-text">«прийшла на перший урок просто зняти стрес після роботи. а вийшла з тарілкою, яку зробила сама вперше в житті — досі не вірю, що це я»</p>
+                <cite class="stories__review-author">ірина, медсестра,<br>харків</cite>
+              </blockquote>
+            </article>
+
+          </div>
+
+          <div class="stories__row">
+
+            <div class="stories__slot" aria-hidden="true"></div>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / мова глини</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-oksana-2" aria-controls="stories-review-oksana-2" aria-expanded="false"
+                      aria-label="Показати відгук: оксана, вчителька фізики, івано-франківськ">
+                <img src="img/stories-4.jpg" alt="Студентка формує виріб на гончарному крузі">
+              </button>
+            </article>
+
+            <div class="stories__slot">
+              <blockquote class="stories__review" id="stories-review-oksana-2" aria-hidden="true">
+                <p class="stories__review-text">«викладаю фізику в школі, цілий день — формули на дошці. глина стала протилежністю: тут нічого не треба доводити, просто відчувати руками»</p>
+                <cite class="stories__review-author">оксана, вчителька фізики,<br>івано-франківськ</cite>
+              </blockquote>
+              <blockquote class="stories__review" id="stories-review-olena-2" aria-hidden="true">
+                <p class="stories__review-text">«я архітектор. ця ваза — моя спроба перенести принципи форм з металу та скла на глину. ARTEFACT допоміг зрозуміти матеріал не як обмеження, а як новий простір для експериментів»</p>
+                <cite class="stories__review-author">олена, архітектор,<br>київ</cite>
+              </blockquote>
+            </div>
+
+            <article class="stories__card">
+              <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / мова глини</p>
+              <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
+                      data-review-target="stories-review-olena-2" aria-controls="stories-review-olena-2" aria-expanded="false"
+                      aria-label="Показати відгук: олена, архітектор, київ">
+                <img src="img/stories-5.jpg" alt="Керамічна миска на трьох ніжках, робота студента курсу «мова глини»">
+              </button>
+            </article>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
   <!-- Lives outside .hero on purpose: .hero__nav carries a leftover GSAP
        transform (identity matrix, harmless visually) from the entrance
        timeline, and any transformed ancestor becomes the containing block

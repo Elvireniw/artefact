@@ -10,7 +10,9 @@ metadata:
 
 Snapshot as of 2026-07-29, end of a long multi-day session. Read this before starting new work so established patterns get reused and known landmines get avoided.
 
-> Blocks 5 and 6 (gallery + philosophy) are now **fully done** — layout, motion, and both gallery hairlines fixed and confirmed by her on 2026-07-31. Full history and the reusable lessons from that bug are in [[project-artefact-pending-fixes]]. **She now works one block per new chat** — the next new chat's job is block 7 ("7_кроки" per the Figma frame names), which has no layout at all yet.
+> Blocks 5 and 6 (gallery + philosophy) are now **fully done** — layout, motion, and both gallery hairlines fixed and confirmed by her on 2026-07-31. Full history and the reusable lessons from that bug are in [[project-artefact-pending-fixes]]. **She now works one block per new chat.**
+
+> **Blocks 7 (steps) and 8 (free lesson) are now both fully done and confirmed by her**, 2026-07-31. Block 8's entrance was iterated twice after first landing: the gallery-pin entrance-timing bug (see "Blocks not yet built at all" below for the full fix) and then a second round where two of its beats (photo + body text) fired at the exact same instant, read as "too fast to see," fixed by chaining all 5 beats sequentially with small `'-='` overlaps instead of fixed absolute time offsets — same recipe philosophy/steps already used. **The next new chat's job is block 9** ("9_історії учнів" per the Figma frame names), which has no layout at all yet.
 
 > **Gallery carousel is now PINNED** (`start:'bottom bottom'`, `end:'+=...'`, `scrub:1`) with a hand-rolled Lenis settle, not the unpinned `bottom center` scrub described further down. **Never use ScrollTrigger's `snap` on this site** — it animates the native scroll position and fights Lenis; the stutter shows up on every scrubbed tween on the page. Details in [[project-artefact-pending-fixes]].
 
@@ -109,22 +111,53 @@ Real SVG `<path>` bars, `transform-box: view-box; transform-origin: 18px 18px`, 
 10. **Lightbox** — each gallery work should open its main shot + 2-3 other angles. The `<button>`s exist with no click handler. She'll supply the extra angle photos.
 
 ## Blocks not yet built at all
-**Block 7 "7_кроки" (steps) is now DONE and fully iterated** (2026-07-31,
-layout + motion + hover cards, plus a same-day follow-up polish pass —
-crossfade direction/easing fix, cards entering fully separately at 30%
-faster, and a new scroll-hover guard). Full final state, exact values, and
-what was tried and rejected along the way: [[project-artefact-block7-motion]].
-The gallery-pin entrance-timing bug (blocks 6/7 revealing during/right
-after the gallery's pinned scroll instead of after it) needed **two
-follow-up rounds** after the first "fix" — see the CRITICAL gotcha below,
-`galleryFloorStart()` in `script.js` is the version that actually works,
-confirmed by live scroll instrumentation, not just a static post-refresh
-read. Remaining,
-per the Figma frame names (mockup exports intentionally removed from the
-repo — she gives node links on request when a block starts): **8 free
-lesson**, **9 історії учнів** (student stories), **10 тарифи** (pricing),
-**11 СТА** (CTA), **12 FAQ**, **13 соц мережі** (social), **14 футер**
-(footer). No layout exists for any of these yet.
+**Blocks 7 "7_кроки" (steps) and 8 "free lesson" are both DONE.** Block 7:
+layout + motion + hover cards, plus a follow-up polish pass (hover-swap
+crossfade, cards entering fully separately, a scroll-hover guard). Block 8
+was built in a separate per-block chat per her new workflow (see below).
+
+**The gallery-pin entrance-timing bug went through three iterations before
+it actually worked** — worth reading before touching entrance timing on any
+future block:
+1. A flat shared floor (`galleryPinTrigger.end`) applied to every
+   downstream trigger — collapsed multiple triggers onto the same point, so
+   blocks fired together instead of in sequence.
+2. A hardcoded per-block `--u`-offset chain (added once block 8 existed,
+   trying to place each trigger a fixed distance past the gallery's pin) —
+   went stale immediately (block 8 needed a manual "+1118u correction" to
+   its offset that nobody could derive without re-measuring live) and,
+   worse, every offset formula dropped the `-viewportHeight*0.8` term a
+   real "top 80%" trigger needs — so blocks 7 and 8 didn't animate at all
+   until scrolled almost to the bottom of each section. This is the bug she
+   caught on video 2026-07-31.
+3. **What actually works, live-verified** (driven scroll +
+   `ScrollTrigger.isActive`/`.progress`, not just reading `.start` after the
+   page settles — that read as "fine" every time despite the bug):
+   `startAfterFloor(el, floorFn)` in `script.js` — a `start` FUNCTION using
+   a fresh `getBoundingClientRect()` read each refresh (self-correcting,
+   no hardcoded offsets to keep in sync with `style.css`), floored via
+   `Math.max(natural, floor)` where each trigger's floor is the PREVIOUS
+   trigger's own resolved `.start + 80` (chained sequentially — philosophy
+   top → philosophy bottom → steps heading → steps list → free-lesson —
+   not one shared constant), and only the very first one floors against
+   `galleryPinTrigger.end`. `galleryFloorStart()` (the old, broken name) no
+   longer exists in the file — if you see it referenced anywhere else in
+   these docs, that reference is stale.
+
+**Separately, block 8's beat pacing needed a second round**: its 5 entrance
+beats were chained on fixed absolute time offsets (to hit the starter kit's
+~2-3s budget), which put the photo and the body text at the exact same
+instant — she saw the heading/eyebrow, then everything else landed too
+fast to register. Fixed by chaining all 5 beats sequentially with small
+`'-='` overlaps (same recipe philosophy/steps already used) instead of
+absolute offsets — still ~2.7s total, but each beat now gets its own
+visible moment. See "Section entrance shape" in `BLOCK_STARTER_KIT.md`.
+
+Remaining, per the Figma frame names (mockup exports intentionally removed
+from the repo — she gives node links on request when a block starts):
+**9 історії учнів** (student stories), **10 тарифи** (pricing), **11 СТА**
+(CTA), **12 FAQ**, **13 соц мережі** (social), **14 футер** (footer). No
+layout exists for any of these yet.
 
 **Starting one of these in a new chat?** She now wants each new block built
 in its own chat, without reading this whole file. Point that chat at
