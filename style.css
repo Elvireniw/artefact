@@ -3786,3 +3786,269 @@ body.menu-is-open {
   color: var(--beige-80);
 }
 .pricing__card--pro .pricing__card-cta-plus { font-size: calc(var(--u) * 32); }
+
+/* ==========================================================================
+   FAQ SECTION — "12_FAQ" (Figma node 978:1468, file 6tA1k2sLpFm5U7cLn9p9rZ)
+   5-item accordion, all items closed by default, each toggles independently
+   (her call — not single-open). Only question 02 had answer copy authored
+   in Figma; 01/03/04/05 were supplied separately and aren't in the mockup.
+   Height is intentionally NOT a fixed --u constant like every other block:
+   opening an item must grow the section, so .section-inner here breaks from
+   the site-wide position:absolute;inset:0 rule (see below) and the list
+   sits in normal flow instead. Not opted into the site-wide scroll-lag
+   system for the same reason — see BLOCK_STARTER_KIT.md.
+   ========================================================================== */
+
+.faq {
+  position: relative;
+  background-color: var(--beige-100);
+  /* full-bleed seam guard vs. .cta above — see BLOCK_STARTER_KIT.md's
+     "full-bleed seam hairline gotcha" */
+  margin: -2px 0 0;
+  /* symmetric with .faq__header's own 150u top offset — the Figma frame's
+     bottom gap only worked out to 88u because that mockup had question 02
+     pinned open; with every item closed by default that measurement isn't
+     meaningful, so this is a plain 150u to match the top instead */
+  padding-bottom: calc(var(--u) * 150);
+}
+
+/* deviates from the global .section-inner rule on purpose — see the block
+   comment above. display:flow-root establishes its own block-formatting
+   context so .faq__list's margin-top doesn't collapse through it and
+   .faq's own top edge — without it, that 529u margin "leaked" upward and
+   pushed the whole section down away from .cta instead of creating space
+   for the header inside it. */
+.faq > .section-inner {
+  position: static;
+  display: flow-root;
+}
+
+.faq__header {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 150);
+  width: calc(var(--u) * 1114);
+}
+
+.faq__eyebrow {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.5;
+  color: #2B3D2D;
+}
+
+.faq__eyebrow .italic-symbol {
+  margin-right: 10px;
+}
+
+.faq__heading {
+  margin: calc(var(--u) * 20) 0 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  font-size: calc(var(--u) * 96);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -2.88);
+  text-transform: uppercase;
+}
+
+.faq__heading-a { color: #2B3D2D; }
+.faq__heading-b { color: rgba(43, 61, 45, 0.8); }
+
+.faq__lead {
+  position: absolute;
+  left: calc(var(--u) * 611);
+  top: calc(var(--u) * 201);
+  width: calc(var(--u) * 294);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.faq__lead-line {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  color: rgba(43, 61, 45, 0.8);
+}
+
+/* the missing 50u left/right inset here was the root cause of the lead
+   paragraph misalignment too: .faq__lead's 611u offset is measured from
+   .faq__header's own left edge (already inset 50u), while .faq__question's
+   611u offset is measured from .faq__list's left edge — with no inset on
+   the list, that put the two 611u marks 50u apart instead of on the same
+   vertical line */
+.faq__list {
+  margin: calc(var(--u) * 529) calc(var(--u) * 50) 0;
+  border-top: 1.5px solid rgba(43, 61, 45, 0.6);
+}
+
+.faq__item {
+  border-bottom: 1.5px solid rgba(43, 61, 45, 0.6);
+}
+
+.faq__row-heading {
+  margin: 0;
+  font-weight: 400;
+}
+
+.faq__row {
+  display: flex;
+  width: 100%;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: calc(var(--u) * 40);
+  padding: calc(var(--u) * 40) 0 calc(var(--u) * 10);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Helvetica Neue', sans-serif;
+  color: #2B3D2D;
+}
+
+.faq__row-left {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.faq__num {
+  flex: 0 0 calc(var(--u) * 611);
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.24);
+}
+
+.faq__num .italic-symbol {
+  margin: 0 10px;
+}
+
+/* no size difference between open/closed on purpose — she tried the
+   Figma-authored 40px->48px bump (first as font-size, then as a transform
+   to fix the resulting jitter) and asked for it removed outright: the
+   question stays one constant size, only the answer copy gets a reveal. */
+.faq__question {
+  max-width: calc(var(--u) * 750);
+  font-size: calc(var(--u) * 40);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.8);
+  font-weight: 400;
+  transition: color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* hover affordance on the row, same signature easing as every other hover
+   transition on the site — question text and the "( +/- )" toggle both dim
+   to 60% opacity, purely pointer feedback, independent of the open/close
+   state itself. A scale on the toggle was tried first and rejected (read as
+   jittery/twitchy on hover) — plain opacity is calmer. */
+@media (hover: hover) and (pointer: fine) {
+  .faq__row:hover .faq__question {
+    color: rgba(43, 61, 45, 0.6);
+  }
+
+  .faq__row:hover .faq__toggle {
+    opacity: 0.6;
+  }
+}
+
+.faq__toggle {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  font-size: calc(var(--u) * 40);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.8);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq__toggle .italic-symbol {
+  margin: 0 10px;
+}
+
+/* "+"/"-" swap: same two-stacked-spans translateY recipe as every other
+   glyph-swap on this site (see .craft__cta-plus-char), just triggered by
+   the .is-open class instead of :hover */
+.faq__toggle-track {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  width: calc(var(--u) * 24);
+  height: calc(var(--u) * 44);
+  vertical-align: bottom;
+}
+
+/* width:100% + text-align:center (not left:0 alone) — "+" and "-" aren't
+   the same glyph width in Helvetica Neue, so left-anchoring them let "+"
+   sit centered by coincidence while "-" read as shifted left */
+.faq__toggle-char {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  text-align: center;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.faq__toggle-char--plus { transform: translateY(0%); }
+.faq__toggle-char--minus { transform: translateY(100%); }
+.faq__item.is-open .faq__toggle-char--plus { transform: translateY(-100%); }
+.faq__item.is-open .faq__toggle-char--minus { transform: translateY(0%); }
+
+/* auto-height accordion reveal: grid-template-rows 0fr -> 1fr, not a JS
+   height measurement — CSS-native and correct for every item regardless of
+   its answer's length. The signature hover curve (fast-start/slow-end) read
+   too abrupt for a reveal this size — switched to the project's OTHER
+   established easing, the symmetric ease-in-out from the block 7 card
+   crossfade (smooth start AND end, not just the end), with a longer
+   duration for a calmer, less snappy motion. */
+.faq__answer-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.faq__item.is-open .faq__answer-wrap {
+  grid-template-rows: 1fr;
+}
+
+.faq__answer-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* the padding lives here, one level below .faq__answer-inner, on purpose:
+   overflow:hidden only zeroes out an element's own CONTENT-based minimum
+   size for grid track sizing, not its padding — padding on .faq__answer-
+   inner itself would keep the closed row 24+40=64u tall instead of
+   collapsing to 0 */
+.faq__answer-body {
+  padding: calc(var(--u) * 24) 0 calc(var(--u) * 40) calc(var(--u) * 611);
+}
+
+.faq__answer-body p {
+  max-width: calc(var(--u) * 598);
+  margin: 0 0 calc(var(--u) * 20);
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: rgba(43, 61, 45, 0.6);
+}
+
+.faq__answer-body p:last-child {
+  margin-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq__answer-wrap,
+  .faq__toggle-char,
+  .faq__toggle,
+  .faq__question,
+  .faq__num {
+    transition: none;
+  }
+}

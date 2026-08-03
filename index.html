@@ -1056,6 +1056,165 @@
 
   </section>
 
+  <!-- Block 12 "12_FAQ" — accordion, all items closed by default, each
+       toggles independently (not single-open). Only .faq > .section-inner
+       deviates from the global position:absolute;inset:0 rule (see
+       style.css) because this block's height must grow/shrink as items
+       open/close; .faq__header keeps the usual absolute-positioned-off-
+       Figma-coordinates layout since it's static like every other block. -->
+  <section class="faq" id="faq" data-cursor-theme="light">
+
+    <div class="section-inner">
+
+      <div class="faq__header">
+        <p class="faq__eyebrow"><span class="italic-symbol">(</span>маєте питання</p>
+        <h2 class="faq__heading"><span class="faq__heading-a">ми готові </span><span class="faq__heading-b">відповісти</span></h2>
+        <p class="faq__lead">
+          <span class="faq__lead-line">ми зібрали питання,</span>
+          <span class="faq__lead-line">які найчастіше хвилюють майбутніх студентів</span>
+        </p>
+      </div>
+
+      <div class="faq__list">
+
+        <div class="faq__item">
+          <h3 class="faq__row-heading">
+            <button class="faq__row" type="button" aria-expanded="false" aria-controls="faq-answer-1" id="faq-toggle-1">
+              <span class="faq__row-left">
+                <span class="faq__num"><span class="italic-symbol">(</span>01<span class="italic-symbol">)</span></span>
+                <span class="faq__question">у мене немає досвіду та особливого таланту. чи вийде в мене щось стоятиме?</span>
+              </span>
+              <span class="faq__toggle" aria-hidden="true">
+                <span class="italic-symbol">(</span>
+                <span class="faq__toggle-track">
+                  <span class="faq__toggle-char faq__toggle-char--plus">+</span>
+                  <span class="faq__toggle-char faq__toggle-char--minus">-</span>
+                </span>
+                <span class="italic-symbol">)</span>
+              </span>
+            </button>
+          </h3>
+          <div class="faq__answer-wrap" id="faq-answer-1" role="region" aria-labelledby="faq-toggle-1">
+            <div class="faq__answer-inner">
+              <div class="faq__answer-body">
+                <p>Так, і це питання ми чуємо найчастіше! Наша методика розроблена спеціально для новачків. Ми не віримо в «талант», ми віримо у структурований підхід. Кожен етап — від цифрового ескізу до роботи з глиною — розбитий на зрозумілі кроки, які поступово розвивають ваші навички. Переконайтеся в цьому, переглянувши роботи таких же новачків у блоці «Історії успіху».</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <h3 class="faq__row-heading">
+            <button class="faq__row" type="button" aria-expanded="false" aria-controls="faq-answer-2" id="faq-toggle-2">
+              <span class="faq__row-left">
+                <span class="faq__num"><span class="italic-symbol">(</span>02<span class="italic-symbol">)</span></span>
+                <span class="faq__question">яке обладнання потрібне? у мене немає гончарного круга</span>
+              </span>
+              <span class="faq__toggle" aria-hidden="true">
+                <span class="italic-symbol">(</span>
+                <span class="faq__toggle-track">
+                  <span class="faq__toggle-char faq__toggle-char--plus">+</span>
+                  <span class="faq__toggle-char faq__toggle-char--minus">-</span>
+                </span>
+                <span class="italic-symbol">)</span>
+              </span>
+            </button>
+          </h3>
+          <div class="faq__answer-wrap" id="faq-answer-2" role="region" aria-labelledby="faq-toggle-2">
+            <div class="faq__answer-inner">
+              <div class="faq__answer-body">
+                <p>для старту потрібен мінімум! базовий курс включає техніки ручного ліплення, для яких потрібні лише прості інструменти (ми дамо їх перелік).</p>
+                <p>модулі з роботою на гончарному крузі проходять у нашій майстерні, все обладнання та матеріали вже включені у вартість.</p>
+                <p>а безкоштовний урок взагалі не вимагає нічого, крім вашої готовності спробувати</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <h3 class="faq__row-heading">
+            <button class="faq__row" type="button" aria-expanded="false" aria-controls="faq-answer-3" id="faq-toggle-3">
+              <span class="faq__row-left">
+                <span class="faq__num"><span class="italic-symbol">(</span>03<span class="italic-symbol">)</span></span>
+                <span class="faq__question">я дуже зайнята людина. скільки часу займатиме навчання?</span>
+              </span>
+              <span class="faq__toggle" aria-hidden="true">
+                <span class="italic-symbol">(</span>
+                <span class="faq__toggle-track">
+                  <span class="faq__toggle-char faq__toggle-char--plus">+</span>
+                  <span class="faq__toggle-char faq__toggle-char--minus">-</span>
+                </span>
+                <span class="italic-symbol">)</span>
+              </span>
+            </button>
+          </h3>
+          <div class="faq__answer-wrap" id="faq-answer-3" role="region" aria-labelledby="faq-toggle-3">
+            <div class="faq__answer-inner">
+              <div class="faq__answer-body">
+                <p>Ми розробили програму так, щоб її можна було комфортно поєднувати з роботою та особистим життям. Для успішного проходження курсу достатньо виділяти 3-4 години на тиждень. Всі уроки записані — ви можете навчатися у зручному для вас темпі.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <h3 class="faq__row-heading">
+            <button class="faq__row" type="button" aria-expanded="false" aria-controls="faq-answer-4" id="faq-toggle-4">
+              <span class="faq__row-left">
+                <span class="faq__num"><span class="italic-symbol">(</span>04<span class="italic-symbol">)</span></span>
+                <span class="faq__question">чим ваша школа відрізняється від інших?</span>
+              </span>
+              <span class="faq__toggle" aria-hidden="true">
+                <span class="italic-symbol">(</span>
+                <span class="faq__toggle-track">
+                  <span class="faq__toggle-char faq__toggle-char--plus">+</span>
+                  <span class="faq__toggle-char faq__toggle-char--minus">-</span>
+                </span>
+                <span class="italic-symbol">)</span>
+              </span>
+            </button>
+          </h3>
+          <div class="faq__answer-wrap" id="faq-answer-4" role="region" aria-labelledby="faq-toggle-4">
+            <div class="faq__answer-inner">
+              <div class="faq__answer-body">
+                <p>ARTEFACT / CLAY — це не просто курси гончарства. Ми єдині, хто поєднує тисячолітню мудрість ремесла з сучасним дизайн-мисленням. Ви не просто навчитеся крутити на гончарному крузі — ви пройдете шлях від ідеї до артефакту, навчившись спочатку проектувати форму в цифрі, а потім втілювати її в глині. Наш фокус — на створенні унікальних предметів для сучасного простору.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="faq__item">
+          <h3 class="faq__row-heading">
+            <button class="faq__row" type="button" aria-expanded="false" aria-controls="faq-answer-5" id="faq-toggle-5">
+              <span class="faq__row-left">
+                <span class="faq__num"><span class="italic-symbol">(</span>05<span class="italic-symbol">)</span></span>
+                <span class="faq__question">яка у вас політика повернення коштів?</span>
+              </span>
+              <span class="faq__toggle" aria-hidden="true">
+                <span class="italic-symbol">(</span>
+                <span class="faq__toggle-track">
+                  <span class="faq__toggle-char faq__toggle-char--plus">+</span>
+                  <span class="faq__toggle-char faq__toggle-char--minus">-</span>
+                </span>
+                <span class="italic-symbol">)</span>
+              </span>
+            </button>
+          </h3>
+          <div class="faq__answer-wrap" id="faq-answer-5" role="region" aria-labelledby="faq-toggle-5">
+            <div class="faq__answer-inner">
+              <div class="faq__answer-body">
+                <p>Ми цінуємо довіру наших майбутніх студентів. Тому, якщо після проходження перших двох модулів ви вирішите, що курс не для вас, ми повернемо повну суму протягом 14 днів.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
   <!-- Lives outside .hero on purpose: .hero__nav carries a leftover GSAP
        transform (identity matrix, harmless visually) from the entrance
        timeline, and any transformed ancestor becomes the containing block

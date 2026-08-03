@@ -73,8 +73,8 @@ if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(reRefreshCtaTrigger);
 }
 
-// .cta is the last section, so it inherits the largest accumulated drift
-// from every image/video that loads late above it — the global
+// .cta used to be the last section, so it inherited the largest accumulated
+// drift from every image/video that loads late above it — the global
 // ScrollTrigger.refresh() calls above don't fully correct it: verified
 // live that this specific trigger's .start stayed frozen ~740px short of
 // its correct position even across repeated global refresh() calls (incl.
@@ -90,9 +90,29 @@ if (document.fonts && document.fonts.ready) {
 // calibrateFluidUnit's — that one only reacts to WIDTH changes) catches
 // this late growth whenever it actually finishes, however long it takes,
 // and re-refreshes both the whole page and this one instance right after.
+// .faq is now the last section instead, so it inherits the same drift and
+// needs the identical fix — this function also refreshes faqEntranceTrigger
+// now (her report: block 12 had "already appeared" by the time she scrolled
+// to it, same symptom block 11 had before this function existed).
 function reRefreshCtaTrigger() {
   if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
   if (typeof ctaEntranceTrigger !== 'undefined' && ctaEntranceTrigger) ctaEntranceTrigger.refresh();
+  // guarded by progress < 1, unlike ctaEntranceTrigger above: .faq contains
+  // the accordion, whose own open/close grows or shrinks document.body and
+  // fires this SAME function via the ResizeObserver below, every time —
+  // calling .refresh() on a scrollTrigger whose linked animation already
+  // finished playing (invalidateOnRefresh:true + once:true) resets that
+  // animation's progress back to 0, replaying the whole section's entrance
+  // on every single click. Confirmed live: .animation.progress() flips
+  // 1 -> 0 the instant .refresh() runs post-completion. The guard keeps the
+  // original fix (correcting the trigger's position before it has fired)
+  // while no-op'ing once it has, so accordion clicks stop retriggering it.
+  if (
+    typeof faqEntranceTrigger !== 'undefined' && faqEntranceTrigger
+    && faqEntranceTrigger.animation && faqEntranceTrigger.animation.progress() < 1
+  ) {
+    faqEntranceTrigger.refresh();
+  }
 }
 
 if (typeof ResizeObserver !== 'undefined') {
@@ -2653,6 +2673,113 @@ function initCtaVideoToggle() {
 }
 
 // ==========================================================================
+// FAQ SECTION — "12_FAQ"
+// ==========================================================================
+
+let faqSection, faqEyebrowWords, faqHeadingA, faqHeadingB, faqLead, faqItems,
+  faqAnswerParagraphs, faqEntranceTrigger;
+
+function cacheFaqRefs() {
+  faqSection = document.querySelector('.faq');
+  const eyebrow = document.querySelector('.faq__eyebrow');
+  faqEyebrowWords = eyebrow ? splitWords(eyebrow) : [];
+  faqHeadingA = document.querySelector('.faq__heading-a');
+  faqHeadingB = document.querySelector('.faq__heading-b');
+  faqLead = document.querySelector('.faq__lead');
+  faqItems = document.querySelectorAll('.faq__item');
+  faqAnswerParagraphs = document.querySelectorAll('.faq__answer-body p');
+}
+
+function setInitialFaqStates() {
+  if (reducedMotion) return;
+  gsap.set(faqEyebrowWords, { opacity: 0 });
+  gsap.set([faqHeadingA, faqHeadingB], { opacity: 0, y: 30 });
+  gsap.set(faqLead, { opacity: 0, y: 12 });
+  gsap.set(faqItems, { opacity: 0, y: 30 });
+  // standard "fade + rise" recipe (BLOCK_STARTER_KIT.md) — reused here for
+  // the answer copy's own reveal on open, not just the section entrance
+  gsap.set(faqAnswerParagraphs, { opacity: 0, y: 12 });
+}
+
+// Same startAfterFloor() chain philosophy/steps/free-lesson/stories/pricing/
+// cta use — see BLOCK_STARTER_KIT.md's "Entrance-timing-after-a-pinned-
+// section gotcha". Floored against ctaEntranceTrigger.start, the block
+// immediately before this one.
+function runFaqEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !faqSection) return;
+
+  const floor = () => (ctaEntranceTrigger ? ctaEntranceTrigger.start + 80 : 0);
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: faqSection,
+      start: startAfterFloor(faqSection, floor),
+      once: true,
+      invalidateOnRefresh: true,
+    },
+  })
+    .to(faqEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' })
+    .to([faqHeadingA, faqHeadingB], {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set([faqHeadingA, faqHeadingB], { clearProps: 'opacity,transform' }),
+    }, '-=0.4')
+    .to(faqLead, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5')
+    .to(faqItems, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(faqItems, { clearProps: 'opacity,transform' }),
+    }, '-=0.3');
+
+  faqEntranceTrigger = tl.scrollTrigger;
+}
+
+// Accordion: each item toggles independently (her call, not single-open).
+// The height reveal itself is pure CSS (grid-template-rows on
+// .faq__answer-wrap, see style.css); the question no longer changes size
+// on open (tried first as font-size, then as a transform to fix the
+// resulting jitter, then dropped outright per her ask) — the answer copy's
+// own "fade + rise" is the only per-open motion now, same recipe/values as
+// every other body-copy reveal on the site (BLOCK_STARTER_KIT.md), just
+// fired from a click instead of a ScrollTrigger. No explicit
+// ScrollTrigger.refresh() here: opening/closing an item changes
+// document.body's height, which the existing ResizeObserver in
+// reRefreshCtaTrigger() already reacts to on its own — a second explicit
+// refresh from here was redundant, and briefly caused the whole section's
+// entrance to replay on every click (see the guard added to
+// reRefreshCtaTrigger()).
+function initFaqAccordion() {
+  document.querySelectorAll('.faq__item').forEach((item) => {
+    const btn = item.querySelector('.faq__row');
+    const wrap = item.querySelector('.faq__answer-wrap');
+    if (!btn || !wrap) return;
+
+    const paragraphs = item.querySelectorAll('.faq__answer-body p');
+
+    btn.addEventListener('click', () => {
+      const isOpen = item.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', String(isOpen));
+
+      if (reducedMotion || !hasGSAP) return;
+      if (isOpen) {
+        gsap.to(paragraphs, {
+          opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'sine.out', overwrite: 'auto',
+        });
+      } else {
+        // instant, not animated — hidden behind the collapsing container
+        // anyway, this just re-arms it for the next time it opens
+        gsap.set(paragraphs, { opacity: 0, y: 12 });
+      }
+    });
+  });
+}
+
+// ==========================================================================
 // INIT
 // ==========================================================================
 
@@ -2668,6 +2795,7 @@ cacheFreeLessonRefs();
 cacheStoriesRefs();
 cachePricingRefs();
 cacheCtaRefs();
+cacheFaqRefs();
 alignCtaLead();
 // Own ResizeObserver rather than hooking into calibrateFluidUnit(): that
 // function runs once immediately at parse time (line ~39, long before
@@ -2694,6 +2822,7 @@ if (hasGSAP) {
   setInitialStoriesStates();
   setInitialPricingStates();
   setInitialCtaStates();
+  setInitialFaqStates();
 }
 initPreloader();
 initGlassCursor();
@@ -2721,6 +2850,8 @@ runFreeLessonEntrance();
 runStoriesEntrance();
 runPricingEntrance();
 runCtaEntrance();
+runFaqEntrance();
+initFaqAccordion();
 initGalleryPhotoHover();
 initStoriesPhotoHover();
 initStoriesReviews();
