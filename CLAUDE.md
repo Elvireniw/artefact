@@ -69,7 +69,8 @@ still scoped to the menu overlay.
 Sections, in order, matching the Figma frame names: `.hero`, `.craft`
 (2_мистецтво), `.clay` (3_мова глини), `.material` (4_глина це), `.gallery`
 (5_галерея робіт), `.philosophy` (6_філософія), `.steps` (7_кроки),
-`.free-lesson` (8_free lesson). Blocks 9+ are not built — see
+`.free-lesson` (8_free lesson), `.stories` (9_історії учнів), `.pricing`
+(10_тарифи), `.cta` (11_СТА). Blocks 12+ are not built — see
 `docs/context/BLOCK_STARTER_KIT.md` before starting one.
 
 ## Verifying visual fixes

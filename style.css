@@ -3158,3 +3158,631 @@ body.menu-is-open {
   opacity: 0.8;
   font-style: normal;
 }
+
+/* ==========================================================================
+   PRICING SECTION — "10_тарифи" (Figma node 978:1381, file
+   6tA1k2sLpFm5U7cLn9p9rZ). Verstka + motion pass.
+
+   BLUR: Figma renders the main heading words and all three card titles
+   with real blur baked into the glyphs. Project hard rule bans CSS blur
+   anywhere, so — same precedent as mova-clay.png (block 3) and
+   h-step-1/2.png (block 7) — every blurred piece of type is a pre-rendered
+   PNG exported straight from Figma instead of a `filter: blur()`. Each
+   image is positioned CENTRED on the original Figma text node's bounding-
+   box centre (not its top-left/width), because Figma's blur export
+   expands the canvas around the glyphs by an amount that isn't reliably
+   symmetric — centring on the source centre is the cheap version of the
+   alpha-bbox measuring mova-clay.png's comment describes, good enough
+   since these assets are static (never scattered/animated individually).
+
+   CARD LAYOUT: every .pricing__card-* is positioned with literal
+   left/top offsets per element (not flex/gap) inside each card, because
+   the three cards' internal spacing isn't uniform — card 2's larger
+   title pushes its price block down by a different amount than cards
+   1/3's shared spacing. Only the outer row (.pricing__cards) uses flex
+   (align-items: flex-end + gap), which is exactly how Figma bottom-
+   aligns the three different-height cards against each other.
+   ========================================================================== */
+
+/* 1441u is Figma's own cards-flush-to-bottom height; +150u is her explicit
+   request for breathing room below the cards that Figma's spec didn't have. */
+.pricing {
+  position: relative;
+  overflow: hidden;
+  height: calc(var(--u) * (1441 + 150));
+  /* full-bleed seam guard, same fix as every other block boundary on the
+     site — see BLOCK_STARTER_KIT.md's "full-bleed seam hairline gotcha" */
+  margin: -2px 0 0;
+  background-color: var(--beige-100);
+  color: #2B3D2D;
+}
+
+.pricing__header {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 150);
+  width: calc(var(--u) * 1821);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 20);
+}
+
+.pricing__heading {
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 308);
+}
+
+.pricing__eyebrow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.5;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.pricing__eyebrow .italic-symbol { margin-right: 10px; }
+
+.pricing__heading-word {
+  position: absolute;
+  display: block;
+  /* word--3's true width (2091u) exceeds .pricing__heading's own 1821u —
+     override the sitewide `img { max-width: 100% }` reset, which was
+     silently capping it to the container width and squashing the blur
+     bleed on "гончарства" */
+  max-width: none;
+  pointer-events: none;
+}
+
+/* All three heading words share ONE scale (s = 0.50277, i.e. k = 1.989
+   canvas-px per Figma unit), derived from the one blur-FREE reference we
+   have — "у" in h-price-3.png isn't blurred, so its alpha bbox is a clean,
+   distortion-free measurement: bbox width 189px for a node that's 95u
+   wide -> k = 189/95 = 1.989. Using a per-image scale derived from each
+   word's OWN blurred bbox height (the first pass) put "оберіть" (blur 12)
+   and "шлях" (blur 5) at visibly different apparent font sizes, because
+   heavier blur inflates the measured bbox height without changing the
+   true glyph size — her catch. One shared k fixes that: every word is now
+   the same true size, only the blur halo differs.
+
+   Every word is positioned by LEFT/TOP-EDGE alignment: left = node.x -
+   bbox.minX*s, top = node.y - bbox.minY*s — not bbox-centring — so the
+   actual glyph ink lands exactly on Figma's node position regardless of
+   how much (possibly asymmetric) padding her export left around it. */
+.pricing__heading-word--1 {
+  /* h-price-1.png, canvas 1306×326, bbox min (22,22); node 978:1391 at
+     (306, 0) within .pricing__heading */
+  left: calc(var(--u) * 294.9);
+  top: calc(var(--u) * -11.06);
+  width: calc(var(--u) * 656.6);
+  height: auto;
+}
+
+.pricing__heading-word--2 {
+  /* h-price-2.png, canvas 923×264, bbox min (19,8); node 978:1390 at
+     (1364, 0) */
+  left: calc(var(--u) * 1354.4);
+  top: calc(var(--u) * -4.02);
+  width: calc(var(--u) * 464.1);
+  height: auto;
+}
+
+/* "у" + "світ гончарства" together — h-price-3.png, canvas 3693×347, bbox
+   min (0,27); node 978:1385 at (0, 154). True width at this shared scale
+   is 1857.1u, which bleeds ~36u past .pricing__heading's own 1821u right
+   edge — i.e. past the site's standard 50u right margin (her catch #2).
+   clip-path trims exactly that overshoot instead of shrinking the image
+   (which would also shrink the "у"/"світ" glyphs out of the shared
+   scale) or clipping the whole heading box (which would also cut the
+   other two words' harmless vertical blur bleed). */
+.pricing__heading-word--3 {
+  left: 0;
+  top: calc(var(--u) * 140.4);
+  width: calc(var(--u) * 1857.1);
+  height: auto;
+  clip-path: inset(0 calc(var(--u) * 36.1) 0 0);
+}
+
+/* two lines, each spread edge-to-edge — Figma spreads every word to an
+   explicit manual x offset; text-align-last:justify reproduces the same
+   "fills the full width" look without hardcoding 17 per-word positions
+   that would only be exactly right at the 1920 reference width. */
+.pricing__lead {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 10);
+  width: 100%;
+}
+
+.pricing__lead-line {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.2;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: rgba(43, 61, 45, 0.8);
+  text-align: justify;
+  text-align-last: justify;
+}
+
+.pricing__lead-line .word {
+  display: inline-block;
+  will-change: opacity;
+}
+
+.pricing__cards {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 650);
+  width: calc(var(--u) * 1819);
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--u) * 10);
+}
+
+/* Hover: the whole card lifts 2px and grows 1% as one unit — background,
+   border and every child scale together, no separate wrapper or per-child
+   transform. A per-child version (`.pricing__card > *` scaling instead of
+   the card itself) was tried in between and reverted — her explicit call,
+   she wants the card's own box moving, not just its contents. */
+.pricing__card {
+  position: relative;
+  width: calc(var(--u) * 600);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pricing__card:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+.pricing__card--basic {
+  height: calc(var(--u) * 732);
+  background-color: rgba(154, 150, 113, 0.2);
+}
+
+.pricing__card--featured {
+  height: calc(var(--u) * 791);
+  background-color: var(--olive-100);
+}
+
+.pricing__card--pro {
+  height: calc(var(--u) * 702);
+  /* 1.5px, not 1px: at her machine's devicePixelRatio (1.5), ANY
+     border-width from 0 up to 1.3px rounds down to the exact same
+     rendered thickness (1 device pixel ≈ 0.667 CSS px) — confirmed live by
+     testing 0.5px/1px/1.2px/1.3px side by side, all identical. That's why
+     the earlier "make it 1px like everywhere else" change was invisible to
+     her. 1.4px is the first value that actually rounds up to a full 2
+     device pixels; 1.5px sits safely past that threshold. If a future
+     hairline border/line looks unchanged after a width tweak, suspect this
+     same DPR rounding before assuming the CSS didn't apply. */
+  border: 1.5px solid rgba(154, 150, 113, 0.2);
+}
+
+.pricing__card-title {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+}
+
+.pricing__card-subtitle,
+.pricing__card-format,
+.pricing__card-result {
+  position: absolute;
+  z-index: 1;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+}
+
+.pricing__card-subtitle {
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.24);
+}
+
+.pricing__card-subtitle .italic-symbol { font-style: italic; margin-right: 10px; }
+
+.pricing__card-price {
+  position: absolute;
+  z-index: 1;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 5);
+  font-family: 'Helvetica Neue', sans-serif;
+  color: #2B3D2D;
+}
+
+.pricing__card-price-currency,
+.pricing__card-price-period {
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.5;
+}
+
+.pricing__card-price-value {
+  font-weight: 500;
+  line-height: 1;
+}
+
+.pricing__card-format {
+  font-size: calc(var(--u) * 18);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.pricing__card-result {
+  font-size: calc(var(--u) * 24);
+  line-height: 1.2;
+  letter-spacing: calc(var(--u) * -0.24);
+}
+
+/* CTA — the underline is a STATIC line, always visible, no hover sweep.
+   An earlier version used the shared heroLineSweep hover-animation (like
+   .hero__btn's), but the animation itself was the bug she flagged (jitter)
+   and didn't suit these cards — she wants the line always there, doing
+   nothing on hover. The plus-icon swap is untouched and still animates on
+   hover via the same .js-line-hover:hover trigger (see
+   .pricing__card-cta-plus-char rules below) — that part was never the
+   complaint, only the line's hover animation was. */
+.pricing__card-cta {
+  position: absolute;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  text-decoration: none;
+  font-family: 'Helvetica Neue', sans-serif;
+}
+
+.pricing__card-cta-line-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * -8);
+  height: 1px;
+  overflow: hidden;
+  /* counter-scales against the card's own hover scale(1.01) below, so the
+     line's RENDERED thickness never changes even mid-transition — a
+     transform on an ancestor visually scales everything painted inside it
+     (a 1px line really does render as ~1.01px once the card scales up),
+     and a hairline is thin enough that this tiny stretch reads as
+     trembling/jitter while the transition is running, since sub-pixel
+     rendering has to keep re-resolving a constantly-changing fractional
+     thickness. Same transition duration/easing as .pricing__card:hover so
+     both scales interpolate in lockstep and actually cancel out
+     throughout the animation, not just at the two end states. */
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pricing__card:hover .pricing__card-cta-line-track {
+    transform: scale(calc(1 / 1.01));
+  }
+}
+
+.pricing__card-cta-line {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+}
+
+.pricing__card-cta-label {
+  font-size: calc(var(--u) * 36);
+  font-weight: 400;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.pricing__card-cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+}
+
+.pricing__card-cta-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.pricing__card-cta-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pricing__card-cta-plus-char--out { transform: translateY(0%); }
+.pricing__card-cta-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .pricing__card-cta-plus-char--out { transform: translateY(-100%); }
+.js-line-hover:hover .pricing__card-cta-plus-char--in { transform: translateY(0%); }
+
+/* --- card 1: перший дотик (basic) --- */
+/* her export (img/h-1price.png, canvas 653×153, bbox min (32,32)), same
+   shared scale s=0.50277 as the main heading (see .pricing__heading-word
+   comment) and same LEFT/TOP-EDGE alignment — her catch #4: the title was
+   previously bbox-CENTRED, which visibly drifted it right of the
+   subtitle/price/etc below (all flush at left:40u). Edge-aligning puts
+   the actual "перший дотик" glyph ink at the same 40u left edge as
+   everything else in the card: left = node.x(40) - bbox.minX(32)*s. */
+.pricing__card--basic .pricing__card-title { left: calc(var(--u) * 23.9); top: calc(var(--u) * 103.9); width: calc(var(--u) * 328.3); }
+.pricing__card--basic .pricing__card-subtitle { left: calc(var(--u) * 40); top: calc(var(--u) * 168); width: calc(var(--u) * 520); color: rgba(43, 61, 45, 0.6); }
+.pricing__card--basic .pricing__card-price { left: calc(var(--u) * 40); top: calc(var(--u) * 234); }
+.pricing__card--basic .pricing__card-price-value { font-size: calc(var(--u) * 104); letter-spacing: calc(var(--u) * -2.08); }
+.pricing__card--basic .pricing__card-format { left: calc(var(--u) * 40); top: calc(var(--u) * 405); width: calc(var(--u) * 335); color: rgba(43, 61, 45, 0.6); }
+.pricing__card--basic .pricing__card-result { left: calc(var(--u) * 40); top: calc(var(--u) * 452); width: calc(var(--u) * 520); color: rgba(43, 61, 45, 0.8); }
+.pricing__card--basic .pricing__card-result-label { color: rgba(43, 61, 45, 0.6); }
+.pricing__card--basic .pricing__card-cta { left: calc(var(--u) * 40); top: calc(var(--u) * 570); color: rgba(43, 61, 45, 0.8); }
+.pricing__card--basic .pricing__card-cta-plus { font-size: calc(var(--u) * 40); }
+
+/* --- card 2: мова глини (featured, olive bg — light text) --- */
+/* placeholder pending her h-2price.png export (see index.html's block
+   comment). pricing-title-2.png is a tight MCP-render crop at native
+   scale (its 492×85 canvas maps ~1:1 to Figma units, unlike her own
+   manual exports which are a different pipeline entirely) — used at its
+   native size, left/top-edge aligned to node 978:1448's own position
+   (40, 100 within the card). Do NOT rescale this to the node's declared
+   77u height like a first pass tried — that assumption doesn't hold for
+   this render pipeline and only shrinks the title for no reason.
+
+   `left` is 24u, not 40u: pricing-title-2.png was exported FLATTENED onto
+   an opaque olive fill matching the card's own background, not with real
+   alpha transparency (unlike h-1price.png, which is genuinely transparent
+   — that's what "bbox min is 0,0" was checking before, the wrong signal
+   for this asset). Measured directly (canvas pixel scan for the first
+   column whose color differs from the image's own corner pixel, not the
+   alpha channel): visible ink starts 16px into the 492px-wide asset. Left
+   is set to 40u - 16u = 24u so the VISIBLE glyph lines up with the
+   subtitle's 40u, the same compensation h-1price.png's 23.9u already does
+   for its own (smaller, ~16u) baked-in margin below. */
+.pricing__card--featured .pricing__card-title { left: calc(var(--u) * 24); top: calc(var(--u) * 100); width: calc(var(--u) * 492); }
+.pricing__card--featured .pricing__card-subtitle { left: calc(var(--u) * 40); top: calc(var(--u) * 187); width: calc(var(--u) * 520); color: rgba(43, 61, 45, 0.6); }
+.pricing__card--featured .pricing__card-price { left: calc(var(--u) * 40); top: calc(var(--u) * 257); }
+.pricing__card--featured .pricing__card-price-value { font-size: calc(var(--u) * 140); letter-spacing: calc(var(--u) * -4.2); }
+.pricing__card--featured .pricing__card-format { left: calc(var(--u) * 40); top: calc(var(--u) * 473); width: calc(var(--u) * 335); color: #2B3D2D; text-align: center; }
+.pricing__card--featured .pricing__card-result { left: calc(var(--u) * 40); top: calc(var(--u) * 516); width: calc(var(--u) * 520); color: var(--beige-100); }
+.pricing__card--featured .pricing__card-result-label { color: rgba(237, 233, 221, 0.6); }
+.pricing__card--featured .pricing__card-cta { left: calc(var(--u) * 40); top: calc(var(--u) * 634); color: #2B3D2D; }
+.pricing__card--featured .pricing__card-cta-plus { font-size: calc(var(--u) * 40); }
+
+/* --- card 3: професійний рівень (transparent, hairline border) --- */
+/* placeholder pending her h-3price.png export — same native-scale MCP
+   render as card 2's (see that comment): used at its real 449×77 size,
+   left/top-edge aligned to node 978:1454's position (40, 90). Reverted
+   from an earlier pass that incorrectly rescaled this down to the node's
+   declared 38u height and made the title visibly smaller than card 1's —
+   her catch.
+
+   Same flattened-background export as card 2's title (see that comment):
+   pricing-title-3.png's visible ink starts 15px into its 449px width, so
+   `left` is 40u - 15u = 25u to line the glyph up with the subtitle's 40u.
+   `top` is nudged an extra literal -13px on top of the 90u position — her
+   explicit correction, applied in two rounds (-6px, then another -7px on
+   top of that) because the title kept sitting too low/close to the
+   subtitle beneath it. */
+.pricing__card--pro .pricing__card-title { left: calc(var(--u) * 25); top: calc(calc(var(--u) * 90) - 13px); width: calc(var(--u) * 449); }
+.pricing__card--pro .pricing__card-subtitle { left: calc(var(--u) * 40); top: calc(var(--u) * 138); width: calc(var(--u) * 520); color: rgba(43, 61, 45, 0.6); }
+.pricing__card--pro .pricing__card-price { left: calc(var(--u) * 40); top: calc(var(--u) * 214); }
+.pricing__card--pro .pricing__card-price-value { font-size: calc(var(--u) * 96); letter-spacing: calc(var(--u) * -1.92); }
+.pricing__card--pro .pricing__card-format { left: calc(var(--u) * 40); top: calc(var(--u) * 375); width: calc(var(--u) * 410); color: rgba(43, 61, 45, 0.6); }
+.pricing__card--pro .pricing__card-result { left: calc(var(--u) * 40); top: calc(var(--u) * 422); width: calc(var(--u) * 520); color: rgba(43, 61, 45, 0.8); }
+.pricing__card--pro .pricing__card-result-label { color: rgba(43, 61, 45, 0.6); }
+.pricing__card--pro .pricing__card-cta { left: calc(var(--u) * 40); top: calc(var(--u) * 540); color: rgba(43, 61, 45, 0.8); }
+
+/* ==========================================================================
+   CTA SECTION — "11_СТА"
+   ========================================================================== */
+
+.cta {
+  isolation: isolate;
+  position: relative;
+  overflow: hidden;
+  height: calc(var(--u) * 1281);
+  /* full-bleed seam guard vs. .pricing above — see BLOCK_STARTER_KIT.md's
+     "full-bleed seam hairline gotcha" */
+  margin: -2px 0 0;
+  background-color: var(--olive-100);
+}
+
+/* same film-grain tile as .philosophy / .gallery__bar — both are flat
+   --olive-100 fields per Figma, see the note above .philosophy::before */
+.cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--grain, none);
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+}
+
+.cta__top {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  right: calc(var(--u) * 50);
+  top: calc(var(--u) * 150);
+}
+
+/* --- heading: 4 lines at 100/80/60/40% opacity, literal green #2B3D2D
+   (the project's one standing dark-text literal). Figma positions the
+   second word of rows 3-4 with an absolute offset independent of the
+   first word's rendered width (row 1 is a plain flex gap instead) — kept
+   as absolute offsets here rather than justify-content so the gap matches
+   exactly regardless of glyph width.
+
+   Each row is also a mask (overflow:hidden) around its own -row-inner —
+   the kasiasiwosz.com "line" reveal (see BLOCK_STARTER_KIT.md's sibling
+   reference note): the inner is what actually slides up + fades in
+   (runCtaEntrance), the row just clips it so it reads as emerging from
+   behind the line rather than sliding in from off-section. --- */
+.cta__heading {
+  position: relative;
+  width: calc(var(--u) * 1009);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cta__heading-row {
+  position: relative;
+  overflow: hidden;
+  height: calc(var(--u) * 128);
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+}
+
+.cta__heading-row-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.cta__heading-row--1 .cta__heading-row-inner { gap: calc(var(--u) * 78); }
+.cta__heading-row--1 { color: #2B3D2D; }
+.cta__heading-row--2 { color: rgba(43, 61, 45, 0.8); }
+.cta__heading-row--3 { color: rgba(43, 61, 45, 0.6); }
+.cta__heading-row--4 { color: rgba(43, 61, 45, 0.4); }
+
+.cta__heading-row--3 .cta__heading-word--b { position: absolute; left: calc(var(--u) * 563); top: 0; }
+.cta__heading-row--4 .cta__heading-word--b { position: absolute; left: calc(var(--u) * 378); top: 0; }
+
+.cta__lead {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 552);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -1.28);
+  white-space: nowrap;
+  color: var(--beige-100);
+}
+
+.cta__lead-dim { color: var(--beige-80); }
+
+/* clickable video, not a passive photo — cursor-bubble treatment
+   (js-cursor-media, "стоп"/"грати" via initCtaVideoToggle) instead of the
+   shared mediaImageGroups() hover-scale+parallax recipe, same distinction
+   BLOCK_STARTER_KIT.md draws for .gallery__photo. Plain hover-scale only,
+   no scroll-drift. */
+.cta__media {
+  display: block;
+  position: absolute;
+  left: calc(var(--u) * 1443);
+  top: calc(var(--u) * 97);
+  width: calc(var(--u) * 377);
+  height: calc(var(--u) * 518);
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cta__media:hover { transform: scale(1.03); }
+}
+
+.cta__media-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: calc(100% + 1px);
+  object-fit: cover;
+  display: block;
+}
+
+/* --- advantages / stats row --- */
+
+.cta__stats {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  right: calc(var(--u) * 50);
+  top: calc(var(--u) * 944);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cta__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.cta__stat-number {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 0 calc(var(--u) * -20);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--beige-80);
+}
+
+.cta__stat-value {
+  display: inline-block;
+  /* right-aligned: runCtaCounters() locks this to its final width via an
+     inline min-width (see setInitialCtaStates()) before the count starts,
+     so the digits don't reflow the stats row mid-count — right-aligning
+     the text within that reserved box keeps it flush against the
+     +/% symbol throughout instead of leaving a gap that only closes at
+     the very end */
+  text-align: right;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 174);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -5.22);
+}
+
+.cta__stat-symbol {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  font-size: calc(var(--u) * 96);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -1.92);
+}
+
+.cta__stat-label {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  white-space: nowrap;
+  color: var(--beige-80);
+}
+.pricing__card--pro .pricing__card-cta-plus { font-size: calc(var(--u) * 32); }

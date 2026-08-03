@@ -311,7 +311,22 @@ background as you scroll): `applySectionLag('.myblock', '.myblock >
 .section-inner')`, one line added to `initSectionScrollLag()`. **Ask her
 first** whether the new block should have this — gallery and philosophy
 were deliberately excluded because she reads them as one continuous
-surface; it's not automatic for every block.
+surface; it's not automatic for every block. **Never add this to a
+pinned+scrubbed section** (a carousel, gallery-style) — both scrubs fight
+over the same content transform, visible as the header drifting vertically
+while the pin is also panning it horizontally. `.gallery` and `.stories`
+are both excluded for exactly this reason.
+
+**Pinning a section to a `'center center'`-style start** (so its content
+sits with symmetric margins once fully visible, e.g. any future carousel
+block): trigger the pin off the SPECIFIC sub-element that must fit on
+screen, not the whole section — `scrollTrigger: { trigger:
+<the-sub-element>, pin: <the-whole-section> }` (trigger and pin can be
+different elements). If the section (header + content combined) is taller
+than a typical widescreen viewport, centering the WHOLE section crops both
+ends equally instead of showing everything — this bug was invisible on a
+narrow/tall test viewport and only showed up on her real wide monitor
+(~100px cropped off the bottom row of block 9's carousel).
 
 **Entrance-timing-after-a-pinned-section gotcha**: if your new block comes
 directly (or a few blocks) after a section that uses ScrollTrigger
@@ -423,7 +438,70 @@ three existing groups — don't restructure the init block itself.
 ## Blocks not yet built
 
 Per the Figma frame names (mockup exports intentionally not in the repo —
-she supplies node links per block when it starts): **8 free lesson**,
-**9 історії учнів** (student stories), **10 тарифи** (pricing), **11 СТА**,
-**12 FAQ**, **13 соц мережі** (social), **14 футер** (footer). Each starts
-from zero layout.
+she supplies node links per block when it starts): **12 FAQ**,
+**13 соц мережі** (social), **14 футер** (footer). Each starts from zero
+layout.
+
+## Verifying a title/label built from an exported image, next to real text
+
+If a block's heading or label is an exported PNG (like the pricing cards'
+titles) sitting next to plain text that needs to visually left-align with
+it, **do not trust the CSS `left` values matching, and do not trust an
+alpha-channel bounding-box check** ("image's opaque pixels start at (0,0),
+so no offset needed"). A title PNG exported flattened onto an opaque
+background matching its own card color (rather than real alpha
+transparency) is fully opaque edge-to-edge — an alpha check reports zero
+padding even when the visible glyph sits 15-20px inside the canvas. This
+cost three rounds on the pricing cards before it was actually measured
+right.
+
+Measure it properly: draw the image to an offscreen canvas, read the pixel
+color at `(0,0)` as the background reference, then scan for the first
+column whose color differs from that reference by a real margin (`|Δr| +
+|Δg| + |Δb| > 30` is a safe threshold). Convert that column index to `u`
+(these assets render at 1 natural px = 1u, so no extra scaling math is
+usually needed) and subtract it from the naive `left` value. Verify by
+comparing the title's rendered ink position against the real text's
+rendered position (a `Range` around its first character's text node gives
+an accurate rect) — the two should differ by well under 1px once correct.
+
+## Card hover that scales/lifts the whole element
+
+The established default (pricing cards, confirmed final after a per-child
+version was tried and rejected): the CARD's own box moves, not just its
+contents —
+```css
+.mycard { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+@media (hover: hover) and (pointer: fine) {
+  .mycard:hover { transform: translateY(-2px) scale(1.01); }
+}
+```
+**If the card contains any hairline border or 1px line**, that line will
+visibly stretch along with the card's scale, and animating through that
+tiny continuous change reads as jitter on the line specifically (thin
+features are far more sensitive to sub-pixel rounding than anything else
+on the card). Counter-scale the hairline element itself, on the exact same
+transition duration/easing as the card's own hover rule so the two cancel
+out continuously through the whole transition, not just at the two end
+states:
+```css
+.mycard-hairline { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+@media (hover: hover) and (pointer: fine) {
+  .mycard:hover .mycard-hairline { transform: scale(calc(1 / 1.01)); }
+}
+```
+
+## Border-width has its own devicePixelRatio rounding cliff
+
+At her machine's devicePixelRatio (1.5), a border-width or any thin
+dimension doesn't render at whatever value you set — it snaps to the
+nearest achievable DEVICE pixel. For dpr 1.5 specifically, EVERY value from
+0 up to ~1.3px rounds down to the same 1 device pixel (≈0.667 CSS px) —
+confirmed by testing 0.5px/1px/1.2px/1.3px side by side and getting an
+identical `getComputedStyle(el).borderTopWidth` for all four. 1.4px is the
+first value that actually renders thicker (2 device pixels ≈ 1.333 CSS
+px). If a thickness tweak "does nothing" visually, check a few candidate
+values via `getComputedStyle` before assuming the CSS didn't apply — this
+is the same family of fractional-dpr issue as the full-bleed section-seam
+hairline gotcha above, just hitting `border-width` instead of a layout
+seam.

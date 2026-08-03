@@ -62,9 +62,7 @@ window.addEventListener('resize', calibrateFluidUnit);
 // against a page that's shorter than its final height — the exact same
 // symptom as the gallery-pin timing bug, just from a different cause. One
 // unconditional refresh once every asset has actually loaded corrects it.
-window.addEventListener('load', () => {
-  if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
-});
+window.addEventListener('load', reRefreshCtaTrigger);
 
 // Same reasoning, different cause: the 16 custom Helvetica Neue weights
 // swap in via @font-face after the fallback font has already laid text
@@ -72,9 +70,33 @@ window.addEventListener('load', () => {
 // metric difference between the fallback and the real face reflows text
 // height further, again after ScrollTrigger has already cached positions.
 if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(() => {
-    if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
-  });
+  document.fonts.ready.then(reRefreshCtaTrigger);
+}
+
+// .cta is the last section, so it inherits the largest accumulated drift
+// from every image/video that loads late above it — the global
+// ScrollTrigger.refresh() calls above don't fully correct it: verified
+// live that this specific trigger's .start stayed frozen ~740px short of
+// its correct position even across repeated global refresh() calls (incl.
+// refresh(true)) fired from 'load'/fonts.ready, while calling .refresh()
+// on the TRIGGER INSTANCE directly, well after those, snapped it to the
+// right value immediately. Also measured the page's real layout still
+// settling for several SECONDS after 'load' (document.body kept growing —
+// probed live: 13035 -> 12913 between the 2s and 4s marks with nothing
+// else happening), so a one-shot re-refresh timed off 'load'/fonts.ready
+// isn't late enough on its own either.
+//
+// Fix: a ResizeObserver on document.body (not documentElement/
+// calibrateFluidUnit's — that one only reacts to WIDTH changes) catches
+// this late growth whenever it actually finishes, however long it takes,
+// and re-refreshes both the whole page and this one instance right after.
+function reRefreshCtaTrigger() {
+  if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
+  if (typeof ctaEntranceTrigger !== 'undefined' && ctaEntranceTrigger) ctaEntranceTrigger.refresh();
+}
+
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(reRefreshCtaTrigger).observe(document.body);
 }
 
 // ==========================================================================
@@ -2065,6 +2087,9 @@ function runFreeLessonEntrance() {
 // ==========================================================================
 
 let storiesSection, storiesEyebrowWords, storiesTitle, storiesLead, storiesCards;
+// exposed for .pricing to chain its own startAfterFloor() off, same as
+// freeLessonEntranceTrigger — see runPricingEntrance() below
+let storiesEntranceTrigger;
 
 function cacheStoriesRefs() {
   storiesSection = document.querySelector('.stories');
@@ -2096,7 +2121,7 @@ function runStoriesEntrance() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !storiesSection) return;
 
   const floor = () => (freeLessonEntranceTrigger ? freeLessonEntranceTrigger.start + 80 : 0);
-  gsap.timeline({
+  const tl = gsap.timeline({
     scrollTrigger: { trigger: storiesSection, start: startAfterFloor(storiesSection, floor), once: true },
   })
     .to(storiesEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' })
@@ -2125,6 +2150,8 @@ function runStoriesEntrance() {
       ease: 'power2.out',
       onComplete: () => gsap.set(storiesCards, { clearProps: 'opacity,transform' }),
     }, '-=0.15');
+
+  storiesEntranceTrigger = tl.scrollTrigger;
 }
 
 // Photo hover: verbatim the same recipe as initGalleryPhotoHover() (scale
@@ -2319,6 +2346,313 @@ function initStoriesSettle(st) {
 }
 
 // ==========================================================================
+// PRICING SECTION — "10_тарифи"
+// ==========================================================================
+
+let pricingSection, pricingEyebrowWords, pricingHeadingWords, pricingLeadWords,
+  pricingCards, pricingCardTitles, pricingCardSubtitles, pricingCardMeta, pricingCardCtas,
+  pricingEntranceTrigger;
+
+function cachePricingRefs() {
+  pricingSection = document.querySelector('.pricing');
+  pricingCards = document.querySelectorAll('.pricing__card');
+  pricingCardTitles = document.querySelectorAll('.pricing__card-title');
+  pricingCardSubtitles = document.querySelectorAll('.pricing__card-subtitle');
+  // price + duration + result read as one "body copy" tier, fading in
+  // together rather than 3 more separate staggered beats — her ask was a
+  // calm, minimal cascade, not a line-by-line reveal for every string
+  pricingCardMeta = document.querySelectorAll('.pricing__card-price, .pricing__card-format, .pricing__card-result');
+  pricingCardCtas = document.querySelectorAll('.pricing__card-cta');
+
+  const eyebrow = document.querySelector('.pricing__eyebrow');
+  pricingEyebrowWords = eyebrow ? splitWords(eyebrow) : [];
+
+  // the heading itself is 3 pre-rendered images (blur, see index.html's
+  // block comment) — animate them as one group via the images directly,
+  // no splitWords possible on an <img>
+  pricingHeadingWords = document.querySelectorAll('.pricing__heading-word');
+
+  pricingLeadWords = Array.from(document.querySelectorAll('.pricing__lead-line'))
+    .flatMap((line) => splitWords(line));
+}
+
+function setInitialPricingStates() {
+  if (reducedMotion) return;
+  gsap.set(pricingEyebrowWords, { opacity: 0 });
+  gsap.set(pricingHeadingWords, { opacity: 0, y: 30 });
+  gsap.set(pricingLeadWords, { opacity: 0 });
+  gsap.set(pricingCards, { opacity: 0, y: 48 });
+  gsap.set(pricingCardTitles, { opacity: 0, y: 20 });
+  gsap.set(pricingCardSubtitles, { opacity: 0, y: 12 });
+  gsap.set(pricingCardMeta, { opacity: 0, y: 12 });
+  gsap.set(pricingCardCtas, { opacity: 0, y: 12 });
+}
+
+// Every beat below reuses an existing site recipe verbatim, per her
+// instruction — nothing new invented:
+//   heading images  -> .hero__title-img's H1 beat (y30, 1.0s, power2.out)
+//   eyebrow + lead   -> splitWords() stagger (.hero__eyebrow /
+//                       .steps__subheading: opacity, 1.0s, stagger .08, sine.out)
+//   card titles      -> .craft__heading-line's fade+rise (y30->y20 here,
+//                       since these are small in-card titles not full
+//                       section headings; same 1.0s/power2.out)
+//   card body copy   -> the standard "fade + rise" recipe (y12, 0.6s, sine.out)
+//   cards themselves -> bottom-up fade+rise (y48->0, power2.out), same as
+//                       .stories__card
+// Same startAfterFloor() chain philosophy/steps/free-lesson/stories use —
+// see BLOCK_STARTER_KIT.md's "Entrance-timing-after-a-pinned-section
+// gotcha". Floored against storiesPinTrigger.end (the CAROUSEL's pin,
+// which holds the screen for STORIES_PAGE_SCROLL=900u), not
+// storiesEntranceTrigger.start — that trigger only fires stories' own
+// fade-in, which happens BEFORE its pin even engages, so flooring against
+// it left pricing's floor ~900u too early: the whole entrance timeline
+// played out while stories' pinned carousel was still visually holding
+// the screen, so by the time she actually scrolled to block 10 everything
+// had already settled — her catch. storiesPinTrigger is assigned later in
+// the init sequence (inside initStoriesCarousel()), but that's fine: this
+// floor function is only ever CALLED lazily on ScrollTrigger refresh, by
+// which point every init call below has already run.
+function runPricingEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !pricingSection) return;
+
+  const floor = () => (storiesPinTrigger ? storiesPinTrigger.end + 80 : 0);
+  const tl = gsap.timeline({
+    scrollTrigger: { trigger: pricingSection, start: startAfterFloor(pricingSection, floor), once: true },
+  })
+    .to(pricingEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' })
+    .to(pricingHeadingWords, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(pricingHeadingWords, { clearProps: 'opacity,transform' }),
+    }, '-=0.4')
+    .to(pricingLeadWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' }, '-=0.5')
+    .to(pricingCards, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(pricingCards, { clearProps: 'opacity,transform' }),
+    }, '-=0.4')
+    .to(pricingCardTitles, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(pricingCardTitles, { clearProps: 'opacity,transform' }),
+    }, '-=0.5')
+    .to(pricingCardSubtitles, {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      stagger: 0.08,
+      ease: 'sine.out',
+      onComplete: () => gsap.set(pricingCardSubtitles, { clearProps: 'opacity,transform' }),
+    }, '-=0.6')
+    .to(pricingCardMeta, {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      stagger: 0.04,
+      ease: 'sine.out',
+      onComplete: () => gsap.set(pricingCardMeta, { clearProps: 'opacity,transform' }),
+    }, '-=0.4')
+    .to(pricingCardCtas, {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      stagger: 0.08,
+      ease: 'sine.out',
+      onComplete: () => gsap.set(pricingCardCtas, { clearProps: 'opacity,transform' }),
+    }, '-=0.3');
+
+  // exposed for .cta's own floor — same "chain to whatever comes
+  // immediately before" pattern every block after a pin already uses
+  pricingEntranceTrigger = tl.scrollTrigger;
+}
+
+// ==========================================================================
+// CTA SECTION — "11_СТА"
+// ==========================================================================
+
+let ctaSection, ctaTop, ctaHeadingRowInners, ctaLead, ctaLeadWords, ctaMedia,
+  ctaStatValues, ctaStatSymbols, ctaStatLabels, ctaEntranceTrigger;
+
+function cacheCtaRefs() {
+  ctaSection = document.querySelector('.cta');
+  ctaTop = document.querySelector('.cta__top');
+  ctaHeadingRowInners = document.querySelectorAll('.cta__heading-row-inner');
+  ctaLead = document.querySelector('.cta__lead');
+  // splitWordsDeep, not splitWords: .cta__lead-strong/-dim are colour tiers
+  // that must stay intact around their own words, same reason
+  // .material__text uses the deep variant — see BLOCK_STARTER_KIT.md
+  ctaLeadWords = ctaLead ? splitWordsDeep(ctaLead) : [];
+  ctaMedia = document.querySelector('.cta__media');
+  ctaStatValues = document.querySelectorAll('.cta__stat-value');
+  ctaStatSymbols = document.querySelectorAll('.cta__stat-symbol');
+  ctaStatLabels = document.querySelectorAll('.cta__stat-label');
+}
+
+function setInitialCtaStates() {
+  if (reducedMotion) return;
+  gsap.set(ctaHeadingRowInners, { opacity: 0, yPercent: 100 });
+  gsap.set(ctaLead, { opacity: 0, y: 12 });
+  gsap.set(ctaLeadWords, { opacity: 0.3 });
+  gsap.set(ctaMedia, { opacity: 0, y: 120 });
+  gsap.set(ctaStatSymbols, { opacity: 0 });
+  gsap.set(ctaStatLabels, { opacity: 0, y: 12 });
+  // lock each value's box to its FINAL rendered width before zeroing the
+  // text — otherwise "200" collapsing to "0" narrows the item, which
+  // (space-between, hug-width items) shifts every stat's x position
+  // during the count and leaves alignCtaLead()'s measurement stale by the
+  // time it matters
+  ctaStatValues.forEach((el) => {
+    el.style.minWidth = `${el.getBoundingClientRect().width}px`;
+    el.textContent = '0';
+  });
+}
+
+// Her ask: the lead paragraph's left edge should line up with the second
+// stat's ("94%") left edge, one line below. .cta__stats is a flex
+// justify-content:space-between row of intrinsically-sized (hug-content)
+// items, so that x position isn't a fixed --u value the way the rest of
+// this block's geometry is — it shifts with the actual rendered glyph
+// widths. Measured live off the real DOM instead, same reasoning
+// calibrateFluidUnit() measures --u live rather than hand-computing it,
+// and re-run on resize/font-swap for the same reason.
+function alignCtaLead() {
+  if (!ctaLead || !ctaTop) return;
+  const stat2 = document.querySelector('.cta__stats .cta__stat:nth-child(2)');
+  if (!stat2) return;
+  const topRect = ctaTop.getBoundingClientRect();
+  const statRect = stat2.getBoundingClientRect();
+  if (!topRect.width || !statRect.width) return;
+  ctaLead.style.left = `${statRect.left - topRect.left}px`;
+}
+
+// resize itself is handled from inside calibrateFluidUnit() (its
+// ResizeObserver catches viewport changes a plain 'resize' listener
+// misses); these two cover the remaining cases — late-loading assets and
+// the @font-face swap, same as the ScrollTrigger.refresh() calls above
+window.addEventListener('load', alignCtaLead);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignCtaLead);
+
+// 0 -> target count-up, one independent tween per stat (not a single
+// staggered .to() on a shared proxy — each needs its own target value and
+// its own element to write into). Runs once, called from the main
+// timeline below so it's still gated behind the same ScrollTrigger.
+function runCtaCounters() {
+  ctaStatValues.forEach((el, i) => {
+    const target = parseInt(el.dataset.count, 10) || 0;
+    const counter = { val: 0 };
+    gsap.to(counter, {
+      val: target,
+      duration: 1.4,
+      delay: i * 0.1,
+      ease: 'power1.out',
+      onUpdate: () => { el.textContent = Math.round(counter.val); },
+    });
+  });
+}
+
+// Same startAfterFloor() chain philosophy/steps/free-lesson/stories/pricing
+// use — see BLOCK_STARTER_KIT.md's "Entrance-timing-after-a-pinned-section
+// gotcha". Floored against pricingEntranceTrigger.start (the block
+// immediately before this one, same as every other link in the chain),
+// with the old storiesPinTrigger floor kept as a fallback for the brief
+// window before pricing's own trigger has fired at least once.
+function runCtaEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !ctaSection) return;
+
+  const floor = () => (pricingEntranceTrigger
+    ? pricingEntranceTrigger.start + 80
+    : (storiesPinTrigger ? storiesPinTrigger.end + 80 : 0));
+
+  // Beat 1 — heading: kasiasiwosz.com "line" reveal (see
+  // ref-kasiasiwosz-text-reveals: mask-slide-fade per line), exact values —
+  // y:100%->0%, opacity 0->1, power2.out, duration 0.5, stagger 0.1.
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: ctaSection,
+      start: startAfterFloor(ctaSection, floor),
+      once: true,
+      invalidateOnRefresh: true,
+    },
+  })
+    .to(ctaHeadingRowInners, { opacity: 1, yPercent: 0, duration: 0.5, stagger: 0.1, ease: 'power2.out' })
+    .to(ctaLead, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.2')
+    .to(ctaMedia, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      ease: 'power4.out',
+      onComplete: () => gsap.set(ctaMedia, { clearProps: 'transform' }),
+    }, '-=0.3')
+    .to(ctaStatSymbols, { opacity: 1, duration: 0.5, stagger: 0.1, ease: 'sine.out' }, '-=0.3')
+    .to(ctaStatLabels, { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'sine.out' }, '<')
+    .call(runCtaCounters, null, '<');
+
+  ctaEntranceTrigger = tl.scrollTrigger;
+
+  // Beat 2 — lead paragraph: kasiasiwosz.com "word" scroll-scrubbed
+  // emphasis (see ref-kasiasiwosz-text-reveals), same tuned values already
+  // shipped on .material__text (project-artefact-block4-motion) rather
+  // than the raw external ones — dim (0.3) words light up (1) as the
+  // scroll passes them. Runs off its own scrub, independent of the
+  // once-only timeline above (same split as material's beat 3a/3b).
+  gsap.to(ctaLeadWords, {
+    opacity: 1,
+    ease: 'power2.out',
+    duration: 1.4,
+    stagger: 0.3,
+    scrollTrigger: {
+      trigger: ctaLead,
+      start: 'top 80%',
+      end: 'top 20%',
+      scrub: true,
+    },
+  });
+}
+
+// ==========================================================================
+// CTA VIDEO TOGGLE — same play/pause + cursor-label swap as
+// .clay__video-toggle (initClayVideoToggle), verbatim, just against the
+// button-framed video instead of the full-bleed one.
+// ==========================================================================
+
+function initCtaVideoToggle() {
+  const toggle = document.querySelector('.cta__media');
+  const video = document.querySelector('.cta__media-video');
+  if (!toggle || !video) return;
+
+  const cursor = document.getElementById('cursor');
+  const cursorLabel = cursor && cursor.querySelector('.cursor__media-label');
+
+  function setState(isPlaying) {
+    const label = isPlaying ? 'стоп' : 'грати';
+    toggle.dataset.cursorLabel = label;
+    toggle.setAttribute('aria-label', isPlaying ? 'Зупинити відео' : 'Відтворити відео');
+    if (cursorLabel && cursor.classList.contains('is-media')) {
+      cursorLabel.textContent = label;
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    if (video.paused) {
+      video.play();
+      setState(true);
+    } else {
+      video.pause();
+      setState(false);
+    }
+  });
+}
+
+// ==========================================================================
 // INIT
 // ==========================================================================
 
@@ -2332,6 +2666,21 @@ cachePhilosophyRefs();
 cacheStepsRefs();
 cacheFreeLessonRefs();
 cacheStoriesRefs();
+cachePricingRefs();
+cacheCtaRefs();
+alignCtaLead();
+// Own ResizeObserver rather than hooking into calibrateFluidUnit(): that
+// function runs once immediately at parse time (line ~39, long before
+// ctaTop/ctaLead exist), and calling into alignCtaLead() from inside it
+// hit those `let` bindings while still in their temporal dead zone —
+// an uncaught ReferenceError on that very first synchronous call, which
+// aborted the rest of this script (nothing after it, including every
+// other block's init calls below, ever ran). Observing .cta__top directly
+// here is set up only after cacheCtaRefs() has already run, so the TDZ has
+// long closed by the time this fires.
+if (typeof ResizeObserver !== 'undefined' && ctaTop) {
+  new ResizeObserver(alignCtaLead).observe(ctaTop);
+}
 if (hasGSAP) {
   setInitialHeroStates();
   setInitialMenuState();
@@ -2343,6 +2692,8 @@ if (hasGSAP) {
   setInitialStepsStates();
   setInitialFreeLessonStates();
   setInitialStoriesStates();
+  setInitialPricingStates();
+  setInitialCtaStates();
 }
 initPreloader();
 initGlassCursor();
@@ -2368,6 +2719,8 @@ runStepsEntrance();
 initStepHoverGuard();
 runFreeLessonEntrance();
 runStoriesEntrance();
+runPricingEntrance();
+runCtaEntrance();
 initGalleryPhotoHover();
 initStoriesPhotoHover();
 initStoriesReviews();
@@ -2377,6 +2730,7 @@ runClayEntrance();
 runMaterialEntrance();
 initClayVideoParallax();
 initClayVideoToggle();
+initCtaVideoToggle();
 initScrollDownArrows();
 initGalleryFilter();
 initSectionScrollLag();
@@ -2386,6 +2740,7 @@ initSectionScrollLag();
 // position via startAfterFloor() on this and every later refresh, so no
 // separate correction pass is needed here.
 if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
+reRefreshCtaTrigger();
 
 // initParallax() and initHeroScrollLag() are both triggered by
 // runHeroEntrance() once the master entrance timeline finishes, not

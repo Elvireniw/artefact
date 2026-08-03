@@ -841,6 +841,221 @@
 
   </section>
 
+  <!-- PRICING SECTION — "10_тарифи" (Figma node 978:1381, file
+       6tA1k2sLpFm5U7cLn9p9rZ). Verstka + motion pass.
+
+       BLUR: Figma renders the main heading words and all three card titles
+       with real blur baked into the glyphs (soft-focus type treatment).
+       Project hard rule bans CSS blur anywhere, so — same precedent as
+       mova-clay.png in block 3 and h-step-1/2.png in block 7 — every
+       blurred piece of type here is a pre-rendered transparent PNG she
+       exported straight from Figma herself: img/h-price-1.png ("оберіть"),
+       img/h-price-2.png ("шлях"), img/h-price-3.png ("у" + "світ
+       гончарства" together — "у" isn't blurred in her export but ships in
+       the same file), img/h-1price.png (card 1's "перший дотик" title).
+       Cards 2/3 titles (img/h-2price.png, img/h-3price.png) aren't in
+       img/ yet — those two cards keep the Figma-MCP-exported placeholders
+       (pricing-title-2.png, pricing-title-3.png) until she adds them; swap
+       once available, same positioning method below applies.
+
+       POSITIONING: her exports are NOT tightly cropped to the glyphs —
+       each PNG's own transparent canvas carries an arbitrary amount of
+       padding around the content, not necessarily centred (confirmed by
+       measuring each file's alpha bounding box). Every h-price-*/h-1price
+       image shares ONE scale (s = 0.50277, i.e. 1.989 canvas-px per Figma
+       unit), derived from the one blur-FREE measurement available — "у"
+       in h-price-3.png — because deriving each word's scale independently
+       from its OWN blurred bbox (first pass) made more-blurred words
+       (blur 12) render visibly bigger than less-blurred ones (blur 5) at
+       the same nominal font-size: her catch. Every image is then
+       positioned by LEFT/TOP-EDGE alignment (left = node.x - bbox.minX*s,
+       not bbox-centring) so the glyph ink lands exactly on Figma's node
+       position — centring had visibly drifted the card 1 title right of
+       its subtitle: her other catch. See the calc() comments on each
+       .pricing__heading-*/.pricing__card-title rule in style.css for the
+       actual numbers.
+
+       Everything else (eyebrow, lead line, subtitles, prices, body copy,
+       CTAs) is real text.
+
+       CARDS: every .pricing__card-* is positioned with literal left/top
+       offsets per element (not flex/gap) — the three cards' internal
+       spacing isn't uniform enough (card 2's taller title pushes its
+       price block down by a different amount than cards 1/3) to fake
+       with a shared gap value. Only the outer row uses flex
+       (align-items: flex-end + gap), which is exactly how Figma bottom-
+       aligns the three different-height cards against each other. -->
+  <section class="pricing" id="pricing" data-cursor-theme="light">
+
+    <div class="section-inner">
+
+      <div class="pricing__header">
+
+        <div class="pricing__heading">
+          <h2 class="visually-hidden">оберіть шлях у світ гончарства</h2>
+          <p class="pricing__eyebrow"><span class="italic-symbol">(</span>наші курси</p>
+          <img class="pricing__heading-word pricing__heading-word--1" src="img/h-price-1.png" alt="" aria-hidden="true">
+          <img class="pricing__heading-word pricing__heading-word--2" src="img/h-price-2.png" alt="" aria-hidden="true">
+          <img class="pricing__heading-word pricing__heading-word--3" src="img/h-price-3.png" alt="" aria-hidden="true">
+        </div>
+
+        <div class="pricing__lead">
+          <p class="pricing__lead-line">пориньте в цей світ з комфортом для себе обирайте між</p>
+          <p class="pricing__lead-line">швидким зануренням, фундаментальним курсом чи індивідуальним шляхом</p>
+        </div>
+
+      </div>
+
+      <div class="pricing__cards">
+
+        <article class="pricing__card pricing__card--basic">
+          <img class="pricing__card-title" src="img/h-1price.png" alt="Перший дотик">
+          <p class="pricing__card-subtitle"><span class="italic-symbol">(</span>ідеальний старт для тих, хто сумнівається</p>
+          <p class="pricing__card-price">
+            <span class="pricing__card-price-currency">₴</span>
+            <span class="pricing__card-price-value">7,900</span>
+            <span class="pricing__card-price-period">/міс</span>
+          </p>
+          <p class="pricing__card-format">Тривалість: 4 тижні&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Формат: офлайн</p>
+          <p class="pricing__card-result"><span class="pricing__card-result-label">результат:</span> готовий виріб, який можна забрати з собою після випалу</p>
+          <a href="#" class="pricing__card-cta js-line-hover">
+            <span class="pricing__card-cta-label">розпочати шлях</span>
+            <span class="pricing__card-cta-plus" aria-hidden="true">
+              <span class="pricing__card-cta-plus-track">
+                <span class="pricing__card-cta-plus-char pricing__card-cta-plus-char--out">+</span>
+                <span class="pricing__card-cta-plus-char pricing__card-cta-plus-char--in">+</span>
+              </span>
+            </span>
+            <span class="pricing__card-cta-line-track" aria-hidden="true">
+              <span class="pricing__card-cta-line pricing__card-cta-line--out"></span>
+            </span>
+          </a>
+        </article>
+
+        <article class="pricing__card pricing__card--featured">
+          <img class="pricing__card-title" src="img/pricing-title-2.png" alt="Мова глини">
+          <p class="pricing__card-subtitle"><span class="italic-symbol">(</span>це ваш шлях від новачка до творця</p>
+          <p class="pricing__card-price">
+            <span class="pricing__card-price-currency">₴</span>
+            <span class="pricing__card-price-value">17,900</span>
+            <span class="pricing__card-price-period">/міс</span>
+          </p>
+          <p class="pricing__card-format">Тривалість: 8 тижні&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Формат: офлайн</p>
+          <p class="pricing__card-result"><span class="pricing__card-result-label">результат:</span> 5-7 готових авторських робіт, портфоліо, впевнені робочі навички</p>
+          <a href="#" class="pricing__card-cta js-line-hover">
+            <span class="pricing__card-cta-label">обрати курс</span>
+            <span class="pricing__card-cta-plus" aria-hidden="true">
+              <span class="pricing__card-cta-plus-track">
+                <span class="pricing__card-cta-plus-char pricing__card-cta-plus-char--out">+</span>
+                <span class="pricing__card-cta-plus-char pricing__card-cta-plus-char--in">+</span>
+              </span>
+            </span>
+            <span class="pricing__card-cta-line-track" aria-hidden="true">
+              <span class="pricing__card-cta-line pricing__card-cta-line--out"></span>
+            </span>
+          </a>
+        </article>
+
+        <article class="pricing__card pricing__card--pro">
+          <img class="pricing__card-title" src="img/pricing-title-3.png" alt="Професійний рівень">
+          <p class="pricing__card-subtitle"><span class="italic-symbol">(</span>ти вже знаєш основи і маєш сміливу ідею</p>
+          <p class="pricing__card-price">
+            <span class="pricing__card-price-currency">₴</span>
+            <span class="pricing__card-price-value">37,900</span>
+            <span class="pricing__card-price-period">/міс</span>
+          </p>
+          <p class="pricing__card-format">Тривалість: 12 тижні&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Формат: офлайн/онлайн</p>
+          <p class="pricing__card-result"><span class="pricing__card-result-label">результат:</span> готовий проєкт для портфоліо, колекція робіт або унікальний арт-об'єкт</p>
+          <a href="#" class="pricing__card-cta js-line-hover">
+            <span class="pricing__card-cta-label">забронювати місце</span>
+            <span class="pricing__card-cta-plus" aria-hidden="true">
+              <span class="pricing__card-cta-plus-track">
+                <span class="pricing__card-cta-plus-char pricing__card-cta-plus-char--out">+</span>
+                <span class="pricing__card-cta-plus-char pricing__card-cta-plus-char--in">+</span>
+              </span>
+            </span>
+            <span class="pricing__card-cta-line-track" aria-hidden="true">
+              <span class="pricing__card-cta-line pricing__card-cta-line--out"></span>
+            </span>
+          </a>
+        </article>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <section class="cta" id="cta" data-cursor-theme="dark">
+
+    <div class="section-inner">
+
+      <div class="cta__top">
+
+        <h2 class="cta__heading">
+          <span class="cta__heading-row cta__heading-row--1">
+            <span class="cta__heading-row-inner">
+              <span class="cta__heading-word">почніть</span>
+              <span class="cta__heading-word">свою</span>
+            </span>
+          </span>
+          <span class="cta__heading-row cta__heading-row--2">
+            <span class="cta__heading-row-inner">
+              <span class="cta__heading-word">подорож</span>
+            </span>
+          </span>
+          <span class="cta__heading-row cta__heading-row--3">
+            <span class="cta__heading-row-inner">
+              <span class="cta__heading-word cta__heading-word--a">у світ</span>
+              <span class="cta__heading-word cta__heading-word--b">глини</span>
+            </span>
+          </span>
+          <span class="cta__heading-row cta__heading-row--4">
+            <span class="cta__heading-row-inner">
+              <span class="cta__heading-word cta__heading-word--a">вже</span>
+              <span class="cta__heading-word cta__heading-word--b">сьогодні</span>
+            </span>
+          </span>
+        </h2>
+
+        <p class="cta__lead"><span class="cta__lead-strong">приєднайтеся<br>до </span><span class="cta__lead-dim">спільноти творців</span></p>
+
+        <button class="cta__media js-cursor-media" type="button" data-cursor-label="стоп" aria-label="Зупинити відео">
+          <video class="cta__media-video" autoplay muted loop playsinline aria-hidden="true">
+            <source src="img/video-cta.mp4" type="video/mp4">
+          </video>
+        </button>
+
+      </div>
+
+      <div class="cta__stats">
+
+        <div class="cta__stat">
+          <p class="cta__stat-number"><span class="cta__stat-value" data-count="200">200</span><span class="cta__stat-symbol">+</span></p>
+          <p class="cta__stat-label">студентів навчилися</p>
+        </div>
+
+        <div class="cta__stat">
+          <p class="cta__stat-number"><span class="cta__stat-value" data-count="94">94</span><span class="cta__stat-symbol">%</span></p>
+          <p class="cta__stat-label">продовжують творити</p>
+        </div>
+
+        <div class="cta__stat">
+          <p class="cta__stat-number"><span class="cta__stat-value" data-count="15">15</span><span class="cta__stat-symbol">+</span></p>
+          <p class="cta__stat-label">занять щомісяця</p>
+        </div>
+
+        <div class="cta__stat">
+          <p class="cta__stat-number"><span class="cta__stat-value" data-count="3">3</span><span class="cta__stat-symbol">+</span></p>
+          <p class="cta__stat-label">років традицій</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
   <!-- Lives outside .hero on purpose: .hero__nav carries a leftover GSAP
        transform (identity matrix, harmless visually) from the entrance
        timeline, and any transformed ancestor becomes the containing block
