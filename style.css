@@ -158,6 +158,13 @@ body {
   outline: none;
   box-shadow: none;
   min-height: 100vh;
+  /* .social pins a section SHORTER than the viewport (890u, unlike
+     .gallery/.stories which are taller) — while it's pinned+fixed, the
+     leftover viewport strip below its own box isn't covered by anything
+     and fell through to the browser's default white. Every section on the
+     page is --beige-100 or darker anyway, so this is a safe blanket
+     backdrop rather than a fix scoped to .social specifically. */
+  background-color: var(--beige-100);
   font-family: 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -4052,3 +4059,179 @@ body.menu-is-open {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   SOCIAL SECTION — "13_соц мережі" (Figma node 978:1536)
+   ========================================================================== */
+
+.social {
+  position: relative;
+  height: calc(var(--u) * 890);
+  /* full-bleed seam guard vs. .faq above — see BLOCK_STARTER_KIT.md's
+     "full-bleed seam hairline gotcha" */
+  margin: -2px 0 0;
+  background-color: var(--beige-100);
+  color: #2B3D2D;
+}
+
+/* --- heading group (Figma frame "Н" at 50,0) --- */
+
+.social__header {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: 0;
+  width: calc(var(--u) * 1819);
+}
+
+.social__heading-row {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 500;
+  font-size: calc(var(--u) * 96);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -2.88);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* top row: two words at the frame's own edges (Figma's "justify-between") */
+.social__heading-row--top {
+  justify-content: space-between;
+  color: #AAB1C3;
+}
+
+/* bottom row: fixed 386u gap between the two words (Figma's own value, not
+   a justify — the row is narrower than the frame and left-aligned) */
+.social__heading-row--bottom {
+  justify-content: flex-start;
+  gap: calc(var(--u) * 386);
+  color: var(--blue);
+}
+
+/* --- content row (Figma frame "content" at 50,292) --- */
+
+.social__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 292);
+  width: calc(var(--u) * 1819);
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 10);
+}
+
+.social__left {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 10);
+  width: calc(var(--u) * 904);
+}
+
+.social__hero-photo {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(var(--u) * 448);
+  height: calc(var(--u) * 448);
+  overflow: hidden;
+}
+
+/* +1px/bottom:auto — same hairline-on-hover-scale-settle fix as
+   .gallery__photo img */
+.social__hero-photo img {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 1px);
+  object-fit: cover;
+  object-position: center 65%;
+  display: block;
+}
+
+.social__text {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 388);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: rgba(43, 61, 45, 0.8);
+}
+
+/* --- carousel. Native horizontal scroll (overflow-x + hidden scrollbar),
+   width fits exactly 3 cards (295*3 + 10*2 = 905u) so it reads flush with
+   the mockup at rest; initSocialCarousel() layers wheel-redirect + pointer
+   drag on top so a plain mouse wheel/drag pages through the other 4 cards
+   too, without the .gallery/.stories full-page pin. --- */
+
+/* mask, not the moving part — same split as .gallery (section is the mask)
+   / .stories (.stories__grid is the mask); here it's this one child instead
+   of the whole section, since only the card row scrubs, not the header. */
+.social__carousel {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(var(--u) * 905);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+}
+
+.social__track {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--u) * 10);
+}
+
+.social__card {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 295);
+}
+
+/* button, not div — same reset .gallery__photo uses, so it can be a real
+   .js-cursor-media hover/click target */
+.social__photo {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* covers both the photo cards and the one video card (978:1551 in the
+   mockup) — same +1px/bottom:auto hairline fix as .gallery__photo img.
+   pointer-events:none so a click always resolves on the button, never gets
+   stolen by the media element itself. */
+.social__photo img,
+.social__photo video {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 1px);
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.social__card:nth-child(1) .social__photo img { object-position: center 58%; }
+.social__card:nth-child(4) .social__photo img { object-position: 55% 68%; }
+.social__card:nth-child(5) .social__photo img { object-position: 45% 50%; }
+.social__card:nth-child(6) .social__photo img { object-position: 35% 40%; }
+.social__card:nth-child(7) .social__photo img { object-position: 40% 72%; }

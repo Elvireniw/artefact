@@ -1215,6 +1215,109 @@
 
   </section>
 
+  <!-- SOCIAL SECTION — "13_соц мережі" (Figma node 978:1536). Right-hand
+       group is a 7-card row (macet had 3: photo/video/photo), extended with
+       4 additional photos she supplied that aren't in the macet — scrolled
+       with a lightweight drag/wheel carousel scoped to the row itself
+       (native horizontal scroll + scroll-snap), NOT the .gallery/.stories
+       full-page pin+scrub mechanism — her call, that machinery pins the
+       whole viewport and this row is a compact 448u-tall strip, not a
+       dedicated full-height carousel section. -->
+  <section class="social" id="social" data-cursor-theme="light">
+
+    <div class="section-inner">
+
+      <div class="social__header">
+        <p class="social__heading-row social__heading-row--top">
+          <span class="social__heading-word">Приєднуйтесь</span>
+          <span class="social__heading-word">до нашого</span>
+        </p>
+        <p class="social__heading-row social__heading-row--bottom">
+          <span class="social__heading-word">творчого</span>
+          <span class="social__heading-word">закутку</span>
+        </p>
+      </div>
+
+      <div class="social__content">
+
+        <div class="social__left">
+          <div class="social__hero-photo">
+            <img class="social__hero-photo-img" src="img/social-1.jpg" alt="Сухоцвіти у білих керамічних вазах">
+          </div>
+          <p class="social__text">в соцмережах народжуються ідеї<br>які потім оживають<br>у глині</p>
+        </div>
+
+        <!-- .social__carousel is the mask (overflow:hidden, fixed at 3 cards
+             wide); .social__track is what actually moves. Same mechanism as
+             .gallery__track/.stories__grid — her explicit spec, "як у 5
+             блоці": the whole .social section pins and the track scrubs
+             sideways against scroll, settling on a card-pitch stop via
+             Lenis when the wheel goes idle (initSocialCarousel() +
+             initSocialSettle() in script.js). No drag/click control — same
+             as block 5, scroll-driven only. -->
+        <div class="social__carousel">
+          <div class="social__track">
+
+            <div class="social__card">
+              <button class="social__photo js-cursor-media" type="button"
+                      data-cursor-label="далі" aria-label="Керамічна ваза-кошик із зеленими яблуками">
+                <img src="img/social-2.jpg" alt="Керамічна ваза-кошик із зеленими яблуками">
+              </button>
+            </div>
+
+            <div class="social__card">
+              <button class="social__photo js-cursor-media" type="button"
+                      data-cursor-label="далі" aria-label="Відео: обробка гончарної миски">
+                <video autoplay muted loop playsinline aria-hidden="true">
+                  <source src="img/video-social.mp4" type="video/mp4">
+                </video>
+              </button>
+            </div>
+
+            <div class="social__card">
+              <button class="social__photo js-cursor-media" type="button"
+                      data-cursor-label="далі" aria-label="Керамічна чаша на ніжці з інжиром">
+                <img src="img/social-4.jpg" alt="Керамічна чаша на ніжці з інжиром">
+              </button>
+            </div>
+
+            <div class="social__card">
+              <button class="social__photo js-cursor-media" type="button"
+                      data-cursor-label="далі" aria-label="Кам'яниста керамічна ваза із сухими травами">
+                <img src="img/social-5.jpg" alt="Кам'яниста керамічна ваза із сухими травами">
+              </button>
+            </div>
+
+            <div class="social__card">
+              <button class="social__photo js-cursor-media" type="button"
+                      data-cursor-label="далі" aria-label="Керамічна чаша на скульптурній підставці">
+                <img src="img/social-6.jpg" alt="Керамічна чаша на скульптурній підставці">
+              </button>
+            </div>
+
+            <div class="social__card">
+              <button class="social__photo js-cursor-media" type="button"
+                      data-cursor-label="далі" aria-label="Текстурні керамічні чаші ручної роботи">
+                <img src="img/social-7.jpg" alt="Текстурні керамічні чаші ручної роботи">
+              </button>
+            </div>
+
+            <div class="social__card">
+              <button class="social__photo js-cursor-media" type="button"
+                      data-cursor-label="далі" aria-label="Керамічний кухоль на тлі вази">
+                <img src="img/social-8.jpg" alt="Керамічний кухоль на тлі вази">
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
   <!-- Lives outside .hero on purpose: .hero__nav carries a leftover GSAP
        transform (identity matrix, harmless visually) from the entrance
        timeline, and any transformed ancestor becomes the containing block

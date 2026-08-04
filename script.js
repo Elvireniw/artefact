@@ -90,10 +90,12 @@ if (document.fonts && document.fonts.ready) {
 // calibrateFluidUnit's — that one only reacts to WIDTH changes) catches
 // this late growth whenever it actually finishes, however long it takes,
 // and re-refreshes both the whole page and this one instance right after.
-// .faq is now the last section instead, so it inherits the same drift and
-// needs the identical fix — this function also refreshes faqEntranceTrigger
-// now (her report: block 12 had "already appeared" by the time she scrolled
-// to it, same symptom block 11 had before this function existed).
+// .faq inherited this drift when it became the last section (her report:
+// block 12 had "already appeared" by the time she scrolled to it, same
+// symptom block 11 had before this function existed) — this function
+// refreshes faqEntranceTrigger for exactly that. .social is now the actual
+// last section, so it needs the identical treatment for the same reason;
+// see socialEntranceTrigger below.
 function reRefreshCtaTrigger() {
   if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
   if (typeof ctaEntranceTrigger !== 'undefined' && ctaEntranceTrigger) ctaEntranceTrigger.refresh();
@@ -112,6 +114,15 @@ function reRefreshCtaTrigger() {
     && faqEntranceTrigger.animation && faqEntranceTrigger.animation.progress() < 1
   ) {
     faqEntranceTrigger.refresh();
+  }
+  // same guard, same reasoning — .social has no accordion, but the carousel
+  // images/video finishing their own late load can still grow document.body
+  // after the first refresh, same class of drift.
+  if (
+    typeof socialEntranceTrigger !== 'undefined' && socialEntranceTrigger
+    && socialEntranceTrigger.animation && socialEntranceTrigger.animation.progress() < 1
+  ) {
+    socialEntranceTrigger.refresh();
   }
 }
 
@@ -1056,6 +1067,7 @@ function mediaImageGroups() {
     { frame: document.querySelector('.craft__art-2-frame'), imgs: document.querySelectorAll('.craft__art-2'), drift: -15 },
     { frame: document.querySelector('.steps__art'), imgs: document.querySelectorAll('.steps__art-img'), drift: -15 },
     { frame: document.querySelector('.free-lesson__media'), imgs: document.querySelectorAll('.free-lesson__media-img'), drift: -15 },
+    { frame: document.querySelector('.social__hero-photo'), imgs: document.querySelectorAll('.social__hero-photo-img'), drift: -15 },
   ];
 
   document.querySelectorAll('.philosophy__img').forEach((frame) => {
@@ -2780,6 +2792,235 @@ function initFaqAccordion() {
 }
 
 // ==========================================================================
+// SOCIAL SECTION — "13_соц мережі" (Figma node 978:1536)
+//
+// Heading -> the word-reveal recipe every heading on the page uses.
+// .social__text -> .gallery__note's word-stagger, per her spec ("текст як
+//   у 5 блоці між картками").
+// .social__hero-photo -> the standard mediaImageGroups() hover-scale +
+//   scroll-parallax (registered above, non-interactive photo, not
+//   clickable) — entrance below still animates the IMG itself (not the
+//   frame), same split steps__art-img/free-lesson__media-img already use,
+//   so GSAP's own transform cache composes the entrance y with the
+//   hover/parallax's scale/yPercent on the same element instead of two
+//   tweens fighting over one CSS `transform`.
+// .social__photo cards -> initGalleryPhotoHover()/initStoriesPhotoHover()'s
+//   cursor-tracking drift + js-cursor-media "далі", per her instruction
+//   that these hover exactly like block 5's ("ховер на картинках як у 5
+//   блоці"). Covers the video card too — same button, a <video> in place
+//   of the <img>.
+//
+// Carousel: deliberately NOT the .gallery/.stories page-pin — see the
+// index.html comment above .social for why. initSocialCarousel() is a
+// self-contained native-scroll carousel (wheel-redirect + pointer drag),
+// entirely scoped to .social__carousel; it never reads or writes the
+// page's own scroll position.
+// ==========================================================================
+
+let socialSection, socialHeadingWords, socialHeroImg, socialTextWords, socialCards;
+// Same startAfterFloor() chain philosophy/steps/free-lesson/stories/pricing/
+// cta/faq use — see BLOCK_STARTER_KIT.md's "Entrance-timing-after-a-pinned-
+// section gotcha". THIS WAS MISSING in the first pass: a plain 'top 80%'
+// resolves against the raw document scroll position, but .gallery and
+// .stories both pin the viewport for a long stretch earlier on the page —
+// the trigger fired (and finished) while gallery/stories were still
+// visually holding the screen, long before she ever scrolled far enough to
+// actually see .social. Floored against faqEntranceTrigger.start, the block
+// immediately before this one — same reasoning faq itself uses against cta.
+let socialEntranceTrigger;
+
+function cacheSocialRefs() {
+  socialSection = document.querySelector('.social');
+  socialHeadingWords = document.querySelectorAll('.social__heading-word');
+  socialHeroImg = document.querySelector('.social__hero-photo-img');
+
+  const text = document.querySelector('.social__text');
+  socialTextWords = text ? splitWords(text) : [];
+
+  socialCards = document.querySelectorAll('.social__card');
+}
+
+function setInitialSocialStates() {
+  if (reducedMotion) return;
+  gsap.set(socialHeadingWords, { opacity: 0 });
+  gsap.set(socialHeroImg, { opacity: 0, y: 120 });
+  gsap.set(socialTextWords, { opacity: 0 });
+  gsap.set(socialCards, { opacity: 0, y: 90 });
+}
+
+function runSocialEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !socialSection) return;
+
+  const floor = () => (faqEntranceTrigger ? faqEntranceTrigger.start + 80 : 0);
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: socialSection,
+      start: startAfterFloor(socialSection, floor),
+      once: true,
+      invalidateOnRefresh: true,
+    },
+  })
+    .to(socialHeadingWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' })
+    .to(socialHeroImg, {
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      ease: 'power4.out',
+      onComplete: () => gsap.set(socialHeroImg, { clearProps: 'opacity,transform' }),
+    }, '-=0.5')
+    .to(socialTextWords, { opacity: 1, duration: 0.8, stagger: 0.05, ease: 'sine.out' }, '-=0.8')
+    .to(socialCards, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(socialCards, { clearProps: 'opacity,transform' }),
+    }, '-=0.7');
+
+  socialEntranceTrigger = tl.scrollTrigger;
+}
+
+// Verbatim initStoriesPhotoHover()/initGalleryPhotoHover() recipe (scale
+// 1.05 + cursor-tracking parallax drift via gsap.quickTo, GALLERY_HOVER_SHIFT
+// reused so the drift feels like the same effect). No caption to fade, same
+// as stories. `img, video` covers the one video card transparently.
+function initSocialPhotoHover() {
+  if (!hasGSAP) return;
+
+  const isFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!isFinePointer) return;
+
+  document.querySelectorAll('.social__photo').forEach((frame) => {
+    const media = frame.querySelector('img, video');
+    if (!media) return;
+
+    const driftX = gsap.quickTo(media, 'x', { duration: 0.9, ease: 'power3' });
+    const driftY = gsap.quickTo(media, 'y', { duration: 0.9, ease: 'power3' });
+
+    frame.addEventListener('mouseenter', () => {
+      gsap.to(media, { scale: 1.05, duration: 0.7, ease: 'power2.out', overwrite: 'auto' });
+    });
+
+    frame.addEventListener('mousemove', (event) => {
+      const rect = frame.getBoundingClientRect();
+      const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+      const shift = GALLERY_HOVER_SHIFT * u;
+      driftX(-(((event.clientX - rect.left) / rect.width) * 2 - 1) * shift);
+      driftY(-(((event.clientY - rect.top) / rect.height) * 2 - 1) * shift);
+    });
+
+    frame.addEventListener('mouseleave', () => {
+      gsap.to(media, { scale: 1, duration: 1.0, ease: 'power2.out', overwrite: 'auto' });
+      driftX(0);
+      driftY(0);
+    });
+  });
+}
+
+// ==========================================================================
+// SOCIAL CAROUSEL — her explicit spec, verbatim: "як у 5 блоці". Same
+// mechanism as initGalleryCarousel()/initGallerySettle()
+// (pin + scrub-x + idle-triggered Lenis settle, never ScrollTrigger's
+// `snap` — project hard rule, fights Lenis). The whole .social section
+// pins (matching gallery, which pins its whole section too — unlike
+// stories, this block has no "taller than viewport" problem that would
+// force pinning off a narrower sub-element instead), .social__track is
+// what scrubs, .social__carousel is just the overflow:hidden mask around
+// it (== .gallery's own section boundary playing the same role).
+//
+// STOPS. 7 cards, 3 visible at once -> 4 possible shift positions (leftmost
+// visible card index 0..4), i.e. 4 pitches of travel — finer-grained than
+// gallery's 2-stop system since there's no note-panel obstruction here to
+// design the grid around, just plain card-by-card paging.
+// ==========================================================================
+
+const SOCIAL_CARD_PITCH = 295 + 10;                         // card + gap, u
+const SOCIAL_VISIBLE = 3;
+const SOCIAL_CARD_COUNT = 7;
+const SOCIAL_STOPS = SOCIAL_CARD_COUNT - SOCIAL_VISIBLE;     // 4
+const SOCIAL_TRAVEL = SOCIAL_CARD_PITCH * SOCIAL_STOPS;      // 1220u
+const SOCIAL_PAGE_SCROLL = 600;                              // u of scroll per stop
+const SOCIAL_SETTLE_IDLE = 120;                              // ms of stillness before settling
+const SOCIAL_SETTLE_DURATION = 0.5;                          // s, the settle itself
+
+let socialPinTrigger;
+
+function initSocialCarousel() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+
+  const track = document.querySelector('.social__track');
+  if (!track || !socialSection) return;
+
+  const u = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
+
+  const tween = gsap.fromTo(track,
+    { x: 0 },
+    {
+      x: () => -SOCIAL_TRAVEL * u(),
+      ease: 'none',
+      scrollTrigger: {
+        trigger: socialSection,
+        // 'top top', NOT gallery's 'bottom bottom': gallery is 1153u tall —
+        // taller than a typical viewport — so 'top top' would pin it before
+        // the card row (near its bottom) had even scrolled into view.
+        // .social is only 890u, comfortably SHORTER than the viewport in
+        // every realistic case, so the opposite problem hits instead: with
+        // 'bottom bottom', the pin engages once the section's BOTTOM is
+        // flush with the viewport bottom — at that moment the section's TOP
+        // is still well below the viewport's top edge, and fixing it there
+        // for the whole pin left a gap above it showing bare (transparent/
+        // white) <body> once .faq had scrolled out from under it. 'top top'
+        // pins flush with no gap, and the whole short section (including
+        // the card row) is already on screen by then regardless.
+        start: 'top top',
+        end: () => `+=${SOCIAL_STOPS * SOCIAL_PAGE_SCROLL * u()}`,
+        pin: true,
+        anticipatePin: 1,
+        scrub: 1,
+        invalidateOnRefresh: true,
+      },
+    });
+
+  socialPinTrigger = tween.scrollTrigger;
+  initSocialSettle(tween.scrollTrigger);
+}
+
+// Settle: identical shape to initGallerySettle()/initStoriesSettle() — see
+// initGallerySettle()'s own header comment for why this goes through
+// lenis.scrollTo() rather than ScrollTrigger's `snap`.
+function initSocialSettle(st) {
+  if (!st || !lenis) return;
+
+  const stops = [];
+  for (let i = 0; i <= SOCIAL_STOPS; i += 1) stops.push(i / SOCIAL_STOPS);
+
+  let idleTimer;
+
+  const settle = () => {
+    if (!st.isActive) return;
+
+    const progress = st.progress;
+    const nearest = stops.reduce((best, s) => (
+      Math.abs(s - progress) < Math.abs(best - progress) ? s : best
+    ), stops[0]);
+
+    const target = st.start + (st.end - st.start) * nearest;
+    if (Math.abs(target - window.scrollY) < 2) return;
+
+    lenis.scrollTo(target, {
+      duration: SOCIAL_SETTLE_DURATION,
+      easing: (t) => 1 - Math.pow(1 - t, 3),
+    });
+  };
+
+  lenis.on('scroll', () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(settle, SOCIAL_SETTLE_IDLE);
+  });
+}
+
+// ==========================================================================
 // INIT
 // ==========================================================================
 
@@ -2796,6 +3037,7 @@ cacheStoriesRefs();
 cachePricingRefs();
 cacheCtaRefs();
 cacheFaqRefs();
+cacheSocialRefs();
 alignCtaLead();
 // Own ResizeObserver rather than hooking into calibrateFluidUnit(): that
 // function runs once immediately at parse time (line ~39, long before
@@ -2823,6 +3065,7 @@ if (hasGSAP) {
   setInitialPricingStates();
   setInitialCtaStates();
   setInitialFaqStates();
+  setInitialSocialStates();
 }
 initPreloader();
 initGlassCursor();
@@ -2852,10 +3095,13 @@ runPricingEntrance();
 runCtaEntrance();
 runFaqEntrance();
 initFaqAccordion();
+runSocialEntrance();
 initGalleryPhotoHover();
 initStoriesPhotoHover();
+initSocialPhotoHover();
 initStoriesReviews();
 initStoriesCarousel();
+initSocialCarousel();
 initOliveGrain();
 runClayEntrance();
 runMaterialEntrance();
