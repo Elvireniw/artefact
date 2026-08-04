@@ -93,9 +93,9 @@ if (document.fonts && document.fonts.ready) {
 // .faq inherited this drift when it became the last section (her report:
 // block 12 had "already appeared" by the time she scrolled to it, same
 // symptom block 11 had before this function existed) — this function
-// refreshes faqEntranceTrigger for exactly that. .social is now the actual
-// last section, so it needs the identical treatment for the same reason;
-// see socialEntranceTrigger below.
+// refreshes faqEntranceTrigger for exactly that. .social got the same
+// treatment when IT was briefly the last section; .footer is now the
+// actual last section, so it needs it too — see footerEntranceTrigger below.
 function reRefreshCtaTrigger() {
   if (hasGSAP && window.ScrollTrigger) ScrollTrigger.refresh();
   if (typeof ctaEntranceTrigger !== 'undefined' && ctaEntranceTrigger) ctaEntranceTrigger.refresh();
@@ -123,6 +123,13 @@ function reRefreshCtaTrigger() {
     && socialEntranceTrigger.animation && socialEntranceTrigger.animation.progress() < 1
   ) {
     socialEntranceTrigger.refresh();
+  }
+  // same guard, same reasoning — .footer is the new actual last section.
+  if (
+    typeof footerEntranceTrigger !== 'undefined' && footerEntranceTrigger
+    && footerEntranceTrigger.animation && footerEntranceTrigger.animation.progress() < 1
+  ) {
+    footerEntranceTrigger.refresh();
   }
 }
 
@@ -618,7 +625,7 @@ function initSectionScrollLag() {
 // its own hidden state on load and reveals afterward in sequence.
 // ==========================================================================
 
-let heroBg, nav, menuBtn, menuLineOut, titleImg, eyebrowWords,
+let heroBg, nav, menuBtn, menuLineOut, titleImg, titleMobileImgs, eyebrowWords,
   ghost, vase, table, labels, desc, descWords, btn, scrollArrow;
 
 function cacheHeroRefs() {
@@ -631,6 +638,9 @@ function cacheHeroRefs() {
   menuBtn = document.querySelector('.hero__menu-btn');
   menuLineOut = document.querySelector('.hero__menu-line--out');
   titleImg = document.querySelector('.hero__title-img');
+  // mobile-only H1 (5 line images, .hero__title-mobile) — hidden/no-op on
+  // desktop, animates alongside titleImg at the same 'h1Start' label
+  titleMobileImgs = document.querySelectorAll('.hero__title-mobile img');
   ghost = document.querySelector('.hero__ghost-img');
   vase = document.querySelector('.hero__vase-intro');
   table = document.querySelector('.hero__table');
@@ -646,8 +656,15 @@ function cacheHeroRefs() {
 
 function setInitialHeroStates() {
   // centering for .hero__btn now lives in xPercent so later `y` tweens
-  // never clobber the translateX(-50%) that used to sit in CSS
-  gsap.set(btn, { xPercent: -50 });
+  // never clobber the translateX(-50%) that used to sit in CSS — desktop
+  // only. Mobile's CTA is left-aligned at 20px (Figma metadata x:20,
+  // matching the eyebrow/H1/description column), not centered; a GSAP
+  // inline transform always beats a CSS one regardless of specificity, so
+  // this must not run at mobile widths or it silently drags the button
+  // back to center no matter what style.css says.
+  if (!window.matchMedia('(max-width: 768px)').matches) {
+    gsap.set(btn, { xPercent: -50 });
+  }
 
   if (reducedMotion) {
     return;
@@ -666,6 +683,7 @@ function setInitialHeroStates() {
   gsap.set(menuLineOut, { scaleX: 0, transformOrigin: 'left' });
   gsap.set(eyebrowWords, { opacity: 0 });
   gsap.set(titleImg, { y: 30, opacity: 0 });
+  gsap.set(titleMobileImgs, { y: 30, opacity: 0 });
   gsap.set(vase, { y: 30, scale: 0.96, opacity: 0 });
   gsap.set(table, { opacity: 0, y: 20 });
   gsap.set(ghost, { opacity: 0, scale: 0.96 });
@@ -725,30 +743,36 @@ function runHeroEntrance() {
         gsap.set(heroBg, { zIndex: 0 });
       },
     }, 0)
-    .to([nav, menuBtn], { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out' }, '+=0.4')
+    // Everything from here down is 30% faster (all durations/stagger/offsets
+    // × 0.7) per her explicit spec — the curtain reveal above is left alone,
+    // it's shared infrastructure locked to the menu overlay's own curtain
+    // timing (see [[project-artefact-block4-motion]]), not a per-element
+    // appearance beat.
+    .to([nav, menuBtn], { y: 0, opacity: 1, duration: 0.63, ease: 'power2.out' }, '+=0.28')
     .to(menuLineOut, {
       scaleX: 1,
-      duration: 0.7,
+      duration: 0.49,
       ease: 'power2.out',
       onComplete: () => gsap.set(menuLineOut, { clearProps: 'transform,transformOrigin' }),
-    }, '-=0.3')
-    .to(eyebrowWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' }, '+=0.11')
-    .addLabel('h1Start', '+=0.11')
-    .to(titleImg, { y: 0, opacity: 1, duration: 1.0, ease: 'power2.out' }, 'h1Start')
-    .to(ghost, { opacity: 1, scale: 1, duration: 2.4, ease: 'sine.out' }, 'h1Start')
+    }, '-=0.21')
+    .to(eyebrowWords, { opacity: 1, duration: 0.7, stagger: 0.056, ease: 'sine.out' }, '+=0.077')
+    .addLabel('h1Start', '+=0.077')
+    .to(titleImg, { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, 'h1Start')
+    .to(titleMobileImgs, { y: 0, opacity: 1, duration: 0.7, stagger: 0.08, ease: 'power2.out' }, 'h1Start')
+    .to(ghost, { opacity: 1, scale: 1, duration: 1.68, ease: 'sine.out' }, 'h1Start')
     .to(vase, {
       y: 0,
       scale: 1,
       opacity: 1,
-      duration: 1.1,
+      duration: 0.77,
       ease: 'power2.out',
       onComplete: startVaseBreathe,
-    }, 'h1Start+=0.98')
-    .to(table, { opacity: 1, y: 0, duration: 1.1, ease: 'power2.out' }, '<')
-    .to(labels, { opacity: 1, scale: 1, duration: 1, stagger: 0.06, ease: 'sine.out' }, '<')
-    .to(descWords, { opacity: 1, duration: 0.9, stagger: 0.08, ease: 'sine.out' }, '+=0.225')
-    .to(btn, { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out' }, '+=0.225')
-    .to(scrollArrow, { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '+=0.3')
+    }, 'h1Start+=0.686')
+    .to(table, { opacity: 1, y: 0, duration: 0.77, ease: 'power2.out' }, '<')
+    .to(labels, { opacity: 1, scale: 1, duration: 0.7, stagger: 0.042, ease: 'sine.out' }, '<')
+    .to(descWords, { opacity: 1, duration: 0.63, stagger: 0.056, ease: 'sine.out' }, '+=0.1575')
+    .to(btn, { y: 0, opacity: 1, duration: 0.63, ease: 'power2.out' }, '+=0.1575')
+    .to(scrollArrow, { y: 0, opacity: 1, duration: 0.49, ease: 'power2.out' }, '+=0.21')
     // parallax only starts once the entrance choreography has fully settled;
     // the scroll-lag ScrollTrigger is created here too (not eagerly at
     // load) — creating it any earlier puts an inline transform on .hero
@@ -819,9 +843,17 @@ function runCraftEntrance() {
       ease: 'power4.out',
       onComplete: () => gsap.set([craftArt1, craftArt2Frame], { clearProps: 'transform' }),
     }, '+=0.15')
-    .to(craftBody, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '+=0.15')
+    // Heading/images stay as-is (her call, "отличная скорость") — body,
+    // side text and especially the CTA had too much dead wait before them.
+    // Both were chained with '+=0.15' (start AFTER the previous beat's own
+    // stagger-duration had fully finished playing), which compounds badly
+    // when the previous beat has a multi-word stagger (craftSideTextWords):
+    // the CTA wasn't just waiting 0.15s, it was waiting for every side-text
+    // word's individual fade to finish first. Overlapping instead of
+    // trailing removes that compounding wait.
+    .to(craftBody, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.6')
     .to(craftSideTextWords, { opacity: 1, duration: 0.8, stagger: 0.06, ease: 'sine.out' }, '<')
-    .to(craftCta, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '+=0.15');
+    .to(craftCta, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.5');
 }
 
 // ==========================================================================
@@ -885,9 +917,11 @@ function runClayEntrance() {
       once: true,
     },
   })
+    // clayWords (center word row) untouched — only the title (heading) and
+    // clayCaption (the right-side text) needed to come in a bit faster.
     .to(clayWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' })
-    .to(clayTitle, { y: 0, opacity: 1, duration: 1.0, ease: 'power2.out' }, '+=0.15')
-    .to(clayCaption, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '+=0.15');
+    .to(clayTitle, { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' }, '+=0.05')
+    .to(clayCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'sine.out' }, '+=0.05');
 }
 
 // ==========================================================================
@@ -970,10 +1004,11 @@ function runMaterialEntrance() {
   });
 
   // Beat 2 — echo assembles, scrubbed so she controls it with the wheel.
-  // Widened from 'top 75%'->'top 40%' to 'top 95%'->'top 45%'. On a scrubbed
-  // tween `duration` is ignored entirely — the scroll DISTANCE between
-  // start and end is what sets the pace, so the only way to slow this down
-  // is to give it more travel. 35% of the viewport became 50%.
+  // Widened again 2026-08-04: 'top 95%'->'top 45%' (50% of viewport) read as
+  // "assembles almost too fast to notice." On a scrubbed tween `duration` is
+  // ignored entirely — the scroll DISTANCE between start and end is what
+  // sets the pace, so slowing it down means more travel, not a bigger
+  // duration. Doubled to 'top 95%'->'top -5%' (100% of viewport).
   gsap.to(materialEchoWords, {
     opacity: 1,
     x: 0,
@@ -985,7 +1020,7 @@ function runMaterialEntrance() {
     scrollTrigger: {
       trigger: materialSection,
       start: 'top 95%',
-      end: 'top 45%',
+      end: 'top -5%',
       scrub: true,
       invalidateOnRefresh: true,
     },
@@ -1877,10 +1912,17 @@ function initPreloader() {
   if (!preloader) return;
 
   const letters = preloader.querySelectorAll('.preloader__logo span');
+  // no letter-logo loading screen on mobile — the full 3-pass animation +
+  // hold is ~7.7s (LETTER_STAGGER*8 + LETTER_ANIM_DURATION*3 + HOLD),
+  // which read as a broken/frozen page on a phone. Drop straight into
+  // runHeroEntrance() instead — the curtain reveal + entrance chain still
+  // run, just without the multi-second wait in front of them.
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
-  if (reducedMotion || !hasGSAP || !letters.length) {
+  if (reducedMotion || !hasGSAP || !letters.length || isMobile) {
     document.body.classList.remove('is-preloading');
     preloader.remove();
+    if (hasGSAP && !reducedMotion) runHeroEntrance();
     return;
   }
 
@@ -1990,6 +2032,106 @@ function initScrollDownArrows() {
         lenis.scrollTo(target, { duration: 1.4 });
       } else {
         window.scrollTo({ top: target, behavior: reducedMotion ? 'auto' : 'smooth' });
+      }
+    });
+  });
+}
+
+// ==========================================================================
+// SCROLL-UP BUTTONS — .js-scroll-up, one in every section her anchor nav
+// links point to (.gallery/.steps/.stories/.pricing/.social) plus .footer.
+// Always targets the very top of the page (position 0) — unlike the
+// scroll-down arrows' "next section" logic, there's no pinned-section jerk
+// risk to route around here: 0 is always well outside any pin's range.
+// ==========================================================================
+
+function initScrollUpArrows() {
+  const links = document.querySelectorAll('.js-scroll-up');
+  if (!links.length) return;
+
+  links.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      if (lenis) {
+        lenis.scrollTo(0, { duration: 1.4 });
+      } else {
+        window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+      }
+    });
+  });
+}
+
+// ==========================================================================
+// NAV ANCHOR LINKS — .hero__link / .footer__menu-link /
+// .menu-overlay__mobile-link all point to real in-section ids now (see the
+// mapping comment above .hero__links in index.html). A plain browser
+// hash-jump is a native, instant scroll — it fights Lenis exactly the way
+// every other scrollTo() on this page already routes around (see
+// initGallerySettle()'s own comment on why raw window.scrollTo/ScrollTrigger
+// snap both got rejected for the same reason), so these go through
+// lenis.scrollTo() instead, same recipe as .js-scroll-down just above.
+// Clicking one from inside the OPEN mobile menu also closes the menu first
+// — without that the overlay just sits on top of whatever it "scrolled" to
+// underneath it, and the click reads as doing nothing.
+//
+// PIN JERK, her catch: three of the mapped targets (#gallery, #stories,
+// #social) are ScrollTrigger pin+scrub carousels. Landing a lenis.scrollTo()
+// exactly on a pinned section's own `getBoundingClientRect().top` can land
+// RIGHT AT the pin's engage boundary (worst case #social, whose pin start
+// is literally 'top top' — the same y as the naive target) rather than
+// safely inside its already-pinned, settled state, which reads as a visible
+// jerk on arrival as the pin snaps in in the same moment the destination is
+// supposedly reached. `initScrollDownArrows()` above sidesteps this
+// entirely by only ever targeting hero/craft/clay, none of which are
+// pinned — see its own comment ("no sections are pinned any more... no
+// pin-spacer to measure around"). Anchor nav can't avoid pinned targets the
+// same way (she wants exactly those blocks reachable), so instead: for a
+// pinned target, land on that pin's own already-resolved `.start` (+40px
+// buffer, comfortably past the engage threshold) instead of the section's
+// naive top. Non-pinned targets (#steps, #philosophy, #pricing) keep the
+// plain rect-based calc, same as the scroll-down arrows use.
+// ==========================================================================
+
+function initAnchorNav() {
+  const links = document.querySelectorAll(
+    '.hero__link[href^="#"], .footer__menu-link[href^="#"], .menu-overlay__mobile-link[href^="#"]'
+  );
+
+  // read lazily (function, not a snapshot) — these trigger vars are only
+  // assigned once initGalleryCarousel()/initStoriesCarousel()/
+  // initSocialCarousel() run, which may be before or after this call in the
+  // init sequence, but always well before a real click can happen
+  const PINNED_TARGETS = {
+    gallery: () => galleryPinTrigger,
+    stories: () => storiesPinTrigger,
+    social: () => socialPinTrigger,
+  };
+
+  links.forEach((link) => {
+    const id = link.getAttribute('href').slice(1);
+    const target = id ? document.getElementById(id) : null;
+    if (!target) return;
+
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      if (document.body.classList.contains('menu-is-open')) {
+        closeMenu();
+        const trigger = document.querySelector('.hero__menu-btn');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      }
+
+      const pinGetter = PINNED_TARGETS[id];
+      const pinTrigger = pinGetter ? pinGetter() : null;
+      const dest = pinTrigger
+        ? pinTrigger.start + 40
+        : window.scrollY + target.getBoundingClientRect().top;
+
+      if (lenis) {
+        lenis.scrollTo(dest, { duration: 1.4 });
+      } else {
+        window.scrollTo({ top: dest, behavior: reducedMotion ? 'auto' : 'smooth' });
       }
     });
   });
@@ -3021,6 +3163,83 @@ function initSocialSettle(st) {
 }
 
 // ==========================================================================
+// FOOTER — "14_футер" (Figma node 978:1556), the last block
+//
+// Beat order mirrors the section top-to-bottom, same as every other
+// section's entrance: nav -> subscribe heading -> subscribe form -> social
+// links -> contacts -> logo -> copyright.
+//
+// .social pins its whole section (see initSocialCarousel()'s own comment),
+// so — same reasoning philosophy uses against galleryPinTrigger and pricing
+// uses against storiesPinTrigger — a plain 'top 80%' here can fire while
+// .social is still visually holding the screen. Floored against
+// socialPinTrigger.end, the immediately-preceding pin, via the same
+// startAfterFloor() chain every section since philosophy uses. See
+// BLOCK_STARTER_KIT.md's "Entrance-timing-after-a-pinned-section gotcha".
+// ==========================================================================
+
+let footerSection, footerMenuLinks, footerHeading, footerSubscribeForm,
+  footerSocialLinks, footerContactItems, footerLogo, footerCopyright;
+let footerEntranceTrigger;
+
+function cacheFooterRefs() {
+  footerSection = document.querySelector('.footer');
+  footerMenuLinks = document.querySelectorAll('.footer__menu-link');
+  footerHeading = document.querySelector('.footer__subscribe-heading');
+  footerSubscribeForm = document.querySelector('.footer__subscribe-form');
+  footerSocialLinks = document.querySelectorAll('.footer__social-link');
+  footerContactItems = document.querySelectorAll('.footer__contact-item');
+  footerLogo = document.querySelector('.footer__logo');
+  footerCopyright = document.querySelector('.footer__copyright');
+}
+
+function setInitialFooterStates() {
+  if (reducedMotion) return;
+  gsap.set(footerMenuLinks, { opacity: 0, y: 12 });
+  gsap.set(footerHeading, { opacity: 0, y: 30 });
+  gsap.set(footerSubscribeForm, { opacity: 0, y: 12 });
+  gsap.set(footerSocialLinks, { opacity: 0, y: 12 });
+  gsap.set(footerContactItems, { opacity: 0, y: 12 });
+  gsap.set(footerLogo, { opacity: 0, y: 40 });
+  gsap.set(footerCopyright, { opacity: 0, y: 12 });
+}
+
+function runFooterEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !footerSection) return;
+
+  const floor = () => (socialPinTrigger ? socialPinTrigger.end + 60 : 0);
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: footerSection,
+      start: startAfterFloor(footerSection, floor),
+      once: true,
+      invalidateOnRefresh: true,
+    },
+  })
+    .to(footerMenuLinks, { opacity: 1, y: 0, duration: 0.6, stagger: 0.05, ease: 'sine.out' })
+    .to(footerHeading, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(footerHeading, { clearProps: 'opacity,transform' }),
+    }, '-=0.3')
+    .to(footerSubscribeForm, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.6')
+    .to(footerSocialLinks, { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'sine.out' }, '-=0.4')
+    .to(footerContactItems, { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'sine.out' }, '-=0.5')
+    .to(footerLogo, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(footerLogo, { clearProps: 'opacity,transform' }),
+    }, '-=0.5')
+    .to(footerCopyright, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5');
+
+  footerEntranceTrigger = tl.scrollTrigger;
+}
+
+// ==========================================================================
 // INIT
 // ==========================================================================
 
@@ -3038,6 +3257,7 @@ cachePricingRefs();
 cacheCtaRefs();
 cacheFaqRefs();
 cacheSocialRefs();
+cacheFooterRefs();
 alignCtaLead();
 // Own ResizeObserver rather than hooking into calibrateFluidUnit(): that
 // function runs once immediately at parse time (line ~39, long before
@@ -3066,6 +3286,7 @@ if (hasGSAP) {
   setInitialCtaStates();
   setInitialFaqStates();
   setInitialSocialStates();
+  setInitialFooterStates();
 }
 initPreloader();
 initGlassCursor();
@@ -3102,6 +3323,7 @@ initSocialPhotoHover();
 initStoriesReviews();
 initStoriesCarousel();
 initSocialCarousel();
+runFooterEntrance();
 initOliveGrain();
 runClayEntrance();
 runMaterialEntrance();
@@ -3109,6 +3331,8 @@ initClayVideoParallax();
 initClayVideoToggle();
 initCtaVideoToggle();
 initScrollDownArrows();
+initAnchorNav();
+initScrollUpArrows();
 initGalleryFilter();
 initSectionScrollLag();
 

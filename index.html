@@ -90,6 +90,7 @@
   <section class="hero" id="hero" data-cursor-theme="dark">
 
     <img class="hero__bg" src="img/hero-bg.png" alt="" aria-hidden="true">
+    <img class="hero__bg-mobile" src="img/mob-hero-bg.png" alt="" aria-hidden="true">
 
     <p class="hero__label hero__label--craft js-parallax" data-depth="0.6"><span class="italic-symbol">(</span>craft</p>
     <p class="hero__label hero__label--texture js-parallax" data-depth="0.8"><span class="italic-symbol">(</span>texture</p>
@@ -102,15 +103,21 @@
 
     <header class="hero__nav">
       <a class="hero__logo" href="#" aria-label="Artefact">
-        <img src="img/logo-header.svg" alt="Artefact" width="200" height="28">
+        <img class="hero__logo-img--desktop" src="img/logo-header.svg" alt="Artefact" width="200" height="28">
+        <img class="hero__logo-img--mobile" src="img/mob-logo-header.svg" alt="Artefact" width="150" height="21">
       </a>
 
+      <!-- anchors, revised 2026-08-04: метод -> block 5 "галерея робіт"
+           (.gallery), філософія -> block 7 "кроки" (.steps), відгуки ->
+           block 9 "історії учнів" (.stories), тарифи -> block 10
+           (.pricing), inst -> block 13 "соц мережі" (.social). метод leads
+           філософія, per her spec. -->
       <nav class="hero__links" aria-label="Основна навігація">
-        <a href="#philosophy" class="hero__link"><span class="hero__link-text">філософія</span><span class="hero__link-underline" aria-hidden="true"></span></a>
-        <a href="#method" class="hero__link"><span class="hero__link-text">метод</span><span class="hero__link-underline" aria-hidden="true"></span></a>
-        <a href="#reviews" class="hero__link"><span class="hero__link-text">відгуки</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#gallery" class="hero__link"><span class="hero__link-text">метод</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#steps" class="hero__link"><span class="hero__link-text">філософія</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#stories" class="hero__link"><span class="hero__link-text">відгуки</span><span class="hero__link-underline" aria-hidden="true"></span></a>
         <a href="#pricing" class="hero__link"><span class="hero__link-text">тарифи</span><span class="hero__link-underline" aria-hidden="true"></span></a>
-        <a href="#" target="_blank" rel="noopener" class="hero__link"><span class="hero__link-text">inst</span><span class="hero__link-underline" aria-hidden="true"></span></a>
+        <a href="#social" class="hero__link"><span class="hero__link-text">inst</span><span class="hero__link-underline" aria-hidden="true"></span></a>
       </nav>
     </header>
 
@@ -121,12 +128,22 @@
       </div>
     </div>
 
+    <img class="hero__vase-mobile" src="img/mob-vase.png" alt="Керамічна ваза ручної роботи">
+
     <div class="hero__content">
       <div class="hero__title-wrap">
         <p class="hero__eyebrow js-split-words"><span class="italic-symbol">(</span>яке об'єднує</p>
         <img src="img/hero-title.png" alt="ЗВ'ЯЗОК ПОКОЛІНЬ ЧЕРЕЗ МИСТЕЦТВО ГОНЧАРСТВА" class="hero__title-img">
       </div>
       <h1 class="visually-hidden">ЗВ'ЯЗОК ПОКОЛІНЬ ЧЕРЕЗ МИСТЕЦТВО ГОНЧАРСТВА</h1>
+    </div>
+
+    <div class="hero__title-mobile" aria-hidden="true">
+      <img src="img/mob-hero-title-line-1.png" alt="">
+      <img src="img/mob-hero-title-line-2.png" alt="">
+      <img src="img/mob-hero-title-line-3.png" alt="">
+      <img src="img/mob-hero-title-line-4.png" alt="">
+      <img src="img/mob-hero-title-line-5.png" alt="">
     </div>
 
     <p class="hero__description">
@@ -173,10 +190,23 @@
     <p class="craft__heading-line craft__heading-line--3">покоління</p>
     <h2 class="visually-hidden">Мистецтво — яке об'єднує покоління</h2>
 
+    <!-- mobile-only heading (node 978:903): right-aligned, single block —
+         a genuinely different layout from the desktop 3-line stagger
+         above, not just a resized copy, so it's a separate element rather
+         than a CSS override of .craft__heading-line. -->
+    <p class="craft__heading-mobile" aria-hidden="true">мистецтво —<br>яке об'єднує<br>покоління</p>
+
     <div class="craft__art-1">
       <img class="craft__art-1-img craft__art-1-img--a" src="img/craft-art-1a.png" alt="Ручне формування глини на гончарному крузі">
       <img class="craft__art-1-img craft__art-1-img--b" src="img/craft-art-1b.png" alt="" aria-hidden="true">
     </div>
+
+    <!-- mobile-only art-1 (node 978:904, x:195 y:158 w:158 h:217) — same
+         source photo as .craft__art-1-img--a, reused since she hasn't
+         supplied a separate mobile crop for this block yet; swap the src
+         if she sends one. No hover-crossfade pair needed here (layout
+         pass only, no mobile motion yet). -->
+    <img class="craft__art-1-mobile" src="img/craft-art-1a.png" alt="Ручне формування глини на гончарному крузі">
 
     <p class="craft__body">ви навчитеся втілювати цифрові задуми в унікальні вироби, де кожна лінія буде промовляти мовою вашої душі</p>
 
@@ -194,9 +224,31 @@
       <img class="craft__art-2" src="img/craft-art-2.png" alt="Готові керамічні вироби на камені">
     </div>
 
+    <!-- mobile-only art-2 (node 978:906, x:20 y:507 w:335 h:440) — same
+         reuse note as art-1-mobile above. -->
+    <img class="craft__art-2-mobile" src="img/craft-art-2.png" alt="Готові керамічні вироби на камені">
+
     <p class="craft__side-text">
       <span class="craft__side-text-line--1">розвиває творчість</span><br>
       <span class="craft__side-text-line--2">і дає справжню </span>терапію для душі
+    </p>
+
+    <!-- mobile-only side-text (node 978:905): a DIFFERENT 3-tier color
+         split than desktop's .craft__side-text (mobile: 1.0/0.8/0.6,
+         desktop: 0.8/0.6/0.4) and a different line break (after
+         "терапію", not before it) — checked against get_design_context's
+         span-by-span output before assuming they'd match, they don't, so
+         this is a separate element rather than a mobile override of the
+         desktop spans. NOT aria-hidden, unlike .craft__heading-mobile
+         above — there's no separate persistent hidden duplicate of this
+         text (no equivalent of the heading's .visually-hidden <h2>), and
+         the desktop <p> this replaces drops out of the a11y tree via
+         display:none on mobile, so this has to stay the one accessible
+         copy or the text disappears for assistive tech entirely. -->
+    <p class="craft__side-text-mobile">
+      <span class="craft__side-text-mobile-line--1">розвиває творчість</span><br>
+      <span class="craft__side-text-mobile-line--2">і дає справжню терапію</span><br>
+      <span class="craft__side-text-mobile-line--3">для душі</span>
     </p>
 
     </div>
@@ -289,6 +341,27 @@
 
     <div class="gallery__track">
 
+      <!-- LOOP CLONE — duplicate of the last real card (6), prepended so
+           scrolling to the first stop reveals a continuation of the strip
+           instead of empty background — her "по колу" spec. aria-hidden +
+           tabindex="-1": it's a decorative repeat of a work already
+           reachable as a real control further down the track, not a second
+           one to tab through. .gallery__track's own `left`/`width` in
+           style.css were shifted/grown by exactly one card-pitch (458u) to
+           compensate, so the 6 real cards' on-screen positions — and the
+           note panel's alignment with them — are completely unchanged. -->
+      <article class="gallery__card" aria-hidden="true">
+        <button class="gallery__photo js-cursor-media" type="button" tabindex="-1"
+                data-cursor-label="далі">
+          <img src="img/gallery-2.jpg" alt="">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 7 тижні</p>
+      </article>
+
       <!-- .gallery__photo is a <button> rather than a <div> because each work
            opens a lightbox (main shot + 2-3 other angles of the same piece);
            that lightbox is a separate build, so the click handler does not
@@ -296,7 +369,10 @@
            cursor's "далі" bubble (.js-cursor-media) never promises an
            interaction to a non-focusable div. The "+" marks are the work's
            difficulty rating and are unrelated to the cursor. -->
-      <article class="gallery__card">
+      <!-- gallery__card--first: no longer :first-child in the DOM (the loop
+           clone above it is), so its own 79.5% crop needs an explicit hook
+           — see the comment on that CSS rule. -->
+      <article class="gallery__card gallery__card--first">
         <button class="gallery__photo js-cursor-media" type="button"
                 data-cursor-label="далі" aria-label="Переглянути роботу: керамічна чашка ручної роботи">
           <img src="img/gallery-1.jpg" alt="Керамічна чашка ручної роботи">
@@ -370,6 +446,22 @@
         <p class="gallery__caption">створено на 7 тижні</p>
       </article>
 
+      <!-- LOOP CLONE — duplicate of the first real card (1), appended so
+           scrolling to the last stop reveals a continuation of the strip
+           instead of empty background — see the comment above the
+           prepended clone at the top of this track for the full reasoning. -->
+      <article class="gallery__card gallery__card--clone-first" aria-hidden="true">
+        <button class="gallery__photo js-cursor-media" type="button" tabindex="-1"
+                data-cursor-label="далі">
+          <img src="img/gallery-1.jpg" alt="">
+          <span class="gallery__marks" aria-hidden="true">
+            <span class="gallery__mark">+</span>
+            <span class="gallery__mark">+</span>
+          </span>
+        </button>
+        <p class="gallery__caption">створено на 6 тижні</p>
+      </article>
+
     </div>
 
     <!-- Lifted OUT of .gallery__track on purpose: the track scrubs sideways
@@ -385,6 +477,15 @@
          absent: that circle is now the glass cursor -->
 
     <div class="gallery__bar" aria-hidden="true"></div>
+
+    <!-- scroll-up: her spec, appears in every anchor-nav target block +
+         footer, same visual recipe/position as .hero__scroll -->
+    <a href="#hero" class="scroll-up js-scroll-up" aria-label="Прокрутити вгору">
+      <svg class="scroll-up-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 24V1M8 1L1 8M8 1L15 8" stroke="currentColor" stroke-width="1.4"/>
+      </svg>
+      <span class="scroll-up-tail" aria-hidden="true"></span>
+    </a>
 
     </div>
 
@@ -533,6 +634,15 @@
         </div>
 
       </div>
+
+      <!-- scroll-up: her spec, appears in every anchor-nav target block +
+           footer, same visual recipe/position as .hero__scroll -->
+      <a href="#hero" class="scroll-up js-scroll-up" aria-label="Прокрутити вгору">
+        <svg class="scroll-up-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 24V1M8 1L1 8M8 1L15 8" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        <span class="scroll-up-tail" aria-hidden="true"></span>
+      </a>
 
     </div>
 
@@ -742,14 +852,13 @@
 
         </div>
 
-        <!-- PLACEHOLDER PAGE 2 — she wants 10 cards total, only has 5 real
-             students so far. This page verbatim-duplicates page 1's
-             photos/labels/reviews (same recipe .gallery used for its
-             missing 6th work) purely to prove the carousel mechanism end
-             to end; every id here is "-2" suffixed so initStoriesReviews()
-             wires it up exactly like page 1, independently. Swap all five
-             students' photos/courses/review text for real ones before
-             launch — nothing structural needs to change to do that. -->
+        <!-- PAGE 2 — 5 real students (cards 6-10), replacing the earlier
+             placeholder duplicates of page 1's photos. Same structural
+             shape as page 1 kept verbatim (card 7/8's reviews still live in
+             each OTHER's .stories__card, card 9/10 still share one
+             .stories__slot) — only photos, review text/authors and ids
+             changed. Course labels ("курс / ...") were left as they were;
+             she didn't ask to change those. -->
         <div class="stories__page">
 
           <div class="stories__row">
@@ -757,42 +866,42 @@
             <article class="stories__card">
               <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / професійний</p>
               <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
-                      data-review-target="stories-review-natalia-2" aria-controls="stories-review-natalia-2" aria-expanded="false"
-                      aria-label="Показати відгук: наталія, бухгалтерка, полтава">
-                <img src="img/stories-1.jpg" alt="Керамічна скульптурна форма, робота студента курсу «професійний»">
+                      data-review-target="stories-review-kateryna" aria-controls="stories-review-kateryna" aria-expanded="false"
+                      aria-label="Показати відгук: катерина, дизайнерка, одеса">
+                <img src="img/stories-6.png" alt="Керамічна чашка з ручкою в руках студентки за сервірованим столом">
               </button>
             </article>
 
             <div class="stories__slot">
-              <blockquote class="stories__review" id="stories-review-natalia-2" aria-hidden="true">
-                <p class="stories__review-text">«я бухгалтерка, двадцять років рахую чужі цифри. на курсі вперше зробила щось руками від початку до кінця — і зрозуміла, що це не хобі, а спосіб дихати»</p>
-                <cite class="stories__review-author">наталія, бухгалтерка,<br>полтава</cite>
+              <blockquote class="stories__review" id="stories-review-kateryna" aria-hidden="true">
+                <p class="stories__review-text">«працюю в рекламі, де все підпорядковане правилам і брифам. глина дала мені відчуття свободи, якого я шукала роками. ти можеш ліпити те, що відчуваєш»</p>
+                <cite class="stories__review-author">катерина, дизайнерка,<br>одеса</cite>
               </blockquote>
             </div>
 
             <article class="stories__card">
               <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / перший дотик</p>
               <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
-                      data-review-target="stories-review-iryna-2" aria-controls="stories-review-iryna-2" aria-expanded="false"
-                      aria-label="Показати відгук: ірина, медсестра, харків">
-                <img src="img/stories-2.jpg" alt="Набір керамічних тарілок ручної роботи в руках студентки">
+                      data-review-target="stories-review-iryna-b" aria-controls="stories-review-iryna-b" aria-expanded="false"
+                      aria-label="Показати відгук: ірина, ілюстраторка, біла церква">
+                <img src="img/stories-7.png" alt="Керамічна фігурка кота ручної роботи з розписаними деталями">
               </button>
-              <blockquote class="stories__review" id="stories-review-andriy-2" aria-hidden="true">
-                <p class="stories__review-text">«дванадцять років пишу код, цілий день дивлюся у монітор. а тут — глина, яка не компілюється з першого разу, і це чомусь заспокоює більше за будь-який дедлайн»</p>
-                <cite class="stories__review-author">андрій, it-спеціаліст,<br>чернігів</cite>
+              <blockquote class="stories__review" id="stories-review-dmytro" aria-hidden="true">
+                <p class="stories__review-text">«я звик до швидких результатів — код написав, сайт запрацював. а тут все інакше. глина не поспішає. вона вчить чекати, спостерігати, приймати — це зовсім інше відчуття»</p>
+                <cite class="stories__review-author">дмитро, full-stack розробник,<br>львів</cite>
               </blockquote>
             </article>
 
             <article class="stories__card">
               <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / професійний</p>
               <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
-                      data-review-target="stories-review-andriy-2" aria-controls="stories-review-andriy-2" aria-expanded="false"
-                      aria-label="Показати відгук: андрій, it-спеціаліст, чернігів">
-                <img src="img/stories-3.jpg" alt="Портрет випускника курсу «професійний» у майстерні">
+                      data-review-target="stories-review-dmytro" aria-controls="stories-review-dmytro" aria-expanded="false"
+                      aria-label="Показати відгук: дмитро, full-stack розробник, львів">
+                <img src="img/stories-8.png" alt="Керамічні вази у формі жіночого силуету на полиці">
               </button>
-              <blockquote class="stories__review" id="stories-review-iryna-2" aria-hidden="true">
-                <p class="stories__review-text">«прийшла на перший урок просто зняти стрес після роботи. а вийшла з тарілкою, яку зробила сама вперше в житті — досі не вірю, що це я»</p>
-                <cite class="stories__review-author">ірина, медсестра,<br>харків</cite>
+              <blockquote class="stories__review" id="stories-review-iryna-b" aria-hidden="true">
+                <p class="stories__review-text">«я завжди шукала спосіб перенести свої малюнки в реальний світ. глина дала мені цю можливість. тепер мої персонажі живуть не лише на екрані, а й на чашках, тарілках і вазах»</p>
+                <cite class="stories__review-author">ірина, ілюстраторка,<br>біла церква</cite>
               </blockquote>
             </article>
 
@@ -805,29 +914,29 @@
             <article class="stories__card">
               <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / мова глини</p>
               <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
-                      data-review-target="stories-review-oksana-2" aria-controls="stories-review-oksana-2" aria-expanded="false"
-                      aria-label="Показати відгук: оксана, вчителька фізики, івано-франківськ">
-                <img src="img/stories-4.jpg" alt="Студентка формує виріб на гончарному крузі">
+                      data-review-target="stories-review-olha" aria-controls="stories-review-olha" aria-expanded="false"
+                      aria-label="Показати відгук: ольга, лаборантка хімічної лабораторії, фастів">
+                <img src="img/stories-9.png" alt="Кругла керамічна ваза-чаша в руці на дерев'яній підставці">
               </button>
             </article>
 
             <div class="stories__slot">
-              <blockquote class="stories__review" id="stories-review-oksana-2" aria-hidden="true">
-                <p class="stories__review-text">«викладаю фізику в школі, цілий день — формули на дошці. глина стала протилежністю: тут нічого не треба доводити, просто відчувати руками»</p>
-                <cite class="stories__review-author">оксана, вчителька фізики,<br>івано-франківськ</cite>
+              <blockquote class="stories__review" id="stories-review-olha" aria-hidden="true">
+                <p class="stories__review-text">«тут не потрібно бути ідеальним — потрібно бути присутнім. це дозволило мені подивитися на свою роботу під іншим кутом і знайти гармонію між логікою та творчістю»</p>
+                <cite class="stories__review-author">ольга, лаборантка хімічної лабораторії,<br>фастів</cite>
               </blockquote>
-              <blockquote class="stories__review" id="stories-review-olena-2" aria-hidden="true">
-                <p class="stories__review-text">«я архітектор. ця ваза — моя спроба перенести принципи форм з металу та скла на глину. ARTEFACT допоміг зрозуміти матеріал не як обмеження, а як новий простір для експериментів»</p>
-                <cite class="stories__review-author">олена, архітектор,<br>київ</cite>
+              <blockquote class="stories__review" id="stories-review-oksana-b" aria-hidden="true">
+                <p class="stories__review-text">«я прийшла на курс у стані повного вигорання. думки про роботу не відпускали. а тут — ти залишаєшся наодинці з глиною. і вона не питає, хто ти і що в тебе сталося. вона просто є. і ти є. разом із нею»</p>
+                <cite class="stories__review-author">оксана, керівниця відділу маркетингу,<br>кременчуг</cite>
               </blockquote>
             </div>
 
             <article class="stories__card">
               <p class="stories__label"><span class="stories__mark" aria-hidden="true">+</span>курс / мова глини</p>
               <button class="stories__photo js-cursor-media" type="button" data-cursor-label="відгук"
-                      data-review-target="stories-review-olena-2" aria-controls="stories-review-olena-2" aria-expanded="false"
-                      aria-label="Показати відгук: олена, архітектор, київ">
-                <img src="img/stories-5.jpg" alt="Керамічна миска на трьох ніжках, робота студента курсу «мова глини»">
+                      data-review-target="stories-review-oksana-b" aria-controls="stories-review-oksana-b" aria-expanded="false"
+                      aria-label="Показати відгук: оксана, керівниця відділу маркетингу, кременчуг">
+                <img src="img/stories-10.png" alt="Портрет випускниці курсу, знята крізь скло">
               </button>
             </article>
 
@@ -836,6 +945,15 @@
         </div>
 
       </div>
+
+      <!-- scroll-up: her spec, appears in every anchor-nav target block +
+           footer, same visual recipe/position as .hero__scroll -->
+      <a href="#hero" class="scroll-up js-scroll-up" aria-label="Прокрутити вгору">
+        <svg class="scroll-up-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 24V1M8 1L1 8M8 1L15 8" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        <span class="scroll-up-tail" aria-hidden="true"></span>
+      </a>
 
     </div>
 
@@ -981,6 +1099,15 @@
         </article>
 
       </div>
+
+      <!-- scroll-up: her spec, appears in every anchor-nav target block +
+           footer, same visual recipe/position as .hero__scroll -->
+      <a href="#hero" class="scroll-up js-scroll-up" aria-label="Прокрутити вгору">
+        <svg class="scroll-up-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 24V1M8 1L1 8M8 1L15 8" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        <span class="scroll-up-tail" aria-hidden="true"></span>
+      </a>
 
     </div>
 
@@ -1314,7 +1441,124 @@
 
       </div>
 
+      <!-- scroll-up: her spec, appears in every anchor-nav target block +
+           footer, same visual recipe/position as .hero__scroll -->
+      <a href="#hero" class="scroll-up js-scroll-up" aria-label="Прокрутити вгору">
+        <svg class="scroll-up-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 24V1M8 1L1 8M8 1L15 8" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        <span class="scroll-up-tail" aria-hidden="true"></span>
+      </a>
+
     </div>
+
+  </section>
+
+  <!-- FOOTER — "14_футер" (Figma node 978:1556), the last block. Structure
+       mirrors the Figma frame's own auto-layout (flex-col, 200u gap between
+       .footer__top and .footer__bottom) rather than absolute-positioning
+       every child, since that auto-layout already reproduces the mockup's
+       rhythm exactly and is more robust to font-metric rounding than
+       hand-copied x/y coordinates would be. Background gradient blobs are
+       CSS radial-gradients (not the Figma-exported blurred-ellipse SVG,
+       which bakes in an feGaussianBlur — the site's flat "no blur anywhere"
+       rule). The grain overlay reuses the SAME --grain tile every olive
+       section already sets via initOliveGrain() in script.js, just applied
+       here via .footer::before, so no new JS was needed for it. The
+       ARTEFACT wordmark (.footer__logo-img) intentionally KEEPS its
+       exported soft-focus/grain treatment — that's her own asset
+       (img/logo-footer.png, supplied for this exact purpose), a deliberate
+       exception to the blur rule confirmed with her, not an oversight. -->
+  <section class="footer" id="footer" data-cursor-theme="light">
+
+    <div class="footer__top">
+
+      <!-- anchors, revised 2026-08-04: метод -> block 5 "галерея робіт"
+           (.gallery, same as "галерея" — her mapping, not a mistake),
+           філософія -> block 7 "кроки" (.steps), галерея -> block 5
+           (.gallery, unchanged), тарифи -> block 10 (.pricing), відгуки ->
+           block 9 "історії учнів" (.stories) — same mapping as
+           .hero__links, see its comment. -->
+      <nav class="footer__menu" aria-label="Футер — навігація">
+        <a href="#gallery" class="footer__menu-link js-line-hover"><span class="footer__menu-link-text">метод</span><span class="footer__menu-link-underline" aria-hidden="true"></span></a>
+        <a href="#steps" class="footer__menu-link js-line-hover"><span class="footer__menu-link-text">філософія</span><span class="footer__menu-link-underline" aria-hidden="true"></span></a>
+        <a href="#gallery" class="footer__menu-link js-line-hover"><span class="footer__menu-link-text">галерея</span><span class="footer__menu-link-underline" aria-hidden="true"></span></a>
+        <a href="#pricing" class="footer__menu-link js-line-hover"><span class="footer__menu-link-text">тарифи</span><span class="footer__menu-link-underline" aria-hidden="true"></span></a>
+        <a href="#stories" class="footer__menu-link js-line-hover"><span class="footer__menu-link-text">відгуки</span><span class="footer__menu-link-underline" aria-hidden="true"></span></a>
+      </nav>
+
+      <div class="footer__subscribe-row">
+
+        <div class="footer__subscribe">
+          <p class="footer__subscribe-heading">Підпишіться</p>
+          <div class="footer__subscribe-form">
+            <label class="visually-hidden" for="footer-email">Ваш email</label>
+            <div class="footer__subscribe-field">
+              <input type="email" id="footer-email" class="footer__subscribe-input" autocomplete="email">
+              <span class="footer__subscribe-line" aria-hidden="true"></span>
+            </div>
+            <button type="button" class="footer__subscribe-btn js-line-hover" aria-label="Підписатися">
+              <span class="footer__subscribe-plus-track">
+                <span class="footer__subscribe-plus-char footer__subscribe-plus-char--out">+</span>
+                <span class="footer__subscribe-plus-char footer__subscribe-plus-char--in">+</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- hover mechanism verbatim from .menu-overlay__social-link: text
+             dims + shifts right on hover, an italic "(" (hidden at rest,
+             no layout space) fades in at the label's original left edge —
+             her explicit spec, "как в выпадающем меню". -->
+        <ul class="footer__social" aria-label="Соціальні мережі">
+          <li><a href="#" class="footer__social-link"><span class="italic-symbol footer__social-link-paren" aria-hidden="true">(</span><span class="footer__social-link-text">instagram</span></a></li>
+          <li><a href="#" class="footer__social-link"><span class="italic-symbol footer__social-link-paren" aria-hidden="true">(</span><span class="footer__social-link-text">pinterest</span></a></li>
+          <li><a href="#" class="footer__social-link"><span class="italic-symbol footer__social-link-paren" aria-hidden="true">(</span><span class="footer__social-link-text">youtube</span></a></li>
+        </ul>
+
+      </div>
+
+    </div>
+
+    <div class="footer__bottom">
+
+      <div class="footer__contacts-logo">
+
+        <div class="footer__contacts">
+          <div class="footer__contacts-group">
+            <div class="footer__contact-item">
+              <p class="footer__contact-label">телефон</p>
+              <p class="footer__contact-value">+38 093 123 45 67</p>
+            </div>
+            <div class="footer__contact-item">
+              <p class="footer__contact-label">mail</p>
+              <p class="footer__contact-value">hello@artefact-clay.com</p>
+            </div>
+          </div>
+          <div class="footer__contact-item">
+            <p class="footer__contact-label">адреса</p>
+            <p class="footer__contact-value">м. Київ, вул. Майстерня, 15</p>
+          </div>
+        </div>
+
+        <div class="footer__logo">
+          <img class="footer__logo-img" src="img/logo-footer.png" alt="Artefact">
+        </div>
+
+      </div>
+
+      <p class="footer__copyright">© ARTEFACT 2026. All rights reserved</p>
+
+    </div>
+
+    <!-- scroll-up: her spec, appears in every anchor-nav target block +
+         footer, same visual recipe/position as .hero__scroll -->
+    <a href="#hero" class="scroll-up js-scroll-up" aria-label="Прокрутити вгору">
+      <svg class="scroll-up-arrow" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 24V1M8 1L1 8M8 1L15 8" stroke="currentColor" stroke-width="1.4"/>
+      </svg>
+      <span class="scroll-up-tail" aria-hidden="true"></span>
+    </a>
 
   </section>
 
@@ -1382,13 +1626,20 @@
     </div>
 
     <div class="menu-overlay__mobile-strip">
-      <img src="img/logo-header.svg" alt="Artefact" class="menu-overlay__mobile-logo">
+      <!-- TODO: swap to img/mob-logo-menu.png once she supplies it — using
+           logo-green.svg (#2B3D2D) as a stand-in since the strip is now
+           #B1B8CA and the other two logo assets (logo-header.svg,
+           mob-logo-header.svg) are ALSO #B1B8CA, i.e. would be invisible
+           on this background. -->
+      <img src="img/logo-green.svg" alt="Artefact" class="menu-overlay__mobile-logo" width="150" height="21">
     </div>
 
+    <!-- same anchor mapping as .hero__links/.footer__menu, see the comment
+         above .hero__links -->
     <nav class="menu-overlay__mobile-nav" aria-label="Мобільна навігація">
-      <a href="#philosophy" class="menu-overlay__mobile-link js-menu-stagger">філософія</a>
-      <a href="#method" class="menu-overlay__mobile-link js-menu-stagger">метод</a>
-      <a href="#reviews" class="menu-overlay__mobile-link js-menu-stagger">відгуки </a>
+      <a href="#gallery" class="menu-overlay__mobile-link js-menu-stagger">метод</a>
+      <a href="#steps" class="menu-overlay__mobile-link js-menu-stagger">філософія</a>
+      <a href="#stories" class="menu-overlay__mobile-link js-menu-stagger">відгуки </a>
       <a href="#pricing" class="menu-overlay__mobile-link js-menu-stagger">тарифи</a>
     </nav>
 

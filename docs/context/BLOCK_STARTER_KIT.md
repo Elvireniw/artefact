@@ -112,9 +112,52 @@ Every block section follows the same shape:
   `--u`**, unless she says otherwise. The one standing exception: small
   fixed gaps next to `.italic-symbol` characters (see below) are
   conventionally literal px too, by precedent.
-- The only breakpoint in the whole site is `max-width: 768px`, and it's
-  scoped to the menu overlay only. Don't add a general mobile breakpoint
-  for your block unless asked.
+- Until 2026-08-04, `max-width: 768px` (menu overlay only) was the only
+  breakpoint on the site. **The mobile phase started that day — see
+  "Mobile version" below** if your task is a mobile build, not a desktop
+  one.
+
+## Mobile version — started 2026-08-04, block by block
+
+All 14 desktop blocks are done and confirmed. She's now doing a mobile pass,
+same one-block-per-chat workflow, working from her own mobile Figma frames
+(she gives a node link per block, same as desktop). Ask for that block's
+mobile node link if it wasn't given.
+
+**Two breakpoints, not one** — she has separate Figma frames at 375px
+(phone) and 768px (tablet) reference widths:
+
+```css
+@media (max-width: 768px) { /* tablet layer — base "below desktop" styles */ }
+@media (max-width: 480px) { /* phone layer — overrides on top of tablet */ }
+```
+
+480px (not 767px) is the phone/tablet cutoff — a conventional round number
+comfortably above her 375px phone reference and below the 768px tablet
+reference, chosen so neither frame's design has to stretch across an
+awkward gap. Confirm with her if a specific block's spec doesn't fit that
+split cleanly.
+
+**Fixed `px`, not `--u`, inside both breakpoints** — this is a real
+convention switch from the fluid desktop system, not a shortcut. Confirmed
+against the one mobile UI already built (`.menu-overlay`'s own
+`max-width:768px` variant in `style.css`): every value there is a literal
+px (`height: 52px`, `font-size: 32px`, `margin: 80px 20px 0`, etc.), not
+`calc(var(--u) * N)`. `--u` is a 1920px-reference fluid scale — appropriate
+for desktop's continuous-resize behavior, not for two fixed device-class
+breakpoints. Write mobile geometry as literal px straight from Figma Dev
+Mode, same as the menu overlay already does.
+
+**Add mobile rules alongside the existing desktop CSS for that block, never
+replace it** — the media queries layer on top; desktop rules still apply
+above 768px. Same append-only, self-contained-addition model as new desktop
+blocks (see "Working model" above) — she merges these in herself too.
+
+Whether existing desktop JS (entrance timelines, hover/parallax, pin+scrub
+carousels) should run at all under 768px hasn't been decided per-block yet
+— ask her, or default to disabling scroll-jacking/pin mechanics on mobile
+(the usual mobile-UX reason to have a breakpoint in the first place) unless
+she says she wants them.
 
 ## Colors (CSS custom properties, already defined — reuse, don't redeclare)
 

@@ -764,6 +764,269 @@ body.is-preloading .hero__btn {
 }
 
 /* ==========================================================================
+   HERO — MOBILE (Figma node 978:863, file 6tA1k2sLpFm5U7cLn9p9rZ, 375px
+   reference, plain px per the mobile-phase convention — see
+   BLOCK_STARTER_KIT.md's "Mobile version"). Background, vase photo, H1
+   title (5 separately-exported line images, each pre-blurred in Figma so
+   no CSS blur is needed), logo, eyebrow, description and CTA all reuse
+   the existing desktop markup/classes (`.hero__eyebrow`,
+   `.hero__description*`, `.hero__btn*`) — only position/size are
+   overridden here, no new elements needed since those are real text, not
+   exported images. Nav links + decorative labels/ghost-text stay hidden
+   (not present in the mobile macket). Still missing: scroll arrow.
+
+   Mobile assets (mob-*.png/svg in img/) are exported at 3x, i.e. dividing
+   their natural pixel size by 3 reproduces the Figma frame's own px value
+   exactly (confirmed: mob-vase.png 942x2481 / 3 = 314x827, matching node
+   997:1780's own x:61 y:-13 w:314 h:827) — so all the px values below are
+   taken straight from Figma metadata, not eyeballed.
+
+   Scoped to the single existing 768px breakpoint for now (matching the
+   menu overlay's own precedent) rather than splitting 480/768, since only
+   the 375px phone frame + assets exist so far. Revisit once she supplies a
+   768px tablet frame for Hero specifically. */
+
+.hero__bg-mobile,
+.hero__vase-mobile,
+.hero__title-mobile {
+  display: none;
+}
+
+/* ".hero__logo img" (a class+type selector, specificity 0,1,1) already
+   sets display:block on any img inside .hero__logo — a plain single-class
+   ".hero__logo-img--mobile { display:none }" (specificity 0,1,0) loses to
+   it regardless of source order, so both logos would render stacked even
+   on desktop. Matching it as a descendant of .hero__logo (0,2,0) instead
+   wins cleanly. */
+.hero__logo .hero__logo-img--mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    aspect-ratio: unset;
+    height: 812px;
+  }
+
+  /* not in the mobile macket at all — decorative desktop-only elements */
+  .hero__label,
+  .hero__ghost-img,
+  .hero__links,
+  .hero__vase-scene,
+  .hero__scroll {
+    display: none;
+  }
+
+  /* .hero__content wraps the eyebrow (real text, kept) + .hero__title-img
+     (desktop PNG, replaced by .hero__title-mobile above) */
+  .hero__content {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .hero__title-img {
+    display: none;
+  }
+
+  .hero__eyebrow {
+    position: absolute;
+    left: 20px;
+    top: 183px;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.32px;
+    line-height: 1.1;
+    color: var(--beige-100);
+    white-space: nowrap;
+  }
+
+  /* Figma text-[24px] leading-[1.1], x:20 y:591 w:225 — desktop rule uses
+     !important on width/font-size/font-weight/line-height (guards against
+     a global reset elsewhere), so the override needs it too or it loses
+     despite coming later in the cascade. */
+  .hero__description {
+    display: block;
+    left: 20px;
+    top: 591px;
+    width: 225px !important;
+    font-size: 24px !important;
+    font-weight: 400 !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Figma: PrimaryBtn left:calc(50%-77px) + translate-x(-50%), top:704px,
+     text-[24px], gap-[28px] — both label and plus icon share the same
+     24px (no desktop-style 32/36 downscale on the plus glyph). Centered
+     with a plain CSS transform since no mobile entrance timeline exists
+     yet (desktop centers via GSAP xPercent so an entrance tween on x/y
+     never clobbers it — not needed until this button gets mobile motion). */
+  /* left:20px, NOT centered — matches metadata (symbol "primary-btn" x:20
+     y:704 w:181 h:28), same left edge as the eyebrow/H1/description
+     column. The React/Tailwind reference code's "-translate-x-1/2 +
+     left-calc(50%-77px)" combo reads like centering but isn't ground
+     truth; get_metadata's raw x/y is. */
+  .hero__btn {
+    display: inline-flex;
+    left: 20px;
+    top: 704px;
+    gap: 28px;
+    font-size: 24px;
+  }
+
+  .hero__btn-plus {
+    font-size: 24px;
+  }
+
+  .hero__bg {
+    display: none;
+  }
+
+  .hero__bg-mobile {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    top: -51px;
+    width: 375px;
+    height: 864px;
+    object-fit: cover;
+  }
+
+  .hero__vase-mobile {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    left: 61px;
+    top: -13px;
+    width: 314px;
+    height: 827px;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  /* logo: fixed 150x21 box (Figma header frame, x:20 y:22), same <a> as
+     desktop — only the image inside swaps */
+  .hero__logo {
+    left: 20px;
+    top: 22px;
+    width: 150px;
+    height: 21px;
+  }
+
+  .hero__logo .hero__logo-img--desktop {
+    display: none;
+  }
+
+  .hero__logo .hero__logo-img--mobile {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* H1: 5 separately-exported line images (Figma "Frame 2147229672",
+     x:20 y:219 w:320, rows at y 0/49/98/147/196 i.e. 45px row + 4px gap —
+     stacked with the same flex gap rather than each row's absolute y,
+     since the exported PNGs are cropped tightly to their (blurred) glyph
+     bounds, not a fixed 45px line box, and would drift out of alignment
+     if positioned against the designed row centers instead.
+
+     Widths are natural-px / 2, NOT / 3 — corrected after she flagged the
+     H1 rendering too small. The vase/bg assets really are 3x (942/314 and
+     1125/375 both land on an exact 3.0), but these 5 PNGs export at 2x:
+     dividing by 2 lands within a few px of Figma's own designed row width
+     (line1 "зв'язок" -> 219.5 vs metadata's 211; line4 "мистецтво" -> 309
+     vs 305), the small remainder being blur bleed (largest on line3
+     "через", which also has the biggest designed blur, 4px vs 2.5px). */
+  .hero__title-mobile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    position: absolute;
+    z-index: 3;
+    left: 20px;
+    top: 219px;
+    width: 320px;
+    pointer-events: none;
+  }
+
+  .hero__title-mobile img {
+    display: block;
+    height: auto;
+  }
+
+  .hero__title-mobile img:nth-child(1) { width: 219.5px; }
+  .hero__title-mobile img:nth-child(2) { width: 258px; }
+  .hero__title-mobile img:nth-child(3) { width: 166.5px; }
+  .hero__title-mobile img:nth-child(4) { width: 309px; }
+  .hero__title-mobile img:nth-child(5) { width: 326.5px; }
+}
+
+/* ==========================================================================
+   SCROLL-UP BUTTON — shared component (not block-prefixed on purpose, it's
+   reused identically across 6 different sections: .gallery/.steps/.stories/
+   .pricing/.social/.footer — the ones her anchor nav links point to, plus
+   the footer). Same visual recipe as .hero__scroll, arrow mirrored to point
+   up. left:1854u reused verbatim (same scrollbar-safety reasoning as
+   .hero__scroll's own comment — it doesn't depend on section height/width,
+   only the reference viewport, so every host section can share one value).
+   bottom-anchored rather than top, since these 6 sections are all different
+   heights — bottom:50u (the project's standard margin unit, close to
+   .hero__scroll's own ~52u gap from Hero's bottom edge) keeps it in the
+   same visual corner regardless. One shared dark color (#2B3D2D) since all
+   six host sections share data-cursor-theme="light" (light bg/dark text),
+   unlike Hero itself.
+   ========================================================================== */
+
+.scroll-up {
+  position: absolute;
+  z-index: 7;
+  left: calc(var(--u) * 1854);
+  bottom: calc(var(--u) * 50);
+  height: calc(var(--u) * 36 * 1.1);
+  display: inline-flex;
+  align-items: center;
+  color: #2B3D2D;
+}
+
+.scroll-up-arrow {
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 24);
+}
+
+/* below the arrow (not above, like .hero__scroll-tail) — the tail extends
+   the shaft backward from the arrowhead, and this arrow points up */
+.scroll-up-tail {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: calc(var(--u) * 1.4);
+  height: calc(var(--u) * 16);
+  background: currentColor;
+  transform-origin: top;
+  transform: translateX(-50%) scaleY(0);
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .scroll-up-tail {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .scroll-up:hover .scroll-up-tail {
+    transform: translateX(-50%) scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-up-arrow {
+    animation: scrollArrowBob 1.8s ease-in-out infinite;
+  }
+}
+
+/* ==========================================================================
    LINE-HOVER MICRO-INTERACTION
    Idle line sits fully visible. On hover it collapses toward its right
    edge, then redraws from its left edge, in one sequential sweep. Applied
@@ -1030,6 +1293,155 @@ body.is-preloading .hero__btn {
 
 .craft__side-text-line--1 { color: rgba(43, 61, 45, 0.8); }
 .craft__side-text-line--2 { color: rgba(43, 61, 45, 0.6); }
+
+/* ==========================================================================
+   CRAFT — MOBILE (Figma node 978:898, file 6tA1k2sLpFm5U7cLn9p9rZ, 375px
+   reference, plain px per the mobile-phase convention). Pixel Perfect
+   pass only, no motion yet — matches how every desktop block was built
+   (layout first, motion as its own separate pass). Verified against
+   get_metadata's raw x/y/w/h, not the get_design_context React/Tailwind
+   reference code, after the Hero pass showed that code's
+   translate-x-1/2-style "centering" isn't reliable ground truth (the CTA
+   button here uses the same pattern and is genuinely left-aligned at
+   x:25, not centered — checked before trusting it this time). Two content
+   pieces (.craft__heading-mobile, .craft__side-text-mobile) turned out to
+   have real differences from their desktop counterparts — different line
+   breaks and different color tiers, not just resized — so they're new
+   elements rather than mobile overrides of the desktop ones; see each
+   element's own HTML comment in index.html for specifics. .craft__body
+   and .craft__cta reuse the desktop elements as-is (same content, same
+   mechanism), just repositioned/resized. */
+
+.craft__heading-mobile,
+.craft__art-1-mobile,
+.craft__art-2-mobile,
+.craft__side-text-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* 80px breathing room top and bottom, per her explicit revision — the
+     raw Figma frame (1236 tall) had ~0px at the top and ~1px at the
+     bottom. Implemented as +80 on every element's own top (not padding on
+     .craft, which is absolutely-positioned children with no padding
+     contribution) plus a matching +80 on the section's own height. */
+  .craft {
+    aspect-ratio: unset;
+    height: 1355px;
+  }
+
+  .craft__heading-line,
+  .craft__art-1,
+  .craft__art-2-frame,
+  .craft__side-text {
+    display: none;
+  }
+
+  .craft__heading-mobile {
+    display: block;
+    position: absolute;
+    z-index: 3;
+    left: 9px;
+    top: 80px;
+    width: 343px;
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: -1.38px;
+    text-align: right;
+    text-transform: uppercase;
+    color: #2B3D2D;
+  }
+
+  /* same source photo as the desktop hover-crossfade pair
+     (craft-art-1a.png) — she hasn't supplied a separate mobile crop for
+     this block yet, so this reuses it with object-fit:cover rather than
+     the exact Figma export crop. Swap src if/when she sends one. */
+  .craft__art-1-mobile {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    left: 195px;
+    top: 238px;
+    width: 158px;
+    height: 217px;
+    object-fit: cover;
+  }
+
+  .craft__art-2-mobile {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    left: 20px;
+    top: 587px;
+    width: 335px;
+    height: 440px;
+    object-fit: cover;
+  }
+
+  .craft__side-text-mobile {
+    display: block;
+    position: absolute;
+    z-index: 3;
+    left: 20px;
+    top: 495px;
+    width: 335px;
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.1;
+    color: #2B3D2D;
+  }
+
+  .craft__side-text-mobile-line--1 { color: #2B3D2D; }
+  .craft__side-text-mobile-line--2 { color: rgba(43, 61, 45, 0.8); }
+  .craft__side-text-mobile-line--3 { color: rgba(43, 61, 45, 0.6); }
+
+  /* reuses the desktop element/content as-is — Figma's mobile spec has
+     the same "ви навчитеся..." copy, just a different color (0.8 here vs
+     desktop's solid #2B3D2D) and position/size */
+  .craft__body {
+    left: 20px;
+    top: 1067px;
+    width: 233px;
+    font-size: 20px;
+    line-height: 1.06;
+    letter-spacing: -0.4px;
+    color: rgba(43, 61, 45, 0.8);
+  }
+
+  /* left:20px, matching .craft__body/.craft__art-2-mobile's own left
+     edge — she asked for it explicitly (the raw Figma metadata actually
+     reads x:25 here, 5px off that column; overridden per her direct
+     instruction rather than the macket). NOT centered either way —
+     desktop's .craft__cta uses a center-anchor (left:50%-354.5u +
+     transform:translateX(-50%)), so that transform has to be explicitly
+     cancelled or it still applies on top of the new left value (same
+     lesson as the Hero CTA). */
+  /* top:1247px — shifted up 40px along with .craft__body when the
+     image-to-body gap was tightened from 80 to 40, so the body-to-cta gap
+     (53px) and the cta-to-section-bottom gap (80px, from item 2) both
+     stay exactly what they were, rather than the 40px just reopening as
+     extra dead space between body and cta. */
+  .craft__cta {
+    left: 20px;
+    top: 1247px;
+    transform: none;
+    gap: 28px;
+    padding-bottom: 2px;
+  }
+
+  .craft__cta-text {
+    font-size: 24px;
+  }
+
+  .craft__cta-plus {
+    font-size: 24px;
+  }
+}
 
 /* ==========================================================================
    CLAY SECTION — "3_мова глини" (Figma node 978:1237, file
@@ -1445,16 +1857,29 @@ body.is-preloading .hero__btn {
   mix-blend-mode: overlay;
 }
 
-/* --- horizontal carousel track. Starts at -409u and runs 2738u wide, so
-   it deliberately overhangs the viewport on both sides; .gallery's own
-   overflow:hidden crops it to the mockup's framing. --- */
+/* --- horizontal carousel track. Starts at -867u and runs 3654u wide (the
+   original 6 real cards' -409u/2738u, both grown by one card-pitch, 458u,
+   in each direction) so scrolling to either end stop reveals a looping
+   clone card instead of empty background — her "по колу" spec, 2026-08-04.
+   The original -409u/2738u left the LAST 49u of GALLERY_TRAVEL's ±458u
+   scrub exposing raw page background at both extremes (measured: the real
+   cards' 818u of overhang was 49u short of the 916u the scrub travels
+   through). One prepended clone of card 6 and one appended clone of card 1
+   (both aria-hidden, tabindex="-1" — decorative repeats, not second real
+   controls) fill exactly that shortfall with real content, with margin to
+   spare (409u of overhang left at each extreme instead of -49u). Because
+   the shift is symmetric (+458u prepended is compensated by -458u on
+   `left`), the 6 real cards' on-screen positions — and the note panel's
+   card-pitch alignment with them — are completely unchanged; only what's
+   visible past the old edges changed. .gallery's own overflow:hidden crops
+   the whole thing to the mockup's framing. --- */
 
 .gallery__track {
   position: absolute;
   z-index: 1;
-  left: calc(var(--u) * -409);
+  left: calc(var(--u) * -867);
   top: calc(var(--u) * 659);
-  width: calc(var(--u) * 2738);
+  width: calc(var(--u) * 3654);
   height: calc(var(--u) * 494);
   display: flex;
   align-items: flex-start;
@@ -1510,7 +1935,12 @@ body.is-preloading .hero__btn {
 /* the first photo is cropped lower than centre in Figma (the export sits
    at top:-61.89% inside a 177.82%-tall box); 79.5% is that same slice
    expressed as an object-position, so the cup stays framed as designed */
-.gallery__card:first-child .gallery__photo img {
+/* --first is the real card 1 (no longer :first-child in the DOM now that a
+   loop clone is prepended before it — see .gallery__track's comment);
+   --clone-first is that same card's own clone at the end of the track.
+   Same crop for both, since --clone-first is a literal copy of card 1. */
+.gallery__card--first .gallery__photo img,
+.gallery__card--clone-first .gallery__photo img {
   object-position: center 79.5%;
 }
 
@@ -2573,13 +3003,25 @@ body.menu-is-open {
     display: none;
   }
 
+  /* was #2B3D2D — a hard-edged dark-green band against the overlay's own
+     blue-tinted background (.menu-overlay, var(--blue) at 98%) read as two
+     separate things snapping in one after another as the curtain revealed
+     them, not one continuous sheet. Matching the overlay's own blue
+     removes that seam. */
+  /* align-items:center previously put the logo at top:15.5px (centered in
+     the 52px strip) — 6.5px off from .hero__logo's own top:22px, so it
+     visibly shifted between the Hero header and the open menu even though
+     it's meant to read as the same fixed element. flex-start + an
+     explicit 22px top padding matches .hero__logo's position exactly
+     (both measured from the viewport top, since both .hero and this strip
+     start flush at y:0). */
   .menu-overlay__mobile-strip {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     height: 52px;
-    padding: 0 20px;
-    background: #2B3D2D;
+    padding: 22px 20px 0;
+    background: var(--blue);
   }
 
   .menu-overlay__mobile-logo {
@@ -2639,11 +3081,21 @@ body.menu-is-open {
     letter-spacing: -0.4px;
   }
 
+  /* Revised: the Hero mobile macket (node 978:863, "btn-menu" x:305 y:24
+     w:50) shows the plain "меню" text link at rest, same as desktop/tablet
+     — not the hamburger icon. Icon-only was a blanket "mobile = icon"
+     rule that predates having this macket to check against. Keep the icon
+     for the OPEN state specifically: mobile still has no separate close
+     button, so this same control needs to read as an X once the overlay
+     is up. */
   .hero__menu-btn {
     position: fixed;
     left: auto;
-    top: 8px;
+    top: 24px;
     right: 20px;
+    font-size: 20px;
+    letter-spacing: -0.4px;
+    color: var(--beige-80);
     /* mobile has no separate close icon — this SAME button (shown as an
        X) is the only way to close the overlay, so unlike desktop/tablet
        it still needs to out-rank #menu-overlay's z-index (9000) to stay
@@ -2651,15 +3103,41 @@ body.menu-is-open {
     z-index: 9001;
   }
 
-  .hero__menu-label,
-  .hero__menu-line-track {
-    display: none;
-  }
-
+  /* Real bug found while checking this per her request: openMenu()/
+     closeMenu() toggle body.menu-is-open synchronously (before the
+     curtain tween even starts), so a plain `display` swap here snapped
+     "меню" -> X in a single frame right at the tap, well before the
+     curtain had covered that corner — read as a jump/jitter on the one
+     control she was looking at. Fixed by keeping both label and icon
+     permanently in the flow (icon absolutely centered over the label so
+     it doesn't add height) and crossfading opacity instead of swapping
+     display. */
   .hero__menu-icon {
     display: inline-flex;
     width: 36px;
     height: 36px;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .hero__menu-label,
+  .hero__menu-line-track {
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  body.menu-is-open .hero__menu-icon {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  body.menu-is-open .hero__menu-label,
+  body.menu-is-open .hero__menu-line-track {
+    opacity: 0;
+    pointer-events: none;
   }
 }
 
@@ -4064,9 +4542,18 @@ body.menu-is-open {
    SOCIAL SECTION — "13_соц мережі" (Figma node 978:1536)
    ========================================================================== */
 
+/* min-height:100vh, not a flat 890u — her catch, live on video: while the
+   carousel is pinned (a long scroll-locked hold, unlike a section you
+   simply scroll past), a section shorter than the real viewport shows a
+   big dead beige gap below the cards for the ENTIRE pin duration, not
+   just a passing seam. Same root cause and same fix shape as .footer's
+   min-height:100vh, but the content here (header+content, both
+   absolutely positioned) is also re-centered vertically — see the
+   `calc(50% - …)` tops below — rather than pinned to top/bottom, since
+   this is one visual cluster, not a top-group/bottom-group footer split. */
 .social {
   position: relative;
-  height: calc(var(--u) * 890);
+  min-height: 100vh;
   /* full-bleed seam guard vs. .faq above — see BLOCK_STARTER_KIT.md's
      "full-bleed seam hairline gotcha" */
   margin: -2px 0 0;
@@ -4076,10 +4563,16 @@ body.menu-is-open {
 
 /* --- heading group (Figma frame "Н" at 50,0) --- */
 
+/* Cluster (.social__header + .social__content) is 740u tall total
+   (content's own bottom, 292+448u hero-photo, is the tallest point).
+   Centering it as one unit: header's top = 50% of .social's real height
+   minus half the cluster (370u); .social__content keeps its original
+   292u offset FROM the header, just added on top of that same centred
+   start instead of literal 0. */
 .social__header {
   position: absolute;
   left: calc(var(--u) * 50);
-  top: 0;
+  top: calc(50% - var(--u) * 370);
   width: calc(var(--u) * 1819);
 }
 
@@ -4115,7 +4608,7 @@ body.menu-is-open {
 .social__content {
   position: absolute;
   left: calc(var(--u) * 50);
-  top: calc(var(--u) * 292);
+  top: calc(50% - var(--u) * 78);
   width: calc(var(--u) * 1819);
   display: flex;
   align-items: flex-start;
@@ -4235,3 +4728,422 @@ body.menu-is-open {
 .social__card:nth-child(5) .social__photo img { object-position: 45% 50%; }
 .social__card:nth-child(6) .social__photo img { object-position: 35% 40%; }
 .social__card:nth-child(7) .social__photo img { object-position: 40% 72%; }
+
+/* ==========================================================================
+   FOOTER — "14_футер" (Figma node 978:1556), the last block
+   ========================================================================== */
+
+/* flex-col + a single 200u gap reproduces the Figma frame's own auto-layout
+   (pt 50 / top-group 341 / gap 200 / bottom-group ~221 / pb 150) exactly,
+   so no fixed section height is set — it sizes itself, same reasoning as
+   .faq opting out of the .section-inner/fixed-height pattern. isolation:
+   isolate contains .footer::before's mix-blend-mode, same as every other
+   grained section (.philosophy/.gallery__bar/.cta). */
+/* min-height:100vh — her catch: as the LAST section, an intrinsic ~960u
+   height (this design's own Figma frame height, scaled off viewport WIDTH)
+   left it well short of viewport HEIGHT on any normal screen (measured
+   441px tall against an 897px viewport at one test size) — the page
+   simply ended mid-screen instead of the footer covering it. min- (not a
+   flat height) so real overflow on a narrow/tall viewport still grows the
+   box instead of clipping. justify-content:space-between then pins
+   .footer__top to the top edge and .footer__bottom to the bottom edge of
+   that full-height box, with `gap` as a floor in case the viewport is
+   short enough that space-between would otherwise crush them together. */
+.footer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: calc(var(--u) * 200);
+  padding: calc(var(--u) * 50) calc(var(--u) * 48);
+  /* full-bleed seam guard vs. .social above — see BLOCK_STARTER_KIT.md's
+     "full-bleed seam hairline gotcha" */
+  margin: -2px 0 0;
+  background:
+    radial-gradient(60% 55% at 78% 12%, rgba(217, 224, 242, 0.55), transparent 70%),
+    radial-gradient(55% 60% at 12% 88%, rgba(147, 154, 172, 0.45), transparent 70%),
+    var(--blue);
+  color: #2B3D2D;
+}
+
+/* same film-grain tile as .philosophy/.gallery__bar/.cta — see the note
+   above .philosophy::before. Reuses the SAME --grain custom property
+   initOliveGrain() already sets globally; no new JS needed. Paints ABOVE
+   .footer's own background but BELOW .footer__top/.footer__bottom because
+   those are given position:relative below, landing in the same
+   z-index:auto paint bucket as this ::before and coming after it in DOM
+   order. */
+.footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--grain, none);
+  background-repeat: repeat;
+  mix-blend-mode: overlay;
+}
+
+.footer__top,
+.footer__bottom {
+  position: relative;
+}
+
+.footer__top {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 100);
+}
+
+/* width 907u, not the full row — her catch: this now shares its right
+   edge with .footer__logo below it (same 907u column, both starting flush
+   at the section's left padding) instead of stretching across the whole
+   footer width like it did originally. */
+.footer__menu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: calc(var(--u) * 907);
+  margin: 0;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+}
+
+.footer__menu-link {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.footer__menu-link-text {
+  display: inline-block;
+}
+
+/* underline hidden at rest, draws in on hover — same recipe as
+   .hero__link-underline */
+.footer__menu-link-underline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--u) * -6);
+  height: 1px;
+  background: #2B3D2D;
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footer__menu-link:hover .footer__menu-link-underline {
+  transform-origin: left;
+  transform: scaleX(1);
+}
+
+/* .footer__social is positioned absolutely at the exact same left offset
+   as .footer__copyright (1371u from the padded content edge, both measured
+   off Figma) rather than flexed with space-between — her catch: with
+   space-between the social column's left edge only matched the copyright
+   text's left edge by coincidence of content width, and drifted out of
+   alignment. An explicit height keeps this row's own layout height equal
+   to the (taller) social column now that it's out of flow. */
+.footer__subscribe-row {
+  position: relative;
+  height: calc(var(--u) * 214);
+}
+
+/* width 907u — same column as .footer__menu/.footer__logo below it. The
+   input grows to fill whatever's left after the heading and button take
+   their natural width (flex:1 chained through .footer__subscribe-form ->
+   .footer__subscribe-field), so the row's right edge lands flush on that
+   same 907u line regardless of the heading's actual rendered width. */
+.footer__subscribe {
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--u) * 21);
+  width: calc(var(--u) * 907);
+}
+
+.footer__subscribe-heading {
+  flex-shrink: 0;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -1.28);
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.footer__subscribe-form {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--u) * 40);
+  padding-bottom: calc(var(--u) * 8);
+}
+
+/* the line lives on its own element (.footer__subscribe-line), not as the
+   input's own border — a CSS border anti-aliases at a visibly different
+   weight than the flat height:1px boxes every other line on the site uses
+   (.hero__link-underline, .hero__btn-line, …), which is what made it read
+   as a different thickness. */
+.footer__subscribe-field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.footer__subscribe-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 0 calc(var(--u) * 8);
+  border: none;
+  background: transparent;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 24);
+  line-height: 1;
+  color: #2B3D2D;
+  outline: none;
+}
+
+.footer__subscribe-input::placeholder {
+  color: rgba(43, 61, 45, 0.4);
+}
+
+.footer__subscribe-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: rgba(43, 61, 45, 0.4);
+  pointer-events: none;
+  transition: background-color 0.3s ease;
+}
+
+/* hover is a subtle darken, distinct from (and lighter than) focus's full
+   solid line — "не перегружений" was her spec */
+.footer__subscribe-field:hover .footer__subscribe-line {
+  background: rgba(43, 61, 45, 0.6);
+}
+
+.footer__subscribe-input:focus ~ .footer__subscribe-line {
+  background: #2B3D2D;
+}
+
+/* plus-icon swap — verbatim .hero__btn-plus recipe, see
+   BLOCK_STARTER_KIT.md's "Two-line icon swap". height:1em (not a fixed
+   20u box) — Figma's own "+" frame is a tight ink-bounds auto-layout hug
+   around a 40u glyph, not a safe CSS box; a fixed 20u height with
+   overflow:hidden clipped the glyph in half. */
+.footer__subscribe-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: calc(var(--u) * 40);
+  line-height: 1;
+  color: rgba(43, 61, 45, 0.8);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.footer__subscribe-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.footer__subscribe-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footer__subscribe-plus-char--out {
+  transform: translateY(0%);
+}
+
+.footer__subscribe-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .footer__subscribe-plus-char--out {
+  transform: translateY(-100%);
+}
+
+.js-line-hover:hover .footer__subscribe-plus-char--in {
+  transform: translateY(0%);
+}
+
+/* positioned to match .footer__copyright's left edge exactly — see the
+   comment above .footer__subscribe-row */
+.footer__social {
+  position: absolute;
+  left: calc(var(--u) * 1371);
+  top: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--u) * 20);
+}
+
+/* hover mechanism verbatim from .menu-overlay__social-link — see that
+   rule's own comment for the full reasoning. Text dims + shifts right;
+   an italic "(" hidden at rest (no layout space, position:absolute)
+   fades in to fill the gap the shift opens up. Font size lives on the
+   <a> itself (matching .menu-overlay__social-link exactly), not just on
+   the text span — her catch: the paren had no font-size rule of its own,
+   so it inherited the page's base size instead of the link's 64u and
+   rendered tiny/mispositioned. Inheriting from the parent is what keeps
+   paren and text the same size. */
+.footer__social-link {
+  position: relative;
+  display: inline-flex;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -1.28);
+  text-decoration: none;
+  color: #2B3D2D;
+}
+
+.footer__social-link-paren {
+  position: absolute;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footer__social-link-text {
+  display: inline-block;
+  white-space: nowrap;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footer__social-link:hover .footer__social-link-paren {
+  opacity: 0.6;
+}
+
+.footer__social-link:hover .footer__social-link-text {
+  opacity: 0.6;
+  transform: translateX(calc(0.5em + 10px));
+}
+
+.footer__bottom {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 466);
+}
+
+.footer__contacts-logo {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 38);
+  width: calc(var(--u) * 905);
+}
+
+/* must stay on one line, same width as the logo below it — her catch: the
+   defensive flex-wrap was the bug, it was wrapping onto two lines whenever
+   the real Helvetica Neue metrics ran a hair wider than Figma's own
+   measurement. nowrap + slightly tightened gaps (down from Figma's 107/54)
+   keep it on one line with margin to spare. */
+.footer__contacts {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: calc(var(--u) * 40);
+}
+
+.footer__contacts-group {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 90);
+}
+
+.footer__contact-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--u) * 10);
+}
+
+.footer__contact-label {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 18);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.36);
+  color: rgba(43, 61, 45, 0.6);
+  white-space: nowrap;
+}
+
+.footer__contact-value {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.24);
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+/* Her own export (img/logo-footer.png), soft-focus/grain baked in on
+   purpose — see the section-level comment in index.html above .footer.
+   -25.2%/-3.54% inset reproduces the Figma frame's own oversize (969x191
+   image inside a 905x127 box) so the blurred edges have room to fall off
+   without a hard clip. */
+.footer__logo {
+  position: relative;
+  width: calc(var(--u) * 905.002);
+  height: calc(var(--u) * 126.998);
+}
+
+.footer__logo-img {
+  position: absolute;
+  left: -3.54%;
+  top: -25.2%;
+  width: 107.08%;
+  height: 150.4%;
+  max-width: none;
+  display: block;
+}
+
+.footer__copyright {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer__menu-link-underline,
+  .footer__social-link-paren,
+  .footer__social-link-text,
+  .footer__subscribe-plus-char {
+    transition: none;
+  }
+}
