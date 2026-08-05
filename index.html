@@ -151,7 +151,8 @@
       у цифрову епоху
     </p>
 
-    <a href="#course" class="hero__btn js-line-hover">
+    <!-- -> block 10 "тарифи" (.pricing), her spec 2026-08-04 -->
+    <a href="#pricing" class="hero__btn js-line-hover">
       <span class="hero__btn-text">обрати курс</span>
       <span class="hero__btn-plus" aria-hidden="true">
         <span class="hero__btn-plus-track">
@@ -210,7 +211,8 @@
 
     <p class="craft__body">ви навчитеся втілювати цифрові задуми в унікальні вироби, де кожна лінія буде промовляти мовою вашої душі</p>
 
-    <a href="#" class="craft__cta js-line-hover">
+    <!-- -> block 8 "free lesson" (.free-lesson), her spec 2026-08-04 -->
+    <a href="#free-lesson" class="craft__cta js-line-hover">
       <span class="craft__cta-text">free вебинар</span>
       <span class="craft__cta-plus" aria-hidden="true">
         <span class="craft__cta-plus-track">
@@ -286,6 +288,32 @@
     <p class="clay__caption">
       як тисячолітнє<br>ремесло стає сучасним мистецтвом
     </p>
+
+    <!-- mobile-only (node 978:908). .clay__bg (the video, above) is
+         already full-bleed/responsive with no override needed — this
+         darkening vignette is new for mobile though, exported straight
+         from Figma (a blurred ellipse, node 978:911 "затемнение"): baked
+         into its own SVG filter, same "pre-rendered blur in an asset is
+         fine, a live CSS blur on our own elements is not" exception
+         .clay__title's own comment already establishes for mova-clay.png. -->
+    <img class="clay__vignette-mobile" src="img/mob-clay-vignette.svg" alt="" aria-hidden="true">
+
+    <!-- different copy than desktop's word-by-word "ваші руки оживляють
+         у форму та наповнюють її історією" — not a reuse, and NOT
+         aria-hidden: .clay__word (which this replaces on mobile) drops
+         out of the a11y tree via display:none, so this has to stay the
+         one accessible copy of its own text or it disappears entirely
+         for assistive tech, same issue caught on the craft mobile pass. -->
+    <p class="clay__body-mobile">це чарівний міст, вони вміють оживляти абстрактні форми наповнюючи їх теплотою<br>та особистою історією</p>
+
+    <!-- .мова / .глини — pre-blurred exports (7px / 6px blur baked in by
+         her, same convention as the Hero mobile H1 lines), replacing
+         desktop's single mova-clay.png (which is only lightly blurred as
+         one flattened image, not two separately-blurred words). -->
+    <div class="clay__title-mobile" aria-hidden="true">
+      <img src="img/mob-mova-clay-1.png" alt="">
+      <img src="img/mob-mova-clay-2.png" alt="">
+    </div>
 
     </div>
 
@@ -487,6 +515,107 @@
       <span class="scroll-up-tail" aria-hidden="true"></span>
     </a>
 
+    <!-- MOBILE (node 978:923, file 6tA1k2sLpFm5U7cLn9p9rZ) — separate
+         markup, not a CSS override of the elements above: the source
+         Figma frame is itself auto-layout (flex/gap), not absolute
+         positioning, so this mirrors that directly (same reasoning
+         desktop's .philosophy already used flex over absolute-in-u). Text
+         content matches desktop's gallery__eyebrow/title/lead exactly
+         (checked against get_design_context, not assumed) but the card
+         list and filter don't reuse desktop's DOM: desktop's track has
+         loop-clone cards for an infinite scrub carousel, which is a
+         motion-pass concern not built here — this is a plain native
+         horizontal scroll, no JS. -->
+    <div class="gallery-mobile">
+      <p class="gallery-mobile__eyebrow"><span class="italic-symbol">(</span>роботи студентів</p>
+
+      <h2 class="gallery-mobile__title">
+        <span class="gallery-mobile__title-a">Ваш слід</span>
+        <span class="gallery-mobile__title-b">у тисячолітті</span>
+      </h2>
+
+      <p class="gallery-mobile__lead">кожна робота тут — це унікальна історія, створена руками наших студентів</p>
+
+      <!-- active = dimmed (0.6 opacity), NOT full brightness — matches
+           desktop's own .gallery__filter-item.is-active convention
+           exactly (counterintuitive but confirmed against both the
+           Figma span opacity AND desktop's existing CSS). -->
+      <div class="gallery-mobile__filter" role="group" aria-label="Фільтр робіт">
+        <button class="gallery-mobile__filter-item js-gallery-mobile-filter" type="button">Ліплення</button>
+        <button class="gallery-mobile__filter-item js-gallery-mobile-filter is-active" type="button" aria-pressed="true">Гончарне коло</button>
+        <button class="gallery-mobile__filter-item js-gallery-mobile-filter" type="button">Декор</button>
+      </div>
+
+      <!-- data-lenis-prevent: this row scrolls itself (native overflow-x),
+           Lenis otherwise listens page-wide for scroll/wheel/touch and can
+           swallow the gesture before it ever reaches a nested scroller —
+           this tells Lenis to leave input over this element alone. -->
+      <!-- .gallery-mobile__track: width:max-content so it's exactly as wide
+           as its real content (5 cards + 4 gaps), no hardcoded pixel sum to
+           keep in sync. .gallery-mobile__bar is her desktop .gallery__bar
+           mechanism ported here — one continuous olive strip behind the
+           whole track (z-index 0, cards paint over it at z-index 1) instead
+           of each card painting its own caption background, so the 10px
+           gaps BETWEEN cards and the inset before card 1 read as olive
+           too, not the section's beige. left:-20px cancels .gallery-mobile__row's
+           own padding-left so the strip reaches the true canvas edge; right:0
+           stops it exactly at the track's own (max-content) right edge, i.e.
+           flush with the last card — no guessed width, no hard-coded cap. -->
+      <div class="gallery-mobile__row" data-lenis-prevent>
+        <div class="gallery-mobile__track">
+        <div class="gallery-mobile__bar" aria-hidden="true"></div>
+        <article class="gallery-mobile__card">
+          <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: керамічна ваза">
+            <img src="img/gallery-1.jpg" alt="Керамічна ваза">
+            <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
+          </button>
+          <p class="gallery-mobile__caption">створено на 8 тижні</p>
+        </article>
+
+        <article class="gallery-mobile__card">
+          <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: керамічна чаша">
+            <img src="img/gallery-2.jpg" alt="Керамічна чаша в руках майстрині">
+            <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span></span>
+          </button>
+          <p class="gallery-mobile__caption">створено на 4 тижні</p>
+        </article>
+
+        <!-- PLACEHOLDER — this is card 3 of 5 in her Figma file, but it's
+             an unmodified default component instance there (Figma's own
+             metadata still marks it "symbol", not "instance" like the
+             other 4 — no real photo/caption assigned yet, confirmed still
+             true after her 2026-08-05 Figma update), same situation as
+             desktop's own 6th-card placeholder. Reusing gallery-3.jpg (the
+             component's own default preview image, matched by comparing
+             asset bytes) + its default caption/mark-count until she
+             finishes that card in Figma; swap src/alt/caption then. -->
+        <article class="gallery-mobile__card">
+          <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу">
+            <img src="img/gallery-3.jpg" alt="">
+            <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
+          </button>
+          <p class="gallery-mobile__caption">створено на 8 тижні</p>
+        </article>
+
+        <article class="gallery-mobile__card">
+          <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: скульптурна керамічна форма">
+            <img src="img/gallery-4.png" alt="Скульптурна керамічна форма">
+            <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
+          </button>
+          <p class="gallery-mobile__caption">створено на 5 тижні</p>
+        </article>
+
+        <article class="gallery-mobile__card">
+          <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: керамічний виріб ручної роботи">
+            <img src="img/gallery-5.jpg" alt="Керамічний виріб ручної роботи">
+            <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
+          </button>
+          <p class="gallery-mobile__caption">створено на 3 тижні</p>
+        </article>
+        </div>
+      </div>
+    </div>
+
     </div>
 
   </section>
@@ -544,6 +673,48 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- MOBILE (node 978:984) — new markup, not a reuse of the desktop
+         elements above: same sentences, but desktop hard-codes its own
+         <br> line breaks for its own (wider) column widths, which don't
+         match how this text wraps naturally at mobile's narrower
+         measure — checked span-by-span in get_design_context rather than
+         assuming the desktop copy would just drop in. Two images only
+         (desktop's 4-image .philosophy has 2 more), matching the mobile
+         macket exactly: reuses phil-main.png and phil-p3.png, the same
+         two photos desktop already uses for the equivalent content.
+         Color alternation (light eyebrow + dark title/body in the first
+         half, dark eyebrow + light title/body in the second) is
+         deliberate and matches desktop's own --light/--dark class split
+         exactly — verified in Figma, not just carried over by assumption. -->
+    <div class="philosophy-mobile">
+      <div class="philosophy-mobile__block philosophy-mobile__block--1">
+        <p class="philosophy-mobile__eyebrow philosophy-mobile__eyebrow--light"><span class="italic-symbol">(</span>наша філософія</p>
+        <h2 class="philosophy-mobile__title philosophy-mobile__title--dark">більше,<br><span class="philosophy-mobile__title-dim">ніж ремесло</span></h2>
+        <div class="philosophy-mobile__img philosophy-mobile__img--1">
+          <img src="img/phil-main.png" alt="Руки майстра формують глину на гончарному крузі">
+        </div>
+        <p class="philosophy-mobile__note">вчимо відчувати історію в кожному дотику до глини, розуміти мову предків і додавати до неї власний голос. це не просто навичка — це міст між епохами, який ви будуєте своїми руками</p>
+      </div>
+
+      <div class="philosophy-mobile__block philosophy-mobile__block--2">
+        <p class="philosophy-mobile__eyebrow philosophy-mobile__eyebrow--dark"><span class="italic-symbol">(</span>наш підхід</p>
+        <h2 class="philosophy-mobile__title philosophy-mobile__title--light">мова <span class="philosophy-mobile__title-dim-light">творця</span></h2>
+        <!-- position:absolute (left:156/top:115 relative to this block) —
+             tried a flex space-between row first, but head-2's rendered
+             width (182px) + this at a fixed 200px + gap already exceeds
+             the 335px available column, so flex-shrink:0 on both just
+             overflowed past the section's right edge instead of landing
+             at Figma's real x:156. The design isn't actually a flex
+             relationship between these two — lead sits at an independent
+             fixed position that happens to start before the title block
+             even finishes its own height. -->
+        <p class="philosophy-mobile__lead">тут ви навчитеся не техніці, а мові глини. відчуєте, як тисячолітня мудрість майстрів оживає у ваших руках, перетворюючись на унікальні речі, що несуть відбиток вашої особистості</p>
+        <div class="philosophy-mobile__img philosophy-mobile__img--2">
+          <img src="img/phil-p3.png" alt="Керамічні свічники ручної роботи">
+        </div>
+      </div>
     </div>
 
   </section>
@@ -643,6 +814,120 @@
         </svg>
         <span class="scroll-up-tail" aria-hidden="true"></span>
       </a>
+
+      <!-- MOBILE (node 978:997 "7_кроки", file 6tA1k2sLpFm5U7cLn9p9rZ) —
+           same pattern as .gallery-mobile/.philosophy-mobile: separate flex
+           markup, not a CSS override of the absolute-positioned desktop
+           elements above. Carousel is a plain native horizontal scroll
+           (.steps-mobile__row + drag support), same mechanism as
+           .gallery-mobile__row — her explicit spec, "як у 5 блоці".
+
+           Card order (1st/2nd/3rd) and each card's own number label follow
+           her Figma frame's actual layout positions (крок-1, крок-3,
+           крок-2 in that left-to-right order — confirmed via
+           get_metadata's x-coordinates, not the instance layer names,
+           which are misleading). The frame's "(N)" number labels
+           themselves don't match their own card's text content in 2 of
+           the 3 cards (the 2nd card is positioned with крок-3's real
+           caption/body text — "додаємо душу" — but its number span reads
+           "2"; the 3rd card carries крок-2's text — "діалог з матерією" —
+           but its label component is stuck showing the hover-state word
+           "завершення" instead of a resting number). Both read as Figma
+           authoring slips (duplicated instances whose bound
+           number/hover-word properties were never reset), not an
+           intentional design choice — text content is what's reliable
+           here, not the label prop on a duplicated instance — so each
+           card's number below is corrected to match its OWN actual
+           caption/body text (1, 3, 2 in this visual order) rather than
+           copying the mismatched label verbatim. Text itself matches
+           desktop's step--1/2/3 verbatim (same copy, no mobile-specific
+           rewording in Figma). -->
+      <div class="steps-mobile">
+        <div class="steps-mobile__top">
+          <div class="steps-mobile__heading">
+            <h2 class="visually-hidden">Як народжується кераміка</h2>
+            <div class="steps-mobile__title" aria-hidden="true">
+              <img class="steps-mobile__title-img" src="img/mob-keramika-1.png" alt="">
+              <img class="steps-mobile__title-img" src="img/mob-keramika-2.png" alt="">
+              <img class="steps-mobile__title-img" src="img/mob-keramika-3.png" alt="">
+            </div>
+            <p class="steps-mobile__subheading">шлях від задуму до готової роботи</p>
+          </div>
+
+          <div class="steps-mobile__art">
+            <img class="steps-mobile__art-img" src="img/step-art-1.jpg" alt="Гончарні інструменти на робочому столі">
+          </div>
+        </div>
+
+        <!-- js-cursor-media + data-cursor-label: her spec, "иконка курсор
+             ручка" — reuses the site's existing glass-bubble custom cursor
+             (initCustomCursor() in script.js) rather than a new mechanism;
+             it's already gated to (hover:hover) and (pointer:fine), so it
+             only ever shows when there's a real mouse to hint for (her own
+             desktop-resized-to-mobile-width testing setup), never on an
+             actual touch phone where a lingering cursor bubble would be
+             meaningless. Native scrollbar hidden below in CSS — this label
+             is the replacement affordance. -->
+        <div class="steps-mobile__row js-cursor-media" data-cursor-label="гортай" data-lenis-prevent>
+          <div class="steps-mobile__track">
+
+            <article class="steps-mobile__card">
+              <p class="steps-mobile__label">
+                <span class="steps-mobile__label-left">
+                  <span class="italic-symbol steps-mobile__label-paren">(</span>
+                  <span class="steps-mobile__label-value">
+                    <span class="steps-mobile__label-value-rest">1</span>
+                    <span class="steps-mobile__label-value-hover" aria-hidden="true">проєктування</span>
+                  </span>
+                </span>
+                <span class="steps-mobile__label-spacer" aria-hidden="true"></span>
+                <span class="italic-symbol steps-mobile__label-paren steps-mobile__label-paren--close">)</span>
+              </p>
+              <div class="steps-mobile__body">
+                <p class="steps-mobile__caption">від     образа  в  уяві           до       ескіза</p>
+                <p class="steps-mobile__text">перш ніж глина торкнеться ваших рук, ми допоможемо втілити задум. ви навчитеся переносити свої ідеї в прості програми, щоб побачити форму, відчути пропорції та створити ідеальний прототип майбутнього творіння</p>
+              </div>
+            </article>
+
+            <article class="steps-mobile__card">
+              <p class="steps-mobile__label">
+                <span class="steps-mobile__label-left">
+                  <span class="italic-symbol steps-mobile__label-paren">(</span>
+                  <span class="steps-mobile__label-value">
+                    <span class="steps-mobile__label-value-rest">3</span>
+                    <span class="steps-mobile__label-value-hover" aria-hidden="true">завершення</span>
+                  </span>
+                </span>
+                <span class="steps-mobile__label-spacer" aria-hidden="true"></span>
+                <span class="italic-symbol steps-mobile__label-paren steps-mobile__label-paren--close">)</span>
+              </p>
+              <div class="steps-mobile__body">
+                <p class="steps-mobile__caption">додаємо         душу</p>
+                <p class="steps-mobile__text">на цьому етапі ми допоможемо вашому твору знайти свій голос. ви освоїте мистецтво фінішного декору, роботи з фактурами та професійної подачі, щоб ваше творіння стало вашою головною історією</p>
+              </div>
+            </article>
+
+            <article class="steps-mobile__card">
+              <p class="steps-mobile__label">
+                <span class="steps-mobile__label-left">
+                  <span class="italic-symbol steps-mobile__label-paren">(</span>
+                  <span class="steps-mobile__label-value">
+                    <span class="steps-mobile__label-value-rest">2</span>
+                    <span class="steps-mobile__label-value-hover" aria-hidden="true">втілення</span>
+                  </span>
+                </span>
+                <span class="steps-mobile__label-spacer" aria-hidden="true"></span>
+                <span class="italic-symbol steps-mobile__label-paren steps-mobile__label-paren--close">)</span>
+              </p>
+              <div class="steps-mobile__body">
+                <p class="steps-mobile__caption">діалог          з        матерією</p>
+                <p class="steps-mobile__text">саме час оживити ваш ескіз. під нашим проводом ви опануєте танець гончарного круга, навчитеся розуміти «дихання» глини та направляти її в форму, що стане продовженням ваших думок</p>
+              </div>
+            </article>
+
+          </div>
+        </div>
+      </div>
 
     </div>
 

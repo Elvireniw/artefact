@@ -678,7 +678,14 @@ function setInitialHeroStates() {
   gsap.set(heroBg, { clipPath: 'inset(0% 0% 100% 0%)' });
   // plain pixels, not yPercent — .hero__nav has no CSS rule of its own and
   // collapses to 0 height (its children are all position:absolute), so a
-  // yPercent-based offset would resolve to 0 and never actually move
+  // yPercent-based offset would resolve to 0 and never actually move.
+  // menuBtn used to be excluded from this on mobile as a defensive
+  // measure against it looking "stuck" mid-entrance — that was masking
+  // the real bug (initPreloader() double-removing #preloader, see
+  // runHeroEntrance()'s onComplete), which is now fixed at its source, so
+  // menuBtn goes back to animating in with nav like every other element
+  // instead of just sitting there un-animated (she noticed and flagged
+  // the inconsistency).
   gsap.set([nav, menuBtn], { y: -40, opacity: 0 });
   gsap.set(menuLineOut, { scaleX: 0, transformOrigin: 'left' });
   gsap.set(eyebrowWords, { opacity: 0 });
@@ -739,7 +746,12 @@ function runHeroEntrance() {
       ease: 'power3.out',
       onComplete: () => {
         document.body.classList.remove('is-preloading');
-        preloader.remove();
+        // null on mobile: initPreloader()'s isMobile branch already
+        // removed #preloader from the DOM before calling this function
+        // (it skips the letter animation entirely), so re-querying it
+        // here finds nothing — .remove() on null threw on every mobile
+        // page load until this guard.
+        if (preloader) preloader.remove();
         gsap.set(heroBg, { zIndex: 0 });
       },
     }, 0)
@@ -793,7 +805,8 @@ function runHeroEntrance() {
 // ==========================================================================
 
 let craftSection, craftHeadingLines, craftArt1, craftArt2Frame, craftBody,
-  craftSideText, craftSideTextWords, craftCta;
+  craftSideText, craftSideTextWords, craftCta,
+  craftHeadingMobile, craftArt1Mobile, craftArt2Mobile, craftSideTextMobile;
 
 function cacheCraftRefs() {
   craftSection = document.querySelector('.craft');
@@ -805,15 +818,27 @@ function cacheCraftRefs() {
   craftCta = document.querySelector('.craft__cta');
 
   craftSideTextWords = craftSideText ? splitWords(craftSideText) : [];
+
+  // mobile-only equivalents (index.html) — combined into the SAME .to()
+  // calls as their desktop counterparts below, not a separate timeline:
+  // hidden-on-mobile desktop elements animate harmlessly off-screen,
+  // hidden-on-desktop mobile elements pick up the same beat for free.
+  // .craft__body/.craft__cta need no entry here, they're shared elements
+  // already covered by craftBody/craftCta above.
+  craftHeadingMobile = document.querySelector('.craft__heading-mobile');
+  craftArt1Mobile = document.querySelector('.craft__art-1-mobile');
+  craftArt2Mobile = document.querySelector('.craft__art-2-mobile');
+  craftSideTextMobile = document.querySelector('.craft__side-text-mobile');
 }
 
 function setInitialCraftStates() {
   if (reducedMotion) return;
 
-  gsap.set(craftHeadingLines, { opacity: 0, y: 30 });
-  gsap.set([craftArt1, craftArt2Frame], { opacity: 0, y: 120 });
+  gsap.set([craftHeadingLines, craftHeadingMobile], { opacity: 0, y: 30 });
+  gsap.set([craftArt1, craftArt2Frame, craftArt1Mobile, craftArt2Mobile], { opacity: 0, y: 120 });
   gsap.set(craftBody, { opacity: 0, y: 12 });
   gsap.set(craftSideTextWords, { opacity: 0 });
+  gsap.set(craftSideTextMobile, { opacity: 0, y: 12 });
   gsap.set(craftCta, { opacity: 0, y: 30 });
 }
 
@@ -834,14 +859,14 @@ function runCraftEntrance() {
       once: true,
     },
   })
-    .to(craftHeadingLines, { opacity: 1, y: 0, duration: 1.0, stagger: 0.1, ease: 'power2.out' })
-    .to([craftArt1, craftArt2Frame], {
+    .to([craftHeadingLines, craftHeadingMobile], { opacity: 1, y: 0, duration: 1.0, stagger: 0.1, ease: 'power2.out' })
+    .to([craftArt1, craftArt2Frame, craftArt1Mobile, craftArt2Mobile], {
       opacity: 1,
       y: 0,
       duration: 1.4,
       stagger: 0.1,
       ease: 'power4.out',
-      onComplete: () => gsap.set([craftArt1, craftArt2Frame], { clearProps: 'transform' }),
+      onComplete: () => gsap.set([craftArt1, craftArt2Frame, craftArt1Mobile, craftArt2Mobile], { clearProps: 'transform' }),
     }, '+=0.15')
     // Heading/images stay as-is (her call, "отличная скорость") — body,
     // side text and especially the CTA had too much dead wait before them.
@@ -853,6 +878,7 @@ function runCraftEntrance() {
     // trailing removes that compounding wait.
     .to(craftBody, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.6')
     .to(craftSideTextWords, { opacity: 1, duration: 0.8, stagger: 0.06, ease: 'sine.out' }, '<')
+    .to(craftSideTextMobile, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '<')
     .to(craftCta, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.5');
 }
 
@@ -868,7 +894,8 @@ function runCraftEntrance() {
 // caption = same as .craft__body.
 // ==========================================================================
 
-let claySection, clayVideo, clayWords, clayTitle, clayCaption;
+let claySection, clayVideo, clayWords, clayTitle, clayCaption,
+  clayVignetteMobile, clayBodyMobile, clayTitleMobileImgs;
 
 function cacheClayRefs() {
   claySection = document.querySelector('.clay');
@@ -876,6 +903,12 @@ function cacheClayRefs() {
   clayWords = document.querySelectorAll('.clay__word');
   clayTitle = document.querySelector('.clay__title');
   clayCaption = document.querySelector('.clay__caption');
+
+  // mobile-only (index.html) — .clay__caption above is already shared
+  // with desktop and needs no separate entry.
+  clayVignetteMobile = document.querySelector('.clay__vignette-mobile');
+  clayBodyMobile = document.querySelector('.clay__body-mobile');
+  clayTitleMobileImgs = document.querySelectorAll('.clay__title-mobile img');
 }
 
 function setInitialClayStates() {
@@ -885,8 +918,11 @@ function setInitialClayStates() {
   // edges for the eye to reference, so a small scale change reads as
   // nothing at all — the amplitude has to be obvious to register
   gsap.set(clayVideo, { scale: 1.25, opacity: 0 });
+  gsap.set(clayVignetteMobile, { opacity: 0 });
   gsap.set(clayWords, { opacity: 0 });
+  gsap.set(clayBodyMobile, { opacity: 0, y: 12 });
   gsap.set(clayTitle, { y: 30, opacity: 0 });
+  gsap.set(clayTitleMobileImgs, { y: 30, opacity: 0 });
   gsap.set(clayCaption, { opacity: 0, y: 12 });
 }
 
@@ -906,6 +942,16 @@ function runClayEntrance() {
     scrollTrigger: { trigger: claySection, start: 'top bottom', once: true },
   });
 
+  // vignette fades in alongside the video (same trigger/timing) rather
+  // than scaling with it — it's a static full-bleed darken layer, not
+  // footage, so only opacity is animated.
+  gsap.to(clayVignetteMobile, {
+    opacity: 1,
+    duration: 1.6,
+    ease: 'power2.out',
+    scrollTrigger: { trigger: claySection, start: 'top bottom', once: true },
+  });
+
   gsap.timeline({
     scrollTrigger: {
       trigger: claySection,
@@ -917,10 +963,14 @@ function runClayEntrance() {
       once: true,
     },
   })
+    // .clay__body-mobile sits at the very top of the mobile layout (the
+    // first content a scroller reaches), so it leads on mobile the same
+    // way clayWords leads on desktop.
+    .to(clayBodyMobile, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' })
     // clayWords (center word row) untouched — only the title (heading) and
     // clayCaption (the right-side text) needed to come in a bit faster.
-    .to(clayWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' })
-    .to(clayTitle, { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' }, '+=0.05')
+    .to(clayWords, { opacity: 1, duration: 1.0, stagger: 0.08, ease: 'sine.out' }, '<')
+    .to([clayTitle, clayTitleMobileImgs], { y: 0, opacity: 1, duration: 0.8, stagger: 0.08, ease: 'power2.out' }, '+=0.05')
     .to(clayCaption, { opacity: 1, y: 0, duration: 0.5, ease: 'sine.out' }, '+=0.05');
 }
 
@@ -1697,6 +1747,16 @@ const GALLERY_SETTLE_DURATION = 0.5;  // s, the settle itself
 
 function initGalleryCarousel() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+  // desktop-only pin+scrub carousel. On mobile .gallery__track is
+  // display:none (replaced by .gallery-mobile's plain native horizontal
+  // scroll) — but this ScrollTrigger doesn't know that, and `pin:true`
+  // still wraps .gallery in a GSAP pin-spacer sized for the DESKTOP
+  // scrub distance regardless. That spacer doesn't care that the mobile
+  // content inside it is a different height, so it forced a large dead
+  // gap (~428px in her real screenshot) between .gallery and whatever
+  // comes after it — read as a stray block of empty background. Skipping
+  // pin setup entirely on mobile avoids the pin-spacer existing at all.
+  if (window.matchMedia('(max-width: 768px)').matches) return;
 
   const track = document.querySelector('.gallery__track');
   const section = document.querySelector('.gallery');
@@ -1979,6 +2039,243 @@ function initClayVideoParallax() {
 // still a single flat track.
 // ==========================================================================
 
+// ==========================================================================
+// MOBILE CAROUSELS — drag-to-scroll for a native horizontal card row
+// The row already scrolls via native touch swipe (overflow-x:auto), which
+// is enough on a real phone. She reported "the carousel doesn't work" for
+// the gallery — most likely tested by resizing a desktop browser to mobile
+// width, where there's no swipe gesture at all, only a mouse (native
+// overflow-x scroll isn't drag-able with a plain mouse, unlike touch). This
+// adds click-drag support so it works either way, without needing a real
+// touchscreen. Generic (takes a row selector) — reused for every mobile
+// carousel row (gallery, steps, ...) rather than one copy per block, since
+// none of this logic is gallery-specific.
+// ==========================================================================
+
+function initDragScrollRow(rowSelector) {
+  const row = document.querySelector(rowSelector);
+  if (!row) return;
+
+  let isDown = false;
+  let startX = 0;
+  let startScroll = 0;
+  let moved = false;
+
+  row.addEventListener('mousedown', (event) => {
+    isDown = true;
+    moved = false;
+    row.classList.add('is-dragging');
+    startX = event.clientX;
+    startScroll = row.scrollLeft;
+  });
+
+  window.addEventListener('mousemove', (event) => {
+    if (!isDown) return;
+    const dx = event.clientX - startX;
+    if (Math.abs(dx) > 3) moved = true;
+    row.scrollLeft = startScroll - dx;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    row.classList.remove('is-dragging');
+  });
+
+  // a drag that actually moved the row shouldn't also fire the card's own
+  // click-through (opening a work) once pointer-up lands back on it
+  row.addEventListener(
+    'click',
+    (event) => {
+      if (moved) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+    true
+  );
+}
+
+// ==========================================================================
+// GALLERY MOBILE — scroll-triggered entrance
+// Same beat shape as every other section's entrance (once:true, top 80%,
+// heading -> visuals -> supporting content, small overlaps) — had none at
+// all until now, since the block was built layout-only and never got its
+// motion pass.
+// ==========================================================================
+
+let galleryMobileSection, galleryMobileEyebrow, galleryMobileTitle,
+  galleryMobileLead, galleryMobileFilterItems, galleryMobileCards, galleryMobileBar;
+
+function cacheGalleryMobileRefs() {
+  galleryMobileSection = document.querySelector('.gallery-mobile');
+  galleryMobileEyebrow = document.querySelector('.gallery-mobile__eyebrow');
+  galleryMobileTitle = document.querySelector('.gallery-mobile__title');
+  galleryMobileLead = document.querySelector('.gallery-mobile__lead');
+  galleryMobileFilterItems = document.querySelectorAll('.gallery-mobile__filter-item');
+  galleryMobileCards = document.querySelectorAll('.gallery-mobile__card');
+  galleryMobileBar = document.querySelector('.gallery-mobile__bar');
+}
+
+function setInitialGalleryMobileStates() {
+  if (reducedMotion || !galleryMobileSection) return;
+
+  gsap.set(galleryMobileEyebrow, { opacity: 0, y: 12 });
+  gsap.set(galleryMobileTitle, { opacity: 0, y: 30 });
+  gsap.set(galleryMobileLead, { opacity: 0, y: 12 });
+  gsap.set(galleryMobileFilterItems, { opacity: 0 });
+  gsap.set(galleryMobileCards, { opacity: 0, y: 60 });
+  // the bar sits statically behind every card (z-index 0) — if it stayed
+  // fully opaque while the cards above it fade in from opacity:0 and slide
+  // up from y:60, its solid olive shows straight through the still-
+  // transparent, still-offset photo for the whole transition, reading as
+  // the photo's bottom being "cut off". Fading it in on the same beat as
+  // the cards (below) keeps it invisible until they're opaque too.
+  gsap.set(galleryMobileBar, { opacity: 0 });
+}
+
+function runGalleryMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !galleryMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: galleryMobileSection, start: 'top 80%', once: true },
+  })
+    .to(galleryMobileEyebrow, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' })
+    .to(galleryMobileTitle, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
+    .to(galleryMobileLead, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5')
+    .to(galleryMobileFilterItems, { opacity: 1, duration: 0.5, stagger: 0.06, ease: 'sine.out' }, '-=0.3')
+    // duration matches the LAST card's own finish (1.0 + 4 * 0.1 stagger =
+    // 1.4s), starting alongside the first — so the bar's opacity ramps
+    // across the whole card cascade instead of finishing early and sitting
+    // fully opaque behind still-fading later cards.
+    .to(galleryMobileBar, { opacity: 1, duration: 1.4, ease: 'sine.out' }, '-=0.25')
+    .to(galleryMobileCards, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(galleryMobileCards, { clearProps: 'transform' }),
+    }, '<');
+}
+
+// ==========================================================================
+// STEPS MOBILE — scroll-triggered entrance
+// Same beat shape as gallery-mobile's (heading -> art -> cards), reused
+// verbatim rather than invented fresh — the two blocks are siblings in the
+// same mobile build pass and there's no reason for the timing language to
+// differ between them.
+// ==========================================================================
+
+let stepsMobileSection, stepsMobileTitle, stepsMobileSubheading,
+  stepsMobileArt, stepsMobileCards;
+
+function cacheStepsMobileRefs() {
+  stepsMobileSection = document.querySelector('.steps-mobile');
+  stepsMobileTitle = document.querySelector('.steps-mobile__title');
+  stepsMobileSubheading = document.querySelector('.steps-mobile__subheading');
+  stepsMobileArt = document.querySelector('.steps-mobile__art');
+  stepsMobileCards = document.querySelectorAll('.steps-mobile__card');
+}
+
+function setInitialStepsMobileStates() {
+  if (reducedMotion || !stepsMobileSection) return;
+
+  gsap.set(stepsMobileTitle, { opacity: 0, y: 30 });
+  gsap.set(stepsMobileSubheading, { opacity: 0, y: 12 });
+  gsap.set(stepsMobileArt, { opacity: 0, y: 30 });
+  gsap.set(stepsMobileCards, { opacity: 0, y: 60 });
+}
+
+function runStepsMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !stepsMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: stepsMobileSection, start: 'top 80%', once: true },
+  })
+    .to(stepsMobileTitle, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' })
+    .to(stepsMobileSubheading, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5')
+    .to(stepsMobileArt, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.3')
+    .to(stepsMobileCards, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(stepsMobileCards, { clearProps: 'transform' }),
+    }, '-=0.4');
+}
+
+// ==========================================================================
+// PHILOSOPHY MOBILE — scroll-triggered entrance
+// Two independent triggers, one per block (block--1 and block--2 sit far
+// enough apart on mobile that block--2 is usually still off-screen when
+// block--1 first enters — a single shared trigger would fire both at once
+// while block--2 is still below the fold).
+// ==========================================================================
+
+let philosophyMobileBlock1, philosophyMobileBlock2,
+  philosophyMobileEyebrow1, philosophyMobileTitle1, philosophyMobileImg1, philosophyMobileNote,
+  philosophyMobileEyebrow2, philosophyMobileTitle2, philosophyMobileLead2, philosophyMobileImg2;
+
+function cachePhilosophyMobileRefs() {
+  philosophyMobileBlock1 = document.querySelector('.philosophy-mobile__block--1');
+  philosophyMobileBlock2 = document.querySelector('.philosophy-mobile__block--2');
+  if (!philosophyMobileBlock1 || !philosophyMobileBlock2) return;
+
+  philosophyMobileEyebrow1 = philosophyMobileBlock1.querySelector('.philosophy-mobile__eyebrow');
+  philosophyMobileTitle1 = philosophyMobileBlock1.querySelector('.philosophy-mobile__title');
+  philosophyMobileImg1 = philosophyMobileBlock1.querySelector('.philosophy-mobile__img');
+  philosophyMobileNote = philosophyMobileBlock1.querySelector('.philosophy-mobile__note');
+
+  philosophyMobileEyebrow2 = philosophyMobileBlock2.querySelector('.philosophy-mobile__eyebrow');
+  philosophyMobileTitle2 = philosophyMobileBlock2.querySelector('.philosophy-mobile__title');
+  philosophyMobileLead2 = philosophyMobileBlock2.querySelector('.philosophy-mobile__lead');
+  philosophyMobileImg2 = philosophyMobileBlock2.querySelector('.philosophy-mobile__img');
+}
+
+function setInitialPhilosophyMobileStates() {
+  if (reducedMotion || !philosophyMobileBlock1 || !philosophyMobileBlock2) return;
+
+  gsap.set([philosophyMobileEyebrow1, philosophyMobileEyebrow2], { opacity: 0, y: 12 });
+  gsap.set([philosophyMobileTitle1, philosophyMobileTitle2], { opacity: 0, y: 30 });
+  gsap.set([philosophyMobileImg1, philosophyMobileImg2], { opacity: 0, y: 60 });
+  gsap.set(philosophyMobileNote, { opacity: 0, y: 12 });
+  gsap.set(philosophyMobileLead2, { opacity: 0, y: 12 });
+}
+
+function runPhilosophyMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !philosophyMobileBlock1 || !philosophyMobileBlock2) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: philosophyMobileBlock1, start: 'top 80%', once: true },
+  })
+    .to(philosophyMobileEyebrow1, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' })
+    .to(philosophyMobileTitle1, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
+    .to(philosophyMobileImg1, {
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      ease: 'power4.out',
+      onComplete: () => gsap.set(philosophyMobileImg1, { clearProps: 'transform' }),
+    }, '-=0.4')
+    .to(philosophyMobileNote, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5');
+
+  gsap.timeline({
+    scrollTrigger: { trigger: philosophyMobileBlock2, start: 'top 80%', once: true },
+  })
+    .to(philosophyMobileEyebrow2, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' })
+    .to(philosophyMobileTitle2, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
+    .to(philosophyMobileLead2, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5')
+    .to(philosophyMobileImg2, {
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      ease: 'power4.out',
+      onComplete: () => gsap.set(philosophyMobileImg2, { clearProps: 'transform' }),
+    }, '-=0.6');
+}
+
 function initGalleryFilter() {
   const items = document.querySelectorAll('.js-gallery-filter');
   if (!items.length) return;
@@ -2064,8 +2361,10 @@ function initScrollUpArrows() {
 
 // ==========================================================================
 // NAV ANCHOR LINKS — .hero__link / .footer__menu-link /
-// .menu-overlay__mobile-link all point to real in-section ids now (see the
-// mapping comment above .hero__links in index.html). A plain browser
+// .menu-overlay__mobile-link / .hero__btn / .craft__cta all point to real
+// in-section ids now (see the mapping comment above .hero__links in
+// index.html, and above .hero__btn / .craft__cta for their own targets:
+// .hero__btn -> #pricing, .craft__cta -> #free-lesson). A plain browser
 // hash-jump is a native, instant scroll — it fights Lenis exactly the way
 // every other scrollTo() on this page already routes around (see
 // initGallerySettle()'s own comment on why raw window.scrollTo/ScrollTrigger
@@ -2095,7 +2394,7 @@ function initScrollUpArrows() {
 
 function initAnchorNav() {
   const links = document.querySelectorAll(
-    '.hero__link[href^="#"], .footer__menu-link[href^="#"], .menu-overlay__mobile-link[href^="#"]'
+    '.hero__link[href^="#"], .footer__menu-link[href^="#"], .menu-overlay__mobile-link[href^="#"], .hero__btn[href^="#"], .craft__cta[href^="#"]'
   );
 
   // read lazily (function, not a snapshot) — these trigger vars are only
@@ -3249,8 +3548,11 @@ cacheCraftRefs();
 cacheClayRefs();
 cacheMaterialRefs();
 cacheGalleryRefs();
+cacheGalleryMobileRefs();
 cachePhilosophyRefs();
+cachePhilosophyMobileRefs();
 cacheStepsRefs();
+cacheStepsMobileRefs();
 cacheFreeLessonRefs();
 cacheStoriesRefs();
 cachePricingRefs();
@@ -3278,8 +3580,11 @@ if (hasGSAP) {
   setInitialClayStates();
   setInitialMaterialStates();
   setInitialGalleryStates();
+  setInitialGalleryMobileStates();
   setInitialPhilosophyStates();
+  setInitialPhilosophyMobileStates();
   setInitialStepsStates();
+  setInitialStepsMobileStates();
   setInitialFreeLessonStates();
   setInitialStoriesStates();
   setInitialPricingStates();
@@ -3296,6 +3601,7 @@ runCraftEntrance();
 initMediaImageHover();
 initMediaImageParallax();
 runGalleryEntrance();
+runGalleryMobileEntrance();
 // Must run BEFORE runPhilosophyEntrance()/runStepsEntrance()/
 // runFreeLessonEntrance() — all three read galleryPinTrigger (set inside
 // this call) via afterGalleryPin()'s start functions. Those functions
@@ -3308,7 +3614,9 @@ runGalleryEntrance();
 // guarantee. Ordering it correctly removes the dependency on that entirely.
 initGalleryCarousel();
 runPhilosophyEntrance();
+runPhilosophyMobileEntrance();
 runStepsEntrance();
+runStepsMobileEntrance();
 initStepHoverGuard();
 runFreeLessonEntrance();
 runStoriesEntrance();
@@ -3334,6 +3642,8 @@ initScrollDownArrows();
 initAnchorNav();
 initScrollUpArrows();
 initGalleryFilter();
+initDragScrollRow('.gallery-mobile__row');
+initDragScrollRow('.steps-mobile__row');
 initSectionScrollLag();
 
 // Settles the page's final layout, including the gallery's pin spacer —

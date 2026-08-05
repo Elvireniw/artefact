@@ -149,6 +149,14 @@ html {
   outline: none;
   box-shadow: none;
   -webkit-text-size-adjust: 100%;
+  /* safety net against any stray horizontal overflow (a full-bleed
+     mobile element a fraction of a px too wide, an --u rounding
+     difference between this environment and a real device, etc.)
+     showing up as a sliver strip on the right and a genuine horizontal
+     scroll gutter — reported live on her phone, not reproducible in this
+     session's own test viewport, so this clamps it regardless of the
+     exact source rather than chasing one specific element. */
+  overflow-x: hidden;
 }
 
 body {
@@ -315,6 +323,26 @@ video {
 @media (prefers-reduced-motion: reduce) {
   .preloader__logo span {
     animation: none;
+  }
+}
+
+/* No preloader screen on mobile at all, per her explicit request — this is
+   CSS, not just initPreloader()'s isMobile branch in script.js (which
+   already skipped the letter animation and jumped straight to
+   runHeroEntrance()): scripts are `defer`, so the browser paints the
+   static HTML — body.is-preloading + this full-viewport overlay — before
+   any JS runs and removes it, which was still a visible flash on a slower
+   phone/connection. Hiding it here means it never paints at all, not just
+   "removed quickly." body.is-preloading's overflow:hidden is neutralized
+   too so a locked scroll can't survive the same window. JS still runs
+   (preloader.remove() + runHeroEntrance()) and is harmless/redundant here. */
+@media (max-width: 768px) {
+  .preloader {
+    display: none;
+  }
+
+  body.is-preloading {
+    overflow: visible;
   }
 }
 
@@ -880,6 +908,18 @@ body.is-preloading .hero__btn {
     font-size: 24px;
   }
 
+  /* base rule is bottom:calc(var(--u)*-8) — at mobile widths --u shrinks
+     to ~0.2 (it's still the 1920-reference fluid unit, unaffected by the
+     "fixed px, not --u" mobile convention unless a block explicitly
+     overrides it), so the line was landing ~1.5px under the text instead
+     of a real gap. Fixed px here, sized off the same ratio desktop uses
+     between its own gap and font-size (~8u under a 36u CTA, ≈0.22) so it
+     reads consistently with the rest of the project instead of just
+     reusing the literal (broken) desktop value. */
+  .hero__btn-line-track {
+    bottom: -6px;
+  }
+
   .hero__bg {
     display: none;
   }
@@ -944,7 +984,7 @@ body.is-preloading .hero__btn {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 0;
     position: absolute;
     z-index: 3;
     left: 20px;
@@ -963,6 +1003,21 @@ body.is-preloading .hero__btn {
   .hero__title-mobile img:nth-child(3) { width: 166.5px; }
   .hero__title-mobile img:nth-child(4) { width: 309px; }
   .hero__title-mobile img:nth-child(5) { width: 326.5px; }
+
+  /* line-spacing halved per her request. The old flex gap:4px (Figma's
+     own designed row gap) wasn't actually what read as "the gap" — each
+     PNG also carries its own blur-bleed padding above/below the glyph
+     (measured via the same alpha-bbox canvas scan as the "мова глини"
+     fix), so the real glyph-to-glyph whitespace at gap:4 ranged ~10.5 to
+     15.5px across the 5 rows, not a flat 4. Halving each row's OWN
+     measured gap (not just retargeting the flex gap value) needed a
+     different margin per row since bleed differs per image (biggest on
+     line 4 "мистецтво", whose own designed blur/height is also the
+     largest) — switched to gap:0 + explicit per-row margin-top. */
+  .hero__title-mobile img:nth-child(2) { margin-top: -1.25px; }
+  .hero__title-mobile img:nth-child(3) { margin-top: -2.75px; }
+  .hero__title-mobile img:nth-child(4) { margin-top: -3.75px; }
+  .hero__title-mobile img:nth-child(5) { margin-top: -2.5px; }
 }
 
 /* ==========================================================================
@@ -1426,12 +1481,16 @@ body.is-preloading .hero__btn {
      (53px) and the cta-to-section-bottom gap (80px, from item 2) both
      stay exactly what they were, rather than the 40px just reopening as
      extra dead space between body and cta. */
+  /* padding-bottom 2px -> 6px: matches Figma's literal pb-[2px] but read
+     as sitting too tight against the text — same fix/ratio as the Hero
+     underline-tracks above (~0.22-0.25 of the 24px CTA font, matching
+     desktop's own gap/font-size relationship project-wide). */
   .craft__cta {
     left: 20px;
     top: 1247px;
     transform: none;
     gap: 28px;
-    padding-bottom: 2px;
+    padding-bottom: 6px;
   }
 
   .craft__cta-text {
@@ -1565,6 +1624,130 @@ body.is-preloading .hero__btn {
 }
 
 /* ==========================================================================
+   CLAY — MOBILE (Figma node 978:908, file 6tA1k2sLpFm5U7cLn9p9rZ, 375px
+   reference, plain px per the mobile-phase convention). Pixel Perfect
+   pass only, no motion/toggle button yet — the mobile macket shows no
+   play/pause control, and its interaction (custom-cursor label morph on
+   hover) doesn't translate to touch anyway, so it's left out rather than
+   forced in. .clay__bg (the background video) needs no mobile override at
+   all — it's already `inset:0; width/height:100%; object-fit:cover`,
+   so it's full-bleed at any breakpoint as-is. Node coordinates in Figma
+   were given relative to the whole page (y offset +2219px) since this
+   node is a "contents" group, not a bounded frame in the exported
+   React/Tailwind code — converted to section-local px using
+   get_metadata's frame origin (0, 2219) before using them below. */
+
+.clay__vignette-mobile,
+.clay__body-mobile,
+.clay__title-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .clay {
+    aspect-ratio: unset;
+    height: 812px;
+  }
+
+  .clay__title,
+  .clay__word {
+    display: none;
+  }
+
+  /* not shown in the mobile macket (no such node in 978:908) but she
+     wants the play/pause cursor interaction kept on mobile too — reuses
+     the exact same element/mechanism as desktop (js-cursor-media +
+     data-cursor-label, initClayVideoToggle() in script.js), just a fixed
+     px hit-circle instead of desktop's --u-scaled 150u (which would
+     shrink to ~29px at mobile's --u and be too small to reliably hover). */
+  .clay__video-toggle {
+    width: 120px;
+    height: 120px;
+  }
+
+  .clay__vignette-mobile {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .clay__body-mobile {
+    display: block;
+    position: absolute;
+    z-index: 1;
+    left: 20px;
+    top: 50px;
+    width: 335px;
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+    text-align: justify;
+    color: var(--beige-100);
+  }
+
+  /* reuses the desktop element/content as-is (same "як тисячолітнє..."
+     copy already in index.html) — just repositioned/resized; color
+     already matches (#2B3D2D on both). */
+  .clay__caption {
+    left: 21px;
+    top: 552px;
+    width: 269px;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+  }
+
+  /* мова/глини: widths are natural-px / 2, same lesson as the Hero H1
+     lines — a small overshoot past Figma's own 207/228px row widths is
+     expected blur bleed (bigger on "мова", which also has the bigger
+     designed blur: 7px vs "глини"'s 6px). Flex-stacked with the row's own
+     rendered height (not a fixed absolute y per line) for the same
+     reason the Hero title used a flex gap instead of hard-coded tops:
+     the exported PNGs are cropped to their (blurred) glyph bounds, not a
+     fixed line box.
+
+     left:11px — 10px left of .clay__caption's own 21px, per her explicit
+     follow-up request (the blurred glyph itself reads visually inset
+     from its crop edge, so a literal edge-to-edge match with the caption
+     still looked off-center to her). */
+  .clay__title-mobile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    position: absolute;
+    z-index: 1;
+    left: 11px;
+    top: 632px;
+    pointer-events: none;
+  }
+
+  .clay__title-mobile img {
+    display: block;
+    height: auto;
+  }
+
+  .clay__title-mobile img:nth-child(1) { width: 230px; }
+  .clay__title-mobile img:nth-child(2) {
+    width: 241px;
+    /* measured both PNGs' real alpha bounding box (canvas/pixel scan, not
+       eyeballed) rather than guessing: at gap:0 the visible whitespace
+       between "мова"'s glyph-bottom and "глини"'s glyph-top was ~16px
+       (each export has several px of transparent blur-bleed padding above
+       and below the actual glyph, so a 0 flex-gap still leaves real dead
+       space). Halved per her request -> pull this image up 8px. */
+    margin-top: -8px;
+  }
+}
+
+/* ==========================================================================
    MATERIAL SECTION — "4_глина це" (Figma node 978:1257, file
    6tA1k2sLpFm5U7cLn9p9rZ). Same fluid --u system as the other sections.
    Pixel Perfect only for now — no entrance/scroll effects yet.
@@ -1671,6 +1854,68 @@ body.is-preloading .hero__btn {
 .material__text .word {
   display: inline-block;
   will-change: opacity, transform;
+}
+
+/* ==========================================================================
+   MATERIAL — MOBILE (Figma node 978:919, file 6tA1k2sLpFm5U7cLn9p9rZ, 375px
+   reference, plain px per the mobile-phase convention). Checked carefully
+   before assuming reuse (per her explicit "be careful" — craft/clay both
+   turned out to have real content/color differences from desktop): this
+   block's content is a genuine exact match — same three elements
+   (.material__label "( глина )", .material__text, .material__echo), same
+   sentence, same tier-2/tier-3 (0.8/0.6) color split at the same word
+   boundaries, verified span-by-span against get_design_context's output,
+   not assumed from the screenshot alone. So this is a pure CSS override
+   of the existing desktop elements, no new markup, and it inherits the
+   desktop entrance (runMaterialEntrance()) for free — no JS changes
+   needed either.
+
+   .material itself needs no override: `height:100vh/100svh` (no
+   `aspect-ratio`/`--u` at the container level) already adapts to any
+   viewport, mobile included.
+
+   left values are literal px, NOT left:50%+transform:translateX(-50%),
+   for .material__text specifically: setInitialMaterialStates() does
+   `gsap.set(materialText, { y: 12 })` directly on this element (not just
+   its words) — GSAP compiles y into an inline `transform`, which would
+   silently wipe out a CSS translateX(-50%) the instant that gsap.set()
+   runs (inline styles always beat stylesheet ones), same class of bug as
+   the Hero/Craft CTAs. Sidestepped by hand-computing each element's
+   centered left offset instead of centering via transform — convenient
+   since Figma's own raw x already IS that computed value almost exactly
+   (e.g. .material__text: (375-326)/2 = 24.5 ≈ metadata's x:25).
+   .material__label has no such conflict (only its child .word spans get
+   a GSAP tween, never the label element itself), so it safely keeps the
+   left:50%/transform centering trick. */
+
+@media (max-width: 768px) {
+  .material__echo {
+    left: -23px;
+    top: 158px;
+    width: 420px;
+    font-size: 42px;
+    line-height: 0.98;
+    letter-spacing: -0.84px;
+    filter: blur(2.5px);
+  }
+
+  .material__text {
+    left: 25px;
+    top: 206px;
+    width: 326px;
+    font-size: 32px;
+    line-height: 1.1;
+    letter-spacing: -0.64px;
+  }
+
+  .material__label {
+    left: 50%;
+    top: 150px;
+    width: auto;
+    transform: translateX(-50%);
+    font-size: 16px;
+    letter-spacing: -0.32px;
+  }
 }
 
 /* ==========================================================================
@@ -2318,6 +2563,759 @@ body.is-preloading .hero__btn {
   top: calc(var(--u) * 181);
   width: calc(var(--u) * 447);
   height: calc(var(--u) * 447);
+}
+
+/* ==========================================================================
+   GALLERY + PHILOSOPHY — MOBILE (Figma node 1388:2152, containing 978:923
+   "5_галерея" and 978:984 "6_філософія", file 6tA1k2sLpFm5U7cLn9p9rZ,
+   375px reference, plain px). Built together per her request. Both
+   source frames are themselves auto-layout (flex/gap), not absolute
+   positioning — unlike blocks 1-4, these use flex here too rather than
+   forcing an absolute-in-px layout onto content that wasn't designed
+   that way (same reasoning desktop's own .philosophy already used for
+   the same reason).
+
+   .gallery-mobile__row-wrap/.gallery-mobile__row is a plain native
+   horizontal scroll — no JS, no loop-clones, no scrub. Desktop's track
+   has an infinite-loop scrub carousel; replicating that on mobile is a
+   motion-pass decision she hasn't made yet, not attempted here.
+
+   Card 3 of 5 in the gallery row is a placeholder (see its HTML comment
+   in index.html) — Figma's own metadata marks that specific instance
+   unmodified ("symbol", not "instance" like the other four), meaning she
+   hasn't finished assigning it a real photo/caption yet.
+
+   Neither .gallery nor .philosophy gets a hardcoded mobile height like
+   blocks 1-4 did — both sections' real content is longer than one
+   viewport and driven by flex layout, not a fixed Figma frame size
+   matched to absolute children, so `height:auto` lets it size itself
+   instead of clipping at a guessed number. */
+
+.gallery-mobile,
+.philosophy-mobile,
+.steps-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .gallery,
+  .philosophy {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* .steps's own override lives further down this file, right after
+     .steps's desktop rule block (line ~3578) instead of here — same
+     selector, same specificity (both plain `.steps`), so source order
+     alone decides the winner and the desktop rule sits BELOW this point
+     in the file. Putting the override here first cost a real bug: the
+     desktop height/overflow silently won at every viewport width,
+     clipping the mobile carousel at ~317px with nothing visibly wrong in
+     the markup itself. Not a mistake worth repeating for .gallery/
+     .philosophy above, whose own desktop rules both sit EARLIER than this
+     block already. */
+
+  /* .section-inner is position:absolute;inset:0 by default (it's the
+     scroll-lag drift target elsewhere) — that takes it out of normal
+     flow, so the flex content inside it never propagates a real height
+     up to .gallery/.philosophy above, and `height:auto` on those
+     collapses to 0 despite genuinely-visible content. Safe to put back
+     in flow here specifically: both are already excluded from scroll-lag
+     (they're meant to read as one continuous surface). .steps > .section-inner's
+     equivalent override is next to its height/overflow fix below, for the
+     same source-order reason. */
+  .gallery > .section-inner,
+  .philosophy > .section-inner {
+    position: static;
+  }
+
+  .gallery__eyebrow,
+  .gallery__title,
+  .gallery__lead,
+  .gallery__filter,
+  .gallery__track,
+  .gallery__note,
+  .gallery__bar,
+  .steps__heading,
+  .steps__list,
+  .scroll-up {
+    display: none;
+  }
+
+  /* padding-top restored to 80px per her explicit instruction
+     (2026-08-05) — literal px, not derived from Figma's auto-layout this
+     time. padding-bottom removed: her updated Figma frame now ends flush
+     with the card row's own caption (frame height 808, no trailing
+     space) — see the note above .gallery-mobile__row for where that
+     bottom space actually belongs now (moved to
+     .philosophy-mobile__block--1's padding-top, so it's olive-colored
+     like the mockup instead of bleeding this section's beige). */
+  .gallery-mobile {
+    display: block;
+    position: relative;
+    padding: 80px 0 0;
+  }
+
+  .gallery-mobile__eyebrow {
+    margin: 0 0 10px;
+    padding: 0 20px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: -0.32px;
+    color: #2B3D2D;
+  }
+
+  .gallery-mobile__eyebrow .italic-symbol {
+    margin-right: 10px;
+  }
+
+  .gallery-mobile__title {
+    margin: 0 0 20px;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: -1.38px;
+    text-transform: uppercase;
+  }
+
+  .gallery-mobile__title-a { color: var(--olive-100); }
+  .gallery-mobile__title-b { color: var(--olive-80); }
+
+  /* width:210 — her "+20px" request (173->193) still wrapped 7 lines;
+     she then showed the actual Figma selection box, whose wrap is 5
+     lines ("кожна робота тут" / "— це унікальна" / "історія, створена" /
+     "руками наших" / "студентів"). Tested every width live and 200-220px
+     all reproduce exactly that wrap — 210 picked as the middle of that
+     confirmed range, this screenshot is the real spec now. */
+  .gallery-mobile__lead {
+    margin: 0 0 60px;
+    padding: 0 20px;
+    width: 210px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+    color: #2B3D2D;
+  }
+
+  .gallery-mobile__filter {
+    margin: 0 0 40px;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  /* is-active = 0.6 opacity, NOT full brightness — matches
+     .gallery__filter-item.is-active's own convention exactly (checked,
+     not assumed the intuitive way round). Underline is hover-only per
+     her request (removed the always-on default) — gated behind
+     (hover:hover)/(pointer:fine) so it doesn't get stuck "on" on a real
+     touch device with no hover state to leave. */
+  .gallery-mobile__filter-item {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.1;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-underline-position: from-font;
+    color: #2B3D2D;
+    cursor: pointer;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .gallery-mobile__filter-item:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .gallery-mobile__filter-item.is-active {
+    opacity: 0.6;
+  }
+
+  /* Reverted 2026-08-05 back to her desktop .gallery__bar mechanism (one
+     continuous olive strip behind the whole track), per her explicit
+     instruction — the previous per-caption-background approach (each card
+     painting its own bg) was a deliberate fix for a real bug (see below)
+     but it also meant the 10px gaps BETWEEN cards, and the inset before
+     card 1, showed the section's beige instead of olive, which doesn't
+     match the mockup. This time the strip's size comes from
+     .gallery-mobile__track's own `width:max-content` (exactly as wide as
+     its real content) instead of a guessed/assumed number, so it can't
+     repeat the old bug (a stray block sized off an assumed card height
+     with no hard cap, see the incident this replaced below). data-lenis-prevent
+     on the row so Lenis (which listens page-wide for scroll/wheel/touch)
+     can't swallow a horizontal swipe/drag before it reaches this nested
+     scroller. */
+  /* native scrollbar hidden — same fix as .steps-mobile__row (her request
+     landed on that block first, applied here too for consistency: both
+     rows are the same carousel mechanism and leaving one with a visible
+     scrollbar next to one without would itself read as a bug). */
+  .gallery-mobile__row {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    cursor: grab;
+    padding-left: 20px;
+    margin-bottom: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .gallery-mobile__row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gallery-mobile__row.is-dragging {
+    cursor: grabbing;
+  }
+
+  .gallery-mobile__track {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: max-content;
+  }
+
+  /* her desktop .gallery__bar, ported: one strip behind the whole track
+     instead of each card's own background. left:-20px cancels the row's
+     own padding-left so the strip reaches the true canvas edge on the
+     left (matching desktop's edge-to-edge bar); right:0 stops it exactly
+     at the track's own max-content edge — flush with the last card, not a
+     guessed width. top:320px is the real, fixed photo height (not an
+     assumed card height), so it can't drift out of sync with the cards
+     the way the old incident bar did. */
+  .gallery-mobile__bar {
+    position: absolute;
+    z-index: 0;
+    left: -20px;
+    right: 0;
+    top: 320px;
+    height: 46px;
+    background-color: var(--olive-100);
+  }
+
+  .gallery-mobile__card {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 auto;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+  }
+
+  .gallery-mobile__photo {
+    display: block;
+    position: relative;
+    width: 320px;
+    height: 320px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    overflow: hidden;
+  }
+
+  .gallery-mobile__photo img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .gallery-mobile__marks {
+    position: absolute;
+    z-index: 1;
+    right: 10px;
+    top: 10px;
+    display: flex;
+    gap: 10px;
+    color: #2B3D2D;
+  }
+
+  .gallery-mobile__mark {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* No background of its own now — sits on .gallery-mobile__bar (the
+     shared strip behind the whole track). height:46px matches the bar
+     exactly (her desktop .gallery__bar height, ported to a literal px);
+     flex+center gives clean vertical centering without re-deriving padding
+     from the font metrics. */
+  .gallery-mobile__caption {
+    margin: 0;
+    padding: 0;
+    width: 320px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+    color: var(--beige-100);
+  }
+
+  /* --- philosophy --- */
+
+  .philosophy__group {
+    display: none;
+  }
+
+  .philosophy-mobile {
+    display: block;
+    position: relative;
+  }
+
+  /* padding-top/gaps below are computed from Figma's actual absolute
+     y-coordinates (checked via get_metadata), not generic round numbers:
+     block--1: eyebrow y127, title y161 (34 after eyebrow top), img y289
+     (36 after title), note y664 (40 after img). block--2 starts at y884,
+     44px after block--1's own content ends at 840 (664 note-top + its
+     176 height). */
+  .philosophy-mobile__block {
+    position: relative;
+    padding: 0 20px;
+  }
+
+  /* Re-derived again after her 2026-08-05 Figma update (get_metadata,
+     node 1398:2238, fileKey 6tA1k2sLpFm5U7cLn9p9rZ) — the previous "85px"
+     note above this rule was itself already stale. Current real numbers,
+     group-local: gallery frame 0-808, ends flush with the card row's own
+     caption (no trailing space in Figma). Philosophy frame starts at
+     group-y 808 (flush, 0 overlap — .gallery-mobile no longer carries any
+     trailing padding/margin, both zeroed out, so this section starts
+     right where the beige one ends visually too). Eyebrow sits at local
+     y:127 within the philosophy frame -> group-y 935. Target gap from
+     gallery's real bottom to the eyebrow = 935 - 808 = 127px, carried
+     entirely as THIS padding-top so the gap reads as olive (matching the
+     mockup) instead of the beige .gallery-mobile used to bleed into it. */
+  .philosophy-mobile__block--1 {
+    padding-top: 127px;
+  }
+
+  .philosophy-mobile__block--2 {
+    padding-top: 44px;
+    padding-bottom: 80px; /* not specified past this group in Figma — matches the site's usual section-end spacing */
+  }
+
+  .philosophy-mobile__eyebrow {
+    margin: 0 0 10px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+    letter-spacing: -0.32px;
+  }
+
+  .philosophy-mobile__eyebrow .italic-symbol { margin-right: 10px; }
+
+  .philosophy-mobile__eyebrow--light { color: var(--beige-100); }
+  .philosophy-mobile__eyebrow--dark { color: #2B3D2D; }
+
+  .philosophy-mobile__title {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: -1.38px;
+    text-transform: uppercase;
+  }
+
+  .philosophy-mobile__block--1 .philosophy-mobile__title {
+    margin-bottom: 36px;
+  }
+
+  .philosophy-mobile__title--dark { color: #2B3D2D; }
+  .philosophy-mobile__title--light { color: var(--beige-100); }
+  .philosophy-mobile__title-dim { color: rgba(43, 61, 45, 0.8); }
+  .philosophy-mobile__title-dim-light { color: rgba(237, 233, 221, 0.8); }
+
+  .philosophy-mobile__img {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  .philosophy-mobile__block--1 .philosophy-mobile__img {
+    margin-bottom: 40px;
+  }
+
+  .philosophy-mobile__img img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .philosophy-mobile__note,
+  .philosophy-mobile__lead {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+  }
+
+  .philosophy-mobile__note {
+    width: 240px;
+    color: #2B3D2D;
+  }
+
+  /* absolute, not flex — a space-between row was tried first (eyebrow+
+     title as one flex item, lead as the other) since Figma's lead
+     visually sits beside the title, but head-2's rendered width + a
+     fixed 200px lead + gap already exceeded the 335px column, and
+     flex-shrink:0 on both just pushed lead past the section's right
+     edge. Figma's own x:156 isn't actually a flex relationship to the
+     title's width — it's an independent fixed position.
+     top:159, NOT 115: an absolutely-positioned child's containing block
+     is the padding EDGE of its nearest positioned ancestor, i.e.
+     block--2's own border-box top (840, where block--1's content ends)
+     — NOT the content-box top after its 44px padding-top has been
+     applied (884, which is only where IN-FLOW children like the eyebrow
+     start). 999 (Figma) - 840 (block's real absolute-positioning origin)
+     = 159. First pass used 884 as the origin by mistake and landed 44px
+     high. */
+  .philosophy-mobile__lead {
+    position: absolute;
+    left: 156px;
+    top: 159px;
+    width: 200px;
+    color: var(--beige-100);
+  }
+
+  /* img follows eyebrow+title in normal flow (unlike lead, so its
+     padding-top DOES apply normally here, no origin confusion). Title
+     renders as ONE line at this width — "мова творця" fits, unlike
+     block 1's explicitly-<br>-broken 2-line title — so the flow position
+     before this margin lands at 964 (measured live, not just summed from
+     font-metrics on paper after the lead miscalculation above). Margin
+     covers the rest of the way to Figma's y:1239. */
+  .philosophy-mobile__block--2 .philosophy-mobile__img {
+    margin-top: 275px;
+  }
+
+  /* --- steps (node 978:997 "7_кроки") ---
+     Same root-has-zero-horizontal-padding convention as .gallery-mobile:
+     the row needs to bleed edge-to-edge for the carousel, so every OTHER
+     child insets itself with its own `padding: 0 20px` instead of relying
+     on the section wrapper. Carousel is a plain native horizontal scroll,
+     same mechanism as .gallery-mobile__row/__track, per her explicit
+     "як у 5 блоці" spec — no bar (desktop's step cards have no background
+     strip to port, unlike the gallery). */
+  .steps-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+    padding: 80px 0;
+  }
+
+  .steps-mobile__top {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 100%;
+  }
+
+  .steps-mobile__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 20px;
+  }
+
+  /* Image title, per her explicit request (2026-08-05) — her own
+     mob-keramika-1/2/3.png exports, not text + CSS. Confirmed by opening
+     the files: img 2 ("народжується") carries a real soft-focus blur BAKED
+     INTO the raster; img 1/3 are crisp. That's exactly why the earlier
+     text version was left unblurred (get_design_context showed a Figma
+     `blur` value on all three text layers, but this project's hard rule is
+     no LIVE CSS blur anywhere) — the blur was always meant to ship as a
+     flat image, same category of exception as the footer's soft-focus
+     logo, not a CSS filter to avoid or a Figma value to replicate. Each
+     img is full column width with its own natural aspect ratio (139:84,
+     537:184, 447:84 — img 1/3 already share img 2's per-line glyph scale,
+     no rescaling needed the way desktop's own two-image heading required). */
+  .steps-mobile__title {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .steps-mobile__title-img {
+    display: block;
+    height: auto;
+  }
+
+  /* NOT all width:100% — the three PNGs share one consistent internal
+     font-scale (checked their real pixel dimensions: 139x84, 537x184,
+     447x84 — img 1/3 are already single-line at the SAME glyph height as
+     one line of img 2's two), so stretching each independently to fill
+     the column would blow "ЯК" up ~2.4x bigger than its actual designed
+     size relative to the other two lines. img 2 ("народжується") is the
+     widest and sets the column's full width; img 1/3 are sized down from
+     their own natural width by that exact same ratio (335/537 = 0.6238),
+     not guessed. */
+  .steps-mobile__title-img:nth-child(1) {
+    width: 87px;
+  }
+
+  .steps-mobile__title-img:nth-child(2) {
+    width: 335px;
+  }
+
+  .steps-mobile__title-img:nth-child(3) {
+    width: 279px;
+  }
+
+  .steps-mobile__subheading {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    color: var(--olive-100);
+  }
+
+  /* margin, not padding: the image itself must render edge-to-edge within
+     the inset box (a padding would shrink the visible photo further). aspect
+     [295/295] is really 1:1 — 335px column minus these 20px margins each
+     side = 315px... kept as a plain aspect-ratio square instead of Figma's
+     "295" literal so it stays exactly the column width minus its own
+     margins at any width, not a hardcoded number that only matches at
+     exactly 375px viewport. Overscan crop (150.27%/-42.42%) copied from
+     Figma verbatim — same technique as .gallery-mobile__card--first's old
+     desktop counterpart, a wrapper + absolutely-oversized img instead of a
+     plain object-position, because the crop isn't just off-center, it's a
+     genuine scale+offset. */
+  .steps-mobile__art {
+    position: relative;
+    width: auto;
+    margin: 0 20px;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+  }
+
+  .steps-mobile__art-img {
+    position: absolute;
+    left: 0;
+    top: -42.42%;
+    width: 100%;
+    height: 150.27%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* native scrollbar hidden per her request — the .js-cursor-media hint
+     (data-cursor-label="гортай" in the markup) is the replacement
+     affordance instead, not the browser's own scroll UI. */
+  .steps-mobile__row {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    cursor: grab;
+    padding-left: 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .steps-mobile__row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .steps-mobile__row.is-dragging {
+    cursor: grabbing;
+  }
+
+  .steps-mobile__track {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: max-content;
+  }
+
+  .steps-mobile__card {
+    flex: 0 0 auto;
+    width: 325px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    margin: 0;
+  }
+
+  /* Number/word hover swap, ported from desktop's .step__label (same
+     structure: -left group holds the opening paren + a crossfading
+     rest/hover pair, -spacer is a flex-grow:0->1 push that shoves the
+     closing paren out to the card's own right edge, recomputed by flexbox
+     itself regardless of word width). The actual :hover trigger lives in
+     the (hover:hover)/(pointer:fine) block further down — base rules here
+     are just sizing/layout, always active, so the number itself always
+     renders even on a real touch device that will never fire :hover. */
+  .steps-mobile__label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    color: #2B3D2D;
+  }
+
+  .steps-mobile__label-left {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .steps-mobile__label-paren {
+    display: block;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 100;
+    font-size: 36px;
+    line-height: 1;
+    letter-spacing: -0.72px;
+  }
+
+  .steps-mobile__label-value {
+    position: relative;
+    display: block;
+  }
+
+  .steps-mobile__label-value-rest {
+    display: block;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .steps-mobile__label-value-hover {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    opacity: 0;
+    pointer-events: none;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .steps-mobile__label-spacer {
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .steps-mobile__label-value-rest,
+    .steps-mobile__label-value-hover {
+      transition: opacity 0.85s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    .steps-mobile__label-spacer {
+      transition: flex-grow 0.75s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    .steps-mobile__card:hover .steps-mobile__label-spacer {
+      flex-grow: 1;
+    }
+
+    .steps-mobile__card:hover .steps-mobile__label-value-rest {
+      opacity: 0;
+      transition-duration: 0.25s;
+    }
+
+    .steps-mobile__card:hover .steps-mobile__label-value-hover {
+      opacity: 1;
+      transition-duration: 0.85s;
+    }
+
+    /* dragging the row under a stationary mouse can slide a card under the
+       cursor and fire its :hover uninvited — same class of bug documented
+       for desktop's .is-scrolling guard. Force the swap back off for the
+       duration of an active drag rather than porting the full JS guard. */
+    .steps-mobile__row.is-dragging .steps-mobile__card:hover .steps-mobile__label-spacer {
+      flex-grow: 0;
+      transition: none;
+    }
+
+    .steps-mobile__row.is-dragging .steps-mobile__card:hover .steps-mobile__label-value-rest {
+      opacity: 1;
+      transition: none;
+    }
+
+    .steps-mobile__row.is-dragging .steps-mobile__card:hover .steps-mobile__label-value-hover {
+      opacity: 0;
+      transition: none;
+    }
+  }
+
+  .steps-mobile__body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+
+  /* pre-wrap, not desktop's plain pre — a 325px mobile card can't hold the
+     same manually-spaced-out caption on one line the way desktop's much
+     wider column can (this is Figma's own choice for this node too:
+     whitespace-pre-wrap, checked in get_design_context, not copied from
+     desktop by assumption). Preserves the multi-space manual justification
+     while still wrapping instead of overflowing the card. */
+  .steps-mobile__caption {
+    margin: 0;
+    width: 100%;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.1;
+    color: var(--olive-100);
+    white-space: pre-wrap;
+  }
+
+  .steps-mobile__text {
+    margin: 0;
+    width: 100%;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+    color: #2B3D2D;
+  }
 }
 
 /* ==========================================================================
@@ -2992,6 +3990,29 @@ body.menu-is-open {
   color: #2B3D2D;
 }
 
+/* .steps's mobile-width override, placed HERE (right after its own
+   desktop rule block) rather than up with .gallery/.philosophy's — same
+   selector `.steps`, same specificity as the desktop rule directly above,
+   so source order alone decides which wins, and a media-query condition
+   being true does NOT grant extra precedence over a later same-specificity
+   rule outside any media query. Putting this fix earlier in the file (where
+   .gallery/.philosophy's own overrides safely live, since THEIR desktop
+   rules sit even earlier) silently lost to the desktop `height:calc(var(--u)*1623);
+   overflow:hidden` above every time — the mobile carousel had completely
+   correct markup and geometry (confirmed live) but was clipped to ~317px
+   tall with nothing visibly wrong in the DOM. Same fix for
+   .steps > .section-inner, for the identical reason. */
+@media (max-width: 768px) {
+  .steps {
+    height: auto;
+    overflow: visible;
+  }
+
+  .steps > .section-inner {
+    position: static;
+  }
+}
+
 /* --- mobile-only breakpoint (first in the project, scoped to the menu
    overlay only) — Figma node 1189:2267, 375px reference, plain px --- */
 
@@ -3087,20 +4108,39 @@ body.menu-is-open {
      rule that predates having this macket to check against. Keep the icon
      for the OPEN state specifically: mobile still has no separate close
      button, so this same control needs to read as an X once the overlay
-     is up. */
+     is up.
+
+     position:absolute, NOT fixed — she explicitly wants "меню" to live
+     only in the Hero header and scroll away with it, same as desktop
+     already behaves (.hero__menu-btn is a body-level sibling with no
+     positioned ancestor, so absolute resolves against the page's initial
+     containing block — right:20/top:24 lands it in the header at scroll
+     0, then it scrolls normally with the rest of the page). This does
+     mean the trigger is only reachable from the top of the page on
+     mobile — worth flagging in case she wants a persistent trigger
+     later, but this is what she asked for twice now.
+     `body.menu-is-open { overflow:hidden }` (below) locks page scroll
+     the instant the overlay opens, so the button (now showing as the X)
+     stays visually put for the whole time it's open regardless — this
+     was fixed's whole reason for existing, and absolute covers it too as
+     long as that lock stays in place. */
   .hero__menu-btn {
-    position: fixed;
+    position: absolute;
     left: auto;
     top: 24px;
     right: 20px;
     font-size: 20px;
     letter-spacing: -0.4px;
     color: var(--beige-80);
-    /* mobile has no separate close icon — this SAME button (shown as an
-       X) is the only way to close the overlay, so unlike desktop/tablet
-       it still needs to out-rank #menu-overlay's z-index (9000) to stay
-       clickable once open */
     z-index: 9001;
+  }
+
+  /* same fix as .hero__btn-line-track above — base rule's
+     bottom:calc(var(--u)*-6) collapses to ~-1.2px at mobile widths,
+     reading as sitting right against the text instead of a real gap.
+     Fixed px, same ~0.25 gap/font-size ratio as desktop's own 6u/24u. */
+  .hero__menu-line-track {
+    bottom: -5px;
   }
 
   /* Real bug found while checking this per her request: openMenu()/
