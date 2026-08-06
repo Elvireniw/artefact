@@ -1557,6 +1557,161 @@
         <span class="scroll-up-tail" aria-hidden="true"></span>
       </a>
 
+      <!-- MOBILE (node 978:1081 "10_тарифи", file 6tA1k2sLpFm5U7cLn9p9rZ) —
+           same pattern as .stories-mobile/.steps-mobile: separate flex
+           markup, plain native horizontal drag-scroll row for the 3 cards
+           (her "як у 5/7/9 блоці" spec), not desktop's absolute per-element
+           positioning.
+
+           No .pricing__lead equivalent in this frame — the mobile header
+           is eyebrow + heading only, nothing else; not an omission.
+
+           HEADING/TITLES: same "real blur baked into the glyph, CSS blur
+           is banned" situation as desktop (h-price-*.png), except these
+           mobile exports (mob-h-price-1/2/3.png = the 3 heading LINES,
+           already split one-per-line unlike desktop's per-word split;
+           mob-pricing-title-1/2/3.png = the 3 card titles) all have real
+           alpha transparency (confirmed via canvas scan, corner alpha 0 —
+           NOT the flattened-opaque-background trap desktop's cards 2/3 hit)
+           and are exported at a clean 2x scale (width-ratio image-px/node-u
+           measured at 2.003/2.007/1.990 across the 3 heading lines — closer
+           to a round 2 than the source text's own blur-inflated bbox would
+           suggest, so s=0.5 is used for those and for 2 of the 3 card
+           titles — EXCEPT mob-pricing-title-2.png ("мова глини"), which
+           was exported at 4x (s=0.25) on its own; verified by rendering
+           the real string in the site's own Helvetica Neue at the
+           declared 48px/500/-2.4px and comparing to the asset's bbox
+           width, not by trusting the node's declared box width (a fixed
+           338px container shared by all 3 titles regardless of actual
+           string length — it can't tell you scale). See style.css's
+           .pricing-mobile__card--featured .pricing-mobile__card-title
+           comment for the numbers. Every image is LEFT/TOP-EDGE aligned
+           to its source text node's position (left = node.x - bbox.minX*s,
+           top = node.y - bbox.minY*s), same method as desktop's h-price-*/
+           pricing-title-* — see the calc()-free literal-px numbers on each
+           .pricing-mobile__heading-line-N / .pricing-mobile__card--*
+           .pricing-mobile__card-title rule in style.css.
+
+           CARD 1 CONTENT BUG: Figma's "mob-cards-1" instance has its
+           duration/result text still bound to card 2's copy ("Тривалість:
+           8 тижні", "5-7 готових авторських робіт...") instead of its own
+           — same authoring-slip class as block 9's card 1 photo mismatch.
+           Title/subtitle/price/CTA on this instance ARE its own and read
+           correctly. Fixed here using desktop's already-approved real card
+           1 text (4 тижні / офлайн; "готовий виріб, який можна забрати з
+           собою після випалу") instead of reproducing the glitch. Cards 2
+           and 3's mobile content matches desktop exactly, no swap needed.
+
+           CARD 3 RESULT COLOR: unlike cards 1/2 (muted label + more-opaque
+           body, two different opacities), Figma gives card 3's whole
+           "результат:" line one uniform rgba(154,150,113,0.8) — read
+           directly off the design context, not a guess; kept as-is since
+           this is a Pixel Perfect pass. -->
+      <div class="pricing-mobile">
+        <div class="pricing-mobile__header">
+          <h2 class="visually-hidden">оберіть шлях у світ гончарства</h2>
+          <p class="pricing-mobile__eyebrow"><span class="italic-symbol">(</span>наші курси</p>
+          <div class="pricing-mobile__heading" aria-hidden="true">
+            <img class="pricing-mobile__heading-line pricing-mobile__heading-line--1" src="img/mob-h-price-1.png" alt="">
+            <img class="pricing-mobile__heading-line pricing-mobile__heading-line--2" src="img/mob-h-price-2.png" alt="">
+            <img class="pricing-mobile__heading-line pricing-mobile__heading-line--3" src="img/mob-h-price-3.png" alt="">
+          </div>
+        </div>
+
+        <div class="pricing-mobile__row" data-lenis-prevent>
+          <div class="pricing-mobile__track">
+
+            <article class="pricing-mobile__card pricing-mobile__card--basic">
+              <div class="pricing-mobile__card-info">
+                <div class="pricing-mobile__card-title-group">
+                  <div class="pricing-mobile__card-title-slot">
+                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-1.png" alt="Перший дотик">
+                  </div>
+                  <p class="pricing-mobile__card-subtitle"><span class="italic-symbol">(</span>ідеальний старт для тих, хто сумнівається</p>
+                </div>
+                <p class="pricing-mobile__card-price">
+                  <span class="pricing-mobile__card-price-currency">₴</span>
+                  <span class="pricing-mobile__card-price-value">7,900</span>
+                  <span class="pricing-mobile__card-price-period">/міс</span>
+                </p>
+                <div class="pricing-mobile__card-result-group">
+                  <p class="pricing-mobile__card-format">Тривалість: 4 тижні&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Формат: офлайн</p>
+                  <p class="pricing-mobile__card-result"><span class="pricing-mobile__card-result-label">результат:</span> готовий виріб, який можна забрати з собою після випалу</p>
+                </div>
+              </div>
+              <a href="#" class="pricing-mobile__card-cta js-line-hover">
+                <span class="pricing-mobile__card-cta-label">розпочати шлях</span>
+                <span class="pricing-mobile__card-cta-plus" aria-hidden="true">
+                  <span class="pricing-mobile__card-cta-plus-track">
+                    <span class="pricing-mobile__card-cta-plus-char pricing-mobile__card-cta-plus-char--out">+</span>
+                    <span class="pricing-mobile__card-cta-plus-char pricing-mobile__card-cta-plus-char--in">+</span>
+                  </span>
+                </span>
+              </a>
+            </article>
+
+            <article class="pricing-mobile__card pricing-mobile__card--featured">
+              <div class="pricing-mobile__card-info">
+                <div class="pricing-mobile__card-title-group">
+                  <div class="pricing-mobile__card-title-slot">
+                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-2.png" alt="Мова глини">
+                  </div>
+                  <p class="pricing-mobile__card-subtitle"><span class="italic-symbol">(</span>це ваш шлях від новачка до творця</p>
+                </div>
+                <p class="pricing-mobile__card-price">
+                  <span class="pricing-mobile__card-price-currency">₴</span>
+                  <span class="pricing-mobile__card-price-value">17,900</span>
+                  <span class="pricing-mobile__card-price-period">/міс</span>
+                </p>
+                <div class="pricing-mobile__card-result-group">
+                  <p class="pricing-mobile__card-format">Тривалість: 8 тижні&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Формат: офлайн</p>
+                  <p class="pricing-mobile__card-result"><span class="pricing-mobile__card-result-label">результат:</span> 5-7 готових авторських робіт, портфоліо, впевнені робочі навички</p>
+                </div>
+              </div>
+              <a href="#" class="pricing-mobile__card-cta js-line-hover">
+                <span class="pricing-mobile__card-cta-label">обрати курс</span>
+                <span class="pricing-mobile__card-cta-plus" aria-hidden="true">
+                  <span class="pricing-mobile__card-cta-plus-track">
+                    <span class="pricing-mobile__card-cta-plus-char pricing-mobile__card-cta-plus-char--out">+</span>
+                    <span class="pricing-mobile__card-cta-plus-char pricing-mobile__card-cta-plus-char--in">+</span>
+                  </span>
+                </span>
+              </a>
+            </article>
+
+            <article class="pricing-mobile__card pricing-mobile__card--pro">
+              <div class="pricing-mobile__card-info">
+                <div class="pricing-mobile__card-title-group">
+                  <div class="pricing-mobile__card-title-slot">
+                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-3.png" alt="Професійний рівень">
+                  </div>
+                  <p class="pricing-mobile__card-subtitle"><span class="italic-symbol">(</span>ти вже знаєш основи і маєш сміливу ідею</p>
+                </div>
+                <p class="pricing-mobile__card-price">
+                  <span class="pricing-mobile__card-price-currency">₴</span>
+                  <span class="pricing-mobile__card-price-value">37,900</span>
+                  <span class="pricing-mobile__card-price-period">/міс</span>
+                </p>
+                <div class="pricing-mobile__card-result-group">
+                  <p class="pricing-mobile__card-format">Тривалість: 12 тижні&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;Формат: офлайн/онлайн</p>
+                  <p class="pricing-mobile__card-result"><span class="pricing-mobile__card-result-label">результат:</span> готовий проєкт для портфоліо, колекція робіт або унікальний арт-об'єкт</p>
+                </div>
+              </div>
+              <a href="#" class="pricing-mobile__card-cta js-line-hover">
+                <span class="pricing-mobile__card-cta-label">забронювати місце</span>
+                <span class="pricing-mobile__card-cta-plus" aria-hidden="true">
+                  <span class="pricing-mobile__card-cta-plus-track">
+                    <span class="pricing-mobile__card-cta-plus-char pricing-mobile__card-cta-plus-char--out">+</span>
+                    <span class="pricing-mobile__card-cta-plus-char pricing-mobile__card-cta-plus-char--in">+</span>
+                  </span>
+                </span>
+              </a>
+            </article>
+
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </section>

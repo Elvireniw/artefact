@@ -2769,7 +2769,12 @@ body.is-preloading .hero__btn {
     position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
+    /* pan-x alone blocks native vertical panning for any touch that starts
+       over the row — a real jerk when a vertical swipe happens to begin
+       here, same bug documented on .stories-mobile__row (see there);
+       pan-x pan-y lets both directions through, the row's own
+       overflow-x:auto still owns the horizontal gesture. */
+    touch-action: pan-x pan-y;
     cursor: grab;
     padding-left: 20px;
     margin-bottom: 0;
@@ -3144,7 +3149,9 @@ body.is-preloading .hero__btn {
     position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
+    /* pan-x pan-y, not pan-x alone — same vertical-scroll-jerk fix as
+       .gallery-mobile__row/.stories-mobile__row, see the comment there. */
+    touch-action: pan-x pan-y;
     cursor: grab;
     padding-left: 20px;
     scrollbar-width: none;
@@ -4993,22 +5000,32 @@ body.menu-is-open {
      (the one still mostly off-screen) read as an ugly accident rather than
      an intentional "there's more, keep scrolling" hint — her own first
      instinct was "make that bit transparent," which is exactly this: a
-     mask-image fade over the last 50px, not a blur (blur is off-limits
+     mask-image fade over the last 25px, not a blur (blur is off-limits
      project-wide, see CLAUDE.md). The cut card fades to the section's own
      beige instead of stopping on a hard edge. Right side only — at rest
      (scrollLeft 0) card 1 is fully on-screen with nothing to soften on the
      left; a static left fade would needlessly dim it before any scrolling
-     has happened. */
+     has happened. Kept narrow (25px, tuned down from an initial 50px) —
+     any wider and it started dimming the edge of the last fully-visible
+     card too, not just the truncated one.
+
+     touch-action: pan-x alone (the same value gallery-mobile/steps-mobile
+     use) blocks native vertical panning for any touch that starts over the
+     element — fine for those two, whose rows are short, but this row's
+     cards run ~600px tall and cover most of the viewport, so a vertical
+     swipe anywhere over the carousel silently failed to scroll the page.
+     pan-x pan-y allows both; the row's own overflow-x:auto still owns the
+     horizontal gesture, vertical now bubbles to the page normally. */
   .stories-mobile__row {
     position: relative;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
+    touch-action: pan-x pan-y;
     cursor: grab;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 50px), transparent 100%);
-    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 50px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 25px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 25px), transparent 100%);
   }
 
   .stories-mobile__row::-webkit-scrollbar {
@@ -5542,6 +5559,444 @@ body.menu-is-open {
 .pricing__card--pro .pricing__card-result { left: calc(var(--u) * 40); top: calc(var(--u) * 422); width: calc(var(--u) * 520); color: rgba(43, 61, 45, 0.8); }
 .pricing__card--pro .pricing__card-result-label { color: rgba(43, 61, 45, 0.6); }
 .pricing__card--pro .pricing__card-cta { left: calc(var(--u) * 40); top: calc(var(--u) * 540); color: rgba(43, 61, 45, 0.8); }
+
+/* --- pricing mobile (node 978:1081 "10_тарифи") ---
+   Same two-part override mechanism as .stories-mobile/.steps-mobile: base
+   display:none here, real layout inside the @media block below, placed
+   AFTER .pricing's own desktop height/overflow rule so source order can't
+   silently lose (see BLOCK_STARTER_KIT.md). Fully self-contained.
+
+   See index.html's block comment for the asset-scale/content-bug notes —
+   not repeated here. */
+.pricing-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .pricing {
+    height: auto;
+    overflow: visible;
+  }
+
+  .pricing > .section-inner {
+    position: static;
+  }
+
+  .pricing__header,
+  .pricing__cards,
+  .scroll-up {
+    display: none;
+  }
+
+  .pricing-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 80px 0;
+  }
+
+  .pricing-mobile__header {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 20px;
+  }
+
+  .pricing-mobile__eyebrow {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #2B3D2D;
+  }
+
+  .pricing-mobile__eyebrow .italic-symbol {
+    margin-right: 10px;
+  }
+
+  .pricing-mobile__heading {
+    position: relative;
+    width: 100%;
+    height: 138px;
+  }
+
+  .pricing-mobile__heading-line {
+    position: absolute;
+    display: block;
+    max-width: none;
+    pointer-events: none;
+  }
+
+  /* mob-h-price-1.png, canvas 688×101, bbox min (10,11); line node
+     978:1086 at (0,0) within .pricing-mobile__heading, shared scale
+     s=0.5 (see index.html comment) */
+  .pricing-mobile__heading-line--1 {
+    left: -5px;
+    top: -5.5px;
+    width: 344px;
+    height: auto;
+  }
+
+  /* mob-h-price-2.png, canvas 307×101, bbox min (16,14); line node
+     978:1087 at (0,46) */
+  .pricing-mobile__heading-line--2 {
+    left: -8px;
+    top: 39px;
+    width: 153.5px;
+    height: auto;
+  }
+
+  /* mob-h-price-3.png, canvas 609×101, bbox min (10,12); line node
+     978:1088 at (0,92) */
+  .pricing-mobile__heading-line--3 {
+    left: -5px;
+    top: 86px;
+    width: 304.5px;
+    height: auto;
+  }
+
+  .pricing-mobile__row {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    cursor: grab;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .pricing-mobile__row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pricing-mobile__row.is-dragging {
+    cursor: grabbing;
+  }
+
+  .pricing-mobile__track {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    width: max-content;
+  }
+
+  /* each card is the full 375px mobile frame width, edge to edge — no
+     side inset, unlike the header's 20px padding above (that's what the
+     Figma frame actually shows: the row bleeds full-bleed while the
+     eyebrow/heading stay inset). */
+  /* overflow:hidden matters beyond the visual edge: card 3's title image
+     (mob-pricing-title-3.png) has a wider transparent canvas margin than
+     cards 1/2's, and its un-clipped box bleeds ~75px past the card's own
+     right edge — since it's the LAST card in the track, that bleed
+     inflated .pricing-mobile__row's scrollWidth and left extra empty
+     scroll space after card 3. Clipping at the card boundary fixes both
+     the stray scroll space and keeps every card visually self-contained
+     (card 3 already reads as a bounded box via its border). */
+  /* ALIGNMENT: her explicit call — title/subtitle/price/format and the
+     CTA must land on the same absolute Y across all 3 cards, not follow
+     Figma's own per-card centering (which put the featured card's title
+     ~40px lower than the other two, since it's a taller card with much
+     bigger top padding, and the row bottom-aligns them). Two mechanisms:
+     (1) every card gets the SAME title/price/format gaps (26px/46px/7px,
+     dropping featured's own slightly different 28px/44px), so identical
+     content produces identical cumulative offsets; (2) the featured
+     card's padding-top is basic/pro's 35px + exactly the 40px height
+     difference (566 vs 526) it pokes up by in the bottom-aligned row —
+     that 40px is what makes its title start 40px higher on the page
+     than the other two would otherwise, so adding it back to padding-top
+     cancels it out. Confirmed via getBoundingClientRect: both land at
+     the same 379px from viewport top. The CTA is bottom-pinned instead
+     (margin-top:auto, see .pricing-mobile__card-cta) rather than relying
+     on identical gaps all the way down, since result-text length still
+     varies per card (card 3's format wraps 2 lines) — bottom-pinning
+     makes CTA alignment immune to that instead of needing yet another
+     hardcoded compensation. */
+  .pricing-mobile__card {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 375px;
+    display: flex;
+    flex-direction: column;
+    padding: 35px 18px 60px;
+    overflow: hidden;
+  }
+
+  .pricing-mobile__card--basic {
+    height: 526px;
+    background-color: rgba(154, 150, 113, 0.2);
+  }
+
+  .pricing-mobile__card--featured {
+    height: 566px;
+    padding-top: 75px;
+    background-color: var(--olive-100);
+  }
+
+  .pricing-mobile__card--pro {
+    height: 526px;
+    /* 1.5px not 1px — same dpr-1.5 rounding cliff as desktop's card 3
+       border, see project memory / BLOCK_STARTER_KIT.md */
+    border: 1.5px solid rgba(154, 150, 113, 0.2);
+  }
+
+  .pricing-mobile__card-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* same 26px/46px gap on ALL 3 cards now — see the ALIGNMENT comment
+     on .pricing-mobile__card above. */
+  .pricing-mobile__card-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  /* reserves the source text node's own 38px height so the subtitle's
+     16px gap below lands in the right place — a LAYOUT height only, not
+     a clip. It must NOT carry overflow/mask: a blurred title's canvas is
+     taller than this box (blur bleeds above AND below the glyph), and an
+     earlier version here had overflow:hidden, which clipped that bleed
+     off at the bottom on every card — most visibly on card 3's taller
+     asset, read as "the title is cut off." Card 3's title is ALSO wider
+     than its column (measured ~418px in the site's real Helvetica Neue
+     48px/500 against the ~338px column) and does still get clipped
+     horizontally, but that clip now happens up at .pricing-mobile__card's
+     own overflow:hidden (the card's outer edge, a generous boundary) —
+     not here, and with no vertical side effect. */
+  .pricing-mobile__card-title-slot {
+    position: relative;
+    width: 100%;
+    height: 38px;
+  }
+
+  .pricing-mobile__card-title {
+    position: absolute;
+    display: block;
+    max-width: none;
+    pointer-events: none;
+  }
+
+  /* mob-pricing-title-1.png, canvas 629×129, bbox min (19,19); title node
+     at (0,0) within .pricing-mobile__card-title-slot */
+  .pricing-mobile__card--basic .pricing-mobile__card-title {
+    left: -9.5px;
+    top: -9.5px;
+    width: 314.5px;
+  }
+
+  /* mob-pricing-title-2.png — she re-exported this file 2026-08-06 18:47
+     (replacing the original 4x-scale export flagged in project memory),
+     canvas 653×111, bbox min (19,16) max (637,93). Her explicit call
+     2026-08-06: this title should read BIGGER — width set directly to
+     her requested 321px (scale = 321/653 = 0.4916, close to the 0.5
+     cards 1/3 use — the earlier 246.2px sizing, derived from matching a
+     real-Helvetica-Neue width measurement, undersized it). left/top
+     re-derived at this scale from the same bbox: left = -19*0.4916,
+     top = -16*0.4916. */
+  .pricing-mobile__card--featured .pricing-mobile__card-title {
+    left: -9.34px;
+    top: -7.87px;
+    width: 321px;
+  }
+
+  /* mob-pricing-title-3.png, canvas 897×153, bbox min (32,30). Her
+     explicit call 2026-08-06: this title should read SMALLER — width set
+     directly to her requested 277px (scale = 277/897 = 0.3088, well
+     under cards 1/2's ~0.49-0.5). At this scale the visible ink
+     (bbox width 837 * 0.3088 ≈ 258px) fits inside the 338px column with
+     real margin, which also resolves the right-edge fade from the
+     previous pass — that fade was masking a genuine overflow at the
+     larger size, not needed at this one, but left in place since it's a
+     no-op when there's nothing to fade. left/top re-derived at this
+     scale from the same bbox: left = -32*0.3088, top = -30*0.3088. */
+  .pricing-mobile__card--pro .pricing-mobile__card-title {
+    left: -9.88px;
+    top: -9.26px;
+    width: 277px;
+  }
+
+  .pricing-mobile__card-subtitle {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.1;
+    letter-spacing: -0.16px;
+  }
+
+  .pricing-mobile__card-subtitle .italic-symbol {
+    font-style: italic;
+    margin-right: 10px;
+  }
+
+  .pricing-mobile__card--basic .pricing-mobile__card-subtitle,
+  .pricing-mobile__card--pro .pricing-mobile__card-subtitle {
+    color: rgba(43, 61, 45, 0.6);
+  }
+
+  .pricing-mobile__card--featured .pricing-mobile__card-subtitle {
+    color: var(--beige-100);
+  }
+
+  .pricing-mobile__card-price {
+    margin: 0 0 46px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-family: 'Helvetica Neue', sans-serif;
+    color: #2B3D2D;
+  }
+
+  .pricing-mobile__card-price-currency,
+  .pricing-mobile__card-price-period {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  .pricing-mobile__card-price-value {
+    font-weight: 500;
+    font-size: 90px;
+    line-height: 1;
+    letter-spacing: -2.7px;
+  }
+
+  .pricing-mobile__card-result-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  /* min-height reserves 2 lines even though only card 3's format text
+     ("...Формат: офлайн/онлайн") actually wraps to 2 — cards 1/2's
+     shorter one-line format would otherwise leave the result paragraph
+     (and everything below it) ~18px higher than card 3's, undoing part
+     of the alignment work above. */
+  .pricing-mobile__card-format {
+    margin: 0;
+    min-height: 36px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  .pricing-mobile__card--basic .pricing-mobile__card-format,
+  .pricing-mobile__card--pro .pricing-mobile__card-format {
+    color: rgba(43, 61, 45, 0.6);
+  }
+
+  .pricing-mobile__card--featured .pricing-mobile__card-format {
+    color: #2B3D2D;
+  }
+
+  .pricing-mobile__card-result {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+  }
+
+  .pricing-mobile__card--basic .pricing-mobile__card-result {
+    color: rgba(43, 61, 45, 0.8);
+  }
+
+  .pricing-mobile__card--basic .pricing-mobile__card-result-label {
+    color: rgba(43, 61, 45, 0.6);
+  }
+
+  .pricing-mobile__card--featured .pricing-mobile__card-result {
+    color: var(--beige-100);
+  }
+
+  .pricing-mobile__card--featured .pricing-mobile__card-result-label {
+    color: rgba(237, 233, 221, 0.6);
+  }
+
+  /* card 3 is read verbatim off Figma: the WHOLE result line (label +
+     body) is one uniform olive tone, no separate muted-label/opaque-body
+     split like cards 1/2 — not an oversight, see index.html's comment. */
+  .pricing-mobile__card--pro .pricing-mobile__card-result,
+  .pricing-mobile__card--pro .pricing-mobile__card-result-label {
+    color: rgba(154, 150, 113, 0.8);
+  }
+
+  /* align-self:flex-start is required — .pricing-mobile__card is a
+     flex column with default align-items:stretch, so without this the
+     CTA (a flex item there) stretches to the card's full content width
+     and its border-bottom (the underline) runs the full card width
+     instead of hugging just the label+icon, like every other CTA on the
+     site.
+
+     margin-top:auto bottom-pins the CTA to the card's own padding-box
+     instead of letting it flow directly after .pricing-mobile__card-info
+     — this is what actually guarantees "все кнопки на одном рівні": the
+     3 cards already share the same bottom edge (.pricing-mobile__track's
+     align-items:flex-end), so a bottom-pinned CTA lands on the same
+     absolute Y on all 3 regardless of any residual content-height
+     difference above it (result-text length still varies per card even
+     after the .pricing-mobile__card-format min-height fix). Relying on
+     identical gaps all the way down would still leave the CTA position
+     hostage to exact text length; this doesn't. */
+  .pricing-mobile__card-cta {
+    display: flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 28px;
+    margin-top: auto;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #2B3D2D;
+    text-decoration: none;
+    font-family: 'Helvetica Neue', sans-serif;
+    color: #2B3D2D;
+  }
+
+  .pricing-mobile__card-cta-label {
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .pricing-mobile__card-cta-plus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1;
+    overflow: hidden;
+    height: 1em;
+  }
+
+  .pricing-mobile__card-cta-plus-track {
+    position: relative;
+    display: block;
+    line-height: 1;
+  }
+
+  .pricing-mobile__card-cta-plus-char {
+    display: block;
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pricing-mobile__card-cta-plus-char--out { transform: translateY(0%); }
+  .pricing-mobile__card-cta-plus-char--in {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(100%);
+  }
+
+  .js-line-hover:hover .pricing-mobile__card-cta-plus-char--out { transform: translateY(-100%); }
+  .js-line-hover:hover .pricing-mobile__card-cta-plus-char--in { transform: translateY(0%); }
+}
 
 /* ==========================================================================
    CTA SECTION — "11_СТА"

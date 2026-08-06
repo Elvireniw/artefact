@@ -2865,6 +2865,16 @@ let storiesPinTrigger;
 
 function initStoriesCarousel() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+  // desktop-only pin+scrub carousel — same reasoning as
+  // initGalleryCarousel()'s own mobile guard above: on mobile
+  // .stories__grid is display:none (replaced by .stories-mobile's plain
+  // native horizontal scroll), but pin:storiesSection doesn't know that
+  // and still wraps the whole section in a GSAP pin-spacer sized for the
+  // desktop scrub distance (STORIES_PAGE_SCROLL), holding the page in
+  // place for that entire distance regardless — read as scrolling being
+  // "stuck"/blocked right at this section on mobile. Skipping pin setup
+  // entirely on mobile avoids the pin-spacer existing at all.
+  if (window.matchMedia('(max-width: 768px)').matches) return;
 
   const track = document.querySelector('.stories__grid');
   if (!track || !storiesSection) return;
@@ -3755,6 +3765,7 @@ initGalleryFilter();
 initDragScrollRow('.gallery-mobile__row');
 initDragScrollRow('.steps-mobile__row');
 initDragScrollRow('.stories-mobile__row');
+initDragScrollRow('.pricing-mobile__row');
 initSectionScrollLag();
 
 // Settles the page's final layout, including the gallery's pin spacer —
