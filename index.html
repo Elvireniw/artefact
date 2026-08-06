@@ -822,26 +822,26 @@
            (.steps-mobile__row + drag support), same mechanism as
            .gallery-mobile__row — her explicit spec, "як у 5 блоці".
 
-           Card order (1st/2nd/3rd) and each card's own number label follow
-           her Figma frame's actual layout positions (крок-1, крок-3,
-           крок-2 in that left-to-right order — confirmed via
-           get_metadata's x-coordinates, not the instance layer names,
+           Card order is sequential 1st/2nd/3rd by number label (she asked
+           for this explicitly, 2026-08-06) — NOT her Figma frame's actual
+           left-to-right layout, which is крок-1/крок-3/крок-2 (confirmed
+           via get_metadata's x-coordinates, not the instance layer names,
            which are misleading). The frame's "(N)" number labels
            themselves don't match their own card's text content in 2 of
-           the 3 cards (the 2nd card is positioned with крок-3's real
+           the 3 cards (the крок-3-positioned card carries крок-3's real
            caption/body text — "додаємо душу" — but its number span reads
-           "2"; the 3rd card carries крок-2's text — "діалог з матерією" —
-           but its label component is stuck showing the hover-state word
-           "завершення" instead of a resting number). Both read as Figma
-           authoring slips (duplicated instances whose bound
-           number/hover-word properties were never reset), not an
+           "2"; the крок-2-positioned card carries крок-2's text — "діалог
+           з матерією" — but its label component is stuck showing the
+           hover-state word "завершення" instead of a resting number).
+           Both read as Figma authoring slips (duplicated instances whose
+           bound number/hover-word properties were never reset), not an
            intentional design choice — text content is what's reliable
            here, not the label prop on a duplicated instance — so each
            card's number below is corrected to match its OWN actual
-           caption/body text (1, 3, 2 in this visual order) rather than
-           copying the mismatched label verbatim. Text itself matches
-           desktop's step--1/2/3 verbatim (same copy, no mobile-specific
-           rewording in Figma). -->
+           caption/body text, then the three are placed in 1/2/3 order by
+           that corrected number rather than the Figma frame's left-to-
+           right order. Text itself matches desktop's step--1/2/3 verbatim
+           (same copy, no mobile-specific rewording in Figma). -->
       <div class="steps-mobile">
         <div class="steps-mobile__top">
           <div class="steps-mobile__heading">
@@ -894,24 +894,6 @@
                 <span class="steps-mobile__label-left">
                   <span class="italic-symbol steps-mobile__label-paren">(</span>
                   <span class="steps-mobile__label-value">
-                    <span class="steps-mobile__label-value-rest">3</span>
-                    <span class="steps-mobile__label-value-hover" aria-hidden="true">завершення</span>
-                  </span>
-                </span>
-                <span class="steps-mobile__label-spacer" aria-hidden="true"></span>
-                <span class="italic-symbol steps-mobile__label-paren steps-mobile__label-paren--close">)</span>
-              </p>
-              <div class="steps-mobile__body">
-                <p class="steps-mobile__caption">додаємо         душу</p>
-                <p class="steps-mobile__text">на цьому етапі ми допоможемо вашому твору знайти свій голос. ви освоїте мистецтво фінішного декору, роботи з фактурами та професійної подачі, щоб ваше творіння стало вашою головною історією</p>
-              </div>
-            </article>
-
-            <article class="steps-mobile__card">
-              <p class="steps-mobile__label">
-                <span class="steps-mobile__label-left">
-                  <span class="italic-symbol steps-mobile__label-paren">(</span>
-                  <span class="steps-mobile__label-value">
                     <span class="steps-mobile__label-value-rest">2</span>
                     <span class="steps-mobile__label-value-hover" aria-hidden="true">втілення</span>
                   </span>
@@ -922,6 +904,29 @@
               <div class="steps-mobile__body">
                 <p class="steps-mobile__caption">діалог          з        матерією</p>
                 <p class="steps-mobile__text">саме час оживити ваш ескіз. під нашим проводом ви опануєте танець гончарного круга, навчитеся розуміти «дихання» глини та направляти її в форму, що стане продовженням ваших думок</p>
+              </div>
+            </article>
+
+            <!-- "ви" joined to "освоїте" with a non-breaking space: at
+                 325px/20px this sentence break used to leave a lone "ви"
+                 stranded at the end of a wrapped line (a real widow, she
+                 flagged it) — nbsp forces the two words to wrap together
+                 as one unit instead. -->
+            <article class="steps-mobile__card">
+              <p class="steps-mobile__label">
+                <span class="steps-mobile__label-left">
+                  <span class="italic-symbol steps-mobile__label-paren">(</span>
+                  <span class="steps-mobile__label-value">
+                    <span class="steps-mobile__label-value-rest">3</span>
+                    <span class="steps-mobile__label-value-hover" aria-hidden="true">завершення</span>
+                  </span>
+                </span>
+                <span class="steps-mobile__label-spacer" aria-hidden="true"></span>
+                <span class="italic-symbol steps-mobile__label-paren steps-mobile__label-paren--close">)</span>
+              </p>
+              <div class="steps-mobile__body">
+                <p class="steps-mobile__caption">додаємо         душу</p>
+                <p class="steps-mobile__text">на цьому етапі ми допоможемо вашому твору знайти свій голос. ви&nbsp;освоїте мистецтво фінішного декору, роботи з фактурами та професійної подачі, щоб ваше творіння стало вашою головною історією</p>
               </div>
             </article>
 
@@ -984,6 +989,56 @@
           </span>
         </a>
 
+      </div>
+
+      <!-- MOBILE (node 978:1019 "8_free lesson", file 6tA1k2sLpFm5U7cLn9p9rZ) —
+           same pattern as .steps-mobile: separate flex markup nested in the
+           same .section-inner, not a CSS override of the desktop absolute
+           layout above. Heading copy is shorter on her mobile frame than
+           desktop's ("повного" vs desktop's "повноцінного") — kept as she
+           drew it, not synced back to desktop's wording. Per-line colors
+           also don't match desktop 1:1 (mobile's "до" is beige-80, not
+           desktop's beige-40) — read straight from this frame's own text
+           fills, not assumed from the desktop block. Pixel Perfect only for
+           now, no entrance motion wired yet, same as steps/stories/pricing
+           got on their first pass. -->
+      <div class="free-lesson-mobile">
+        <div class="free-lesson-mobile__gradient" aria-hidden="true"></div>
+
+        <div class="free-lesson-mobile__top">
+          <div class="free-lesson-mobile__heading">
+            <p class="free-lesson-mobile__line free-lesson-mobile__line--100">ще не</p>
+            <p class="free-lesson-mobile__line free-lesson-mobile__line--80">готові</p>
+            <p class="free-lesson-mobile__line free-lesson-mobile__line--80">до</p>
+            <p class="free-lesson-mobile__line free-lesson-mobile__line--60">повного</p>
+            <p class="free-lesson-mobile__line free-lesson-mobile__line--last">
+              <span class="free-lesson-mobile__line--60">курсу</span>
+              <span class="free-lesson-mobile__mark">?</span>
+            </p>
+          </div>
+
+          <div class="free-lesson-mobile__media">
+            <img class="free-lesson-mobile__media-img" src="img/free-lesson-course-mobile.png" alt="Керамічна ваза на тканинному тлі">
+          </div>
+        </div>
+
+        <div class="free-lesson-mobile__bottom">
+          <div class="free-lesson-mobile__txt">
+            <p class="free-lesson-mobile__txt-line"><span class="italic-symbol free-lesson-mobile__txt-paren">(</span>отримайте</p>
+            <p class="free-lesson-mobile__txt-line">вводний 2-годинний</p>
+            <p class="free-lesson-mobile__txt-line">відео-урок <span class="italic-symbol free-lesson-mobile__txt-paren free-lesson-mobile__txt-paren--close">)</span></p>
+          </div>
+
+          <a href="#" class="free-lesson-mobile__cta js-line-hover">
+            <span class="free-lesson-mobile__cta-label">free вебинар</span>
+            <span class="free-lesson-mobile__cta-plus" aria-hidden="true">
+              <span class="free-lesson-mobile__cta-plus-track">
+                <span class="free-lesson-mobile__cta-plus-char free-lesson-mobile__cta-plus-char--out">+</span>
+                <span class="free-lesson-mobile__cta-plus-char free-lesson-mobile__cta-plus-char--in">+</span>
+              </span>
+            </span>
+          </a>
+        </div>
       </div>
 
     </div>
@@ -1239,6 +1294,114 @@
         </svg>
         <span class="scroll-up-tail" aria-hidden="true"></span>
       </a>
+
+      <!-- MOBILE (node 978:1048 "9_історії учнів", file 6tA1k2sLpFm5U7cLn9p9rZ) —
+           same pattern as .steps-mobile/.gallery-mobile: separate flex
+           markup nested in the same .section-inner, plain native horizontal
+           scroll for the review row (her "як у 5/7 блоці" spec), not the
+           desktop click-to-reveal/pin mechanism above.
+
+           Only 5 of desktop's 10 review cards fit this frame (Figma's own
+           "відгук-4" instance is unmodified — same authoring slip as block
+           7's mismatched labels: its bound text/name/label properties still
+           read олена's content verbatim, identical to the very next card).
+           Text isn't reliable on THAT card, so identity was confirmed by
+           byte-comparing its exported photo against desktop's own
+           img/stories-*.jpg files instead (md5-identical) — it carries
+           оксана's photo, so it got оксана's real text/label from desktop's
+           card 4, not the placeholder's. The other four cards' photos
+           confirmed the same way: відгук-5→олена, відгук-3→андрій,
+           відгук-2→ірина, відгук-1→наталія — all already had their own
+           correct text in Figma, only card 1 needed the swap. Photos are
+           the SAME image files desktop already uses, not new mobile
+           exports. Figma's "4-робота" group applies a rotate-180+scaleY(-1)
+           to each photo, which nets to a pure horizontal mirror (confirmed
+           by matrix math) — not present on desktop's own version of these
+           same photos and not visible in Figma's own rendered screenshot,
+           so treated as an authoring artifact and left off here, same as
+           the eyebrow's literal-space and closing-paren hacks elsewhere on
+           this project. Pixel Perfect only for now, no entrance motion
+           wired yet. -->
+      <div class="stories-mobile">
+        <div class="stories-mobile__title">
+          <p class="stories-mobile__eyebrow"><span class="italic-symbol">(</span>вироби студентів</p>
+          <div class="stories-mobile__intro">
+            <h2 class="stories-mobile__heading"><span class="stories-mobile__heading-a">Історії </span><span class="stories-mobile__heading-b">успіху</span></h2>
+            <p class="stories-mobile__lead">вони такі ж люди, як і ви. вчителі, менеджери, коучі — усі змогли знайти щось своє у гончарстві</p>
+          </div>
+        </div>
+
+        <div class="stories-mobile__row" data-lenis-prevent>
+          <div class="stories-mobile__track">
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-4.jpg" alt="Студентка формує виріб на гончарному крузі">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«викладаю фізику в школі, цілий день — формули на дошці. глина стала протилежністю: тут нічого не треба доводити, просто відчувати руками»</p>
+                <p class="stories-mobile__author">оксана, вчителька фізики,<br>івано-франківськ</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-5.jpg" alt="Керамічна миска на трьох ніжках, робота студента курсу «мова глини»">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«я архітектор. ця ваза — моя спроба перенести принципи форм з металу та скла на глину. ARTEFACT допоміг зрозуміти матеріал не як обмеження, а як новий простір для експериментів»</p>
+                <p class="stories-mobile__author">олена, архітектор,<br>київ</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-3.jpg" alt="Портрет випускника курсу «професійний» у майстерні">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«дванадцять років пишу код, цілий день дивлюся у монітор. а тут — глина, яка не компілюється з першого разу, і це чомусь заспокоює більше за будь-який дедлайн»</p>
+                <p class="stories-mobile__author">андрій, it-спеціаліст,<br>чернігів</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / перший дотик</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-2.jpg" alt="Набір керамічних тарілок ручної роботи в руках студентки">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«прийшла на перший урок просто зняти стрес після роботи. а вийшла з тарілкою, яку зробила сама вперше в житті — досі не вірю, що це я»</p>
+                <p class="stories-mobile__author">ірина, медсестра,<br>харків</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-1.jpg" alt="Керамічна скульптурна форма, робота студента курсу «професійний»">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«я бухгалтерка, двадцять років рахую чужі цифри. на курсі вперше зробила щось руками від початку до кінця — і зрозуміла, що це не хобі, а спосіб дихати»</p>
+                <p class="stories-mobile__author">наталія, бухгалтерка,<br>полтава</p>
+              </div>
+            </article>
+
+          </div>
+        </div>
+      </div>
 
     </div>
 

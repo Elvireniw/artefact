@@ -2556,6 +2556,61 @@ function runFreeLessonEntrance() {
 }
 
 // ==========================================================================
+// FREE LESSON MOBILE — scroll-triggered entrance
+// Same beat shape as steps-mobile/gallery-mobile (heading -> visuals ->
+// supporting content -> CTA last, once:true, top 80%) — independent
+// trigger, no startAfterFloor() chaining needed like the desktop version
+// above: mobile has no pinned gallery carousel ahead of it to fire early
+// against.
+// ==========================================================================
+
+let freeLessonMobileSection, freeLessonMobileLines, freeLessonMobileMedia,
+  freeLessonMobileTxtLines, freeLessonMobileCta;
+
+function cacheFreeLessonMobileRefs() {
+  freeLessonMobileSection = document.querySelector('.free-lesson-mobile');
+  freeLessonMobileLines = document.querySelectorAll('.free-lesson-mobile__line');
+  freeLessonMobileMedia = document.querySelector('.free-lesson-mobile__media');
+  freeLessonMobileTxtLines = document.querySelectorAll('.free-lesson-mobile__txt-line');
+  freeLessonMobileCta = document.querySelector('.free-lesson-mobile__cta');
+}
+
+function setInitialFreeLessonMobileStates() {
+  if (reducedMotion || !freeLessonMobileSection) return;
+
+  gsap.set(freeLessonMobileLines, { opacity: 0, y: 30 });
+  gsap.set(freeLessonMobileMedia, { opacity: 0, y: 30 });
+  gsap.set(freeLessonMobileTxtLines, { opacity: 0, y: 12 });
+  gsap.set(freeLessonMobileCta, { opacity: 0, y: 12 });
+}
+
+function runFreeLessonMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !freeLessonMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: freeLessonMobileSection, start: 'top 80%', once: true },
+  })
+    .to(freeLessonMobileLines, {
+      opacity: 1,
+      y: 0,
+      duration: 0.9,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(freeLessonMobileLines, { clearProps: 'transform' }),
+    })
+    .to(freeLessonMobileMedia, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.4')
+    .to(freeLessonMobileTxtLines, {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      stagger: 0.08,
+      ease: 'sine.out',
+      onComplete: () => gsap.set(freeLessonMobileTxtLines, { clearProps: 'transform' }),
+    }, '-=0.3')
+    .to(freeLessonMobileCta, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.2');
+}
+
+// ==========================================================================
 // STORIES SECTION — "9_історії учнів"
 // ==========================================================================
 
@@ -2625,6 +2680,55 @@ function runStoriesEntrance() {
     }, '-=0.15');
 
   storiesEntranceTrigger = tl.scrollTrigger;
+}
+
+// ==========================================================================
+// STORIES MOBILE — scroll-triggered entrance
+// Same beat shape as every other mobile block (eyebrow -> heading -> lead
+// -> cards, once:true, top 80%) — independent trigger, no startAfterFloor()
+// chaining like the desktop version above needs (no pinned carousel ahead
+// of it on mobile).
+// ==========================================================================
+
+let storiesMobileSection, storiesMobileEyebrow, storiesMobileHeading,
+  storiesMobileLead, storiesMobileCards;
+
+function cacheStoriesMobileRefs() {
+  storiesMobileSection = document.querySelector('.stories-mobile');
+  storiesMobileEyebrow = document.querySelector('.stories-mobile__eyebrow');
+  storiesMobileHeading = document.querySelector('.stories-mobile__heading');
+  storiesMobileLead = document.querySelector('.stories-mobile__lead');
+  storiesMobileCards = document.querySelectorAll('.stories-mobile__card');
+}
+
+function setInitialStoriesMobileStates() {
+  if (reducedMotion || !storiesMobileSection) return;
+
+  gsap.set(storiesMobileEyebrow, { opacity: 0, y: 12 });
+  gsap.set(storiesMobileHeading, { opacity: 0, y: 30 });
+  gsap.set(storiesMobileLead, { opacity: 0, y: 12 });
+  gsap.set(storiesMobileCards, { opacity: 0, y: 60 });
+}
+
+function runStoriesMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !storiesMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: storiesMobileSection, start: 'top 80%', once: true },
+  })
+    .to(storiesMobileEyebrow, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' })
+    .to(storiesMobileHeading, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' }, '-=0.35')
+    // .stories-mobile__lead is styled at opacity:0.8 at rest — animate TO
+    // that value, not blindly to 1 (project hard rule).
+    .to(storiesMobileLead, { opacity: 0.8, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5')
+    .to(storiesMobileCards, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(storiesMobileCards, { clearProps: 'transform' }),
+    }, '-=0.3');
 }
 
 // Photo hover: verbatim the same recipe as initGalleryPhotoHover() (scale
@@ -3554,7 +3658,9 @@ cachePhilosophyMobileRefs();
 cacheStepsRefs();
 cacheStepsMobileRefs();
 cacheFreeLessonRefs();
+cacheFreeLessonMobileRefs();
 cacheStoriesRefs();
+cacheStoriesMobileRefs();
 cachePricingRefs();
 cacheCtaRefs();
 cacheFaqRefs();
@@ -3586,7 +3692,9 @@ if (hasGSAP) {
   setInitialStepsStates();
   setInitialStepsMobileStates();
   setInitialFreeLessonStates();
+  setInitialFreeLessonMobileStates();
   setInitialStoriesStates();
+  setInitialStoriesMobileStates();
   setInitialPricingStates();
   setInitialCtaStates();
   setInitialFaqStates();
@@ -3619,7 +3727,9 @@ runStepsEntrance();
 runStepsMobileEntrance();
 initStepHoverGuard();
 runFreeLessonEntrance();
+runFreeLessonMobileEntrance();
 runStoriesEntrance();
+runStoriesMobileEntrance();
 runPricingEntrance();
 runCtaEntrance();
 runFaqEntrance();
@@ -3644,6 +3754,7 @@ initScrollUpArrows();
 initGalleryFilter();
 initDragScrollRow('.gallery-mobile__row');
 initDragScrollRow('.steps-mobile__row');
+initDragScrollRow('.stories-mobile__row');
 initSectionScrollLag();
 
 // Settles the page's final layout, including the gallery's pin spacer —
