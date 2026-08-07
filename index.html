@@ -1399,6 +1399,83 @@
               </div>
             </article>
 
+            <!-- cards 6-10 appended per her explicit request to match
+                 desktop's full 10-card set — her mobile Figma frame itself
+                 only shows 5 (see the big comment above .stories-mobile).
+                 Photo/quote/author pairing follows desktop's aria-label on
+                 each card's own button (the authoritative "who's in this
+                 photo" signal), not which article physically HOUSES the
+                 blockquote — desktop cross-houses cards 7/8's reviews in
+                 each OTHER's article (for its click-reveal panel's own
+                 layout reasons), which doesn't apply to mobile's plain
+                 inline quote+author, so this pairs each photo with its
+                 OWN real person's text regardless of where desktop's DOM
+                 physically stores it. -->
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-6.png" alt="Керамічна чашка з ручкою в руках студентки за сервірованим столом">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«працюю в рекламі, де все підпорядковане правилам і брифам. глина дала мені відчуття свободи, якого я шукала роками. ти можеш ліпити те, що відчуваєш»</p>
+                <p class="stories-mobile__author">катерина, дизайнерка,<br>одеса</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / перший дотик</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-7.png" alt="Керамічна фігурка кота ручної роботи з розписаними деталями">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«я завжди шукала спосіб перенести свої малюнки в реальний світ. глина дала мені цю можливість. тепер мої персонажі живуть не лише на екрані, а й на чашках, тарілках і вазах»</p>
+                <p class="stories-mobile__author">ірина, ілюстраторка,<br>біла церква</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-8.png" alt="Керамічні вази у формі жіночого силуету на полиці">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«я звик до швидких результатів — код написав, сайт запрацював. а тут все інакше. глина не поспішає. вона вчить чекати, спостерігати, приймати — це зовсім інше відчуття»</p>
+                <p class="stories-mobile__author">дмитро, full-stack розробник,<br>львів</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-9.png" alt="Кругла керамічна ваза-чаша в руці на дерев'яній підставці">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«тут не потрібно бути ідеальним — потрібно бути присутнім. це дозволило мені подивитися на свою роботу під іншим кутом і знайти гармонію між логікою та творчістю»</p>
+                <p class="stories-mobile__author">ольга, лаборантка хімічної лабораторії,<br>фастів</p>
+              </div>
+            </article>
+
+            <article class="stories-mobile__card">
+              <div class="stories-mobile__meta">
+                <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
+                <div class="stories-mobile__photo">
+                  <img src="img/stories-10.png" alt="Портрет випускниці курсу, знята крізь скло">
+                </div>
+              </div>
+              <div class="stories-mobile__text">
+                <p class="stories-mobile__quote">«я прийшла на курс у стані повного вигорання. думки про роботу не відпускали. а тут — ти залишаєшся наодинці з глиною. і вона не питає, хто ти і що в тебе сталося. вона просто є. і ти є. разом із нею»</p>
+                <p class="stories-mobile__author">оксана, керівниця відділу маркетингу,<br>кременчуг</p>
+              </div>
+            </article>
+
           </div>
         </div>
       </div>
@@ -1683,7 +1760,7 @@
               <div class="pricing-mobile__card-info">
                 <div class="pricing-mobile__card-title-group">
                   <div class="pricing-mobile__card-title-slot">
-                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-3.png" alt="Професійний рівень">
+                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-3.png" alt="Професійний">
                   </div>
                   <p class="pricing-mobile__card-subtitle"><span class="italic-symbol">(</span>ти вже знаєш основи і маєш сміливу ідею</p>
                 </div>
@@ -1778,6 +1855,55 @@
         <div class="cta__stat">
           <p class="cta__stat-number"><span class="cta__stat-value" data-count="3">3</span><span class="cta__stat-symbol">+</span></p>
           <p class="cta__stat-label">років традицій</p>
+        </div>
+
+      </div>
+
+      <!-- mobile (node 978:1110 "11_СТА") — self-contained addition, see
+           BLOCK_STARTER_KIT.md's "Mobile version". Verstka only, no
+           entrance motion yet. -->
+      <div class="cta-mobile">
+
+        <div class="cta-mobile__title">
+          <h2 class="cta-mobile__heading">
+            <span class="cta-mobile__heading-tier cta-mobile__heading-tier--1">почніть свою </span><span class="cta-mobile__heading-tier cta-mobile__heading-tier--2">подорож</span><br>
+            <span class="cta-mobile__heading-tier cta-mobile__heading-tier--3">у світ глини </span><span class="cta-mobile__heading-tier cta-mobile__heading-tier--4">вже сьогодні</span>
+          </h2>
+        </div>
+
+        <div class="cta-mobile__media-group">
+          <div class="cta-mobile__art">
+            <video class="cta-mobile__art-img" autoplay muted loop playsinline aria-hidden="true">
+              <source src="img/video-cta.mp4" type="video/mp4">
+            </video>
+          </div>
+          <p class="cta-mobile__lead"><span class="cta-mobile__lead-strong">приєднайтеся<br></span><span class="cta-mobile__lead-dim">до спільноти творців</span></p>
+        </div>
+
+        <div class="cta-mobile__stats-row" data-lenis-prevent>
+          <div class="cta-mobile__stats-track">
+
+            <div class="cta-mobile__stat">
+              <p class="cta-mobile__stat-number"><span class="cta-mobile__stat-value" data-count="200">200</span><span class="cta-mobile__stat-symbol">+</span></p>
+              <p class="cta-mobile__stat-label">студентів<br>навчилися</p>
+            </div>
+
+            <div class="cta-mobile__stat">
+              <p class="cta-mobile__stat-number"><span class="cta-mobile__stat-value" data-count="94">94</span><span class="cta-mobile__stat-symbol">%</span></p>
+              <p class="cta-mobile__stat-label">продовжують<br>творити</p>
+            </div>
+
+            <div class="cta-mobile__stat">
+              <p class="cta-mobile__stat-number"><span class="cta-mobile__stat-value" data-count="15">15</span><span class="cta-mobile__stat-symbol">+</span></p>
+              <p class="cta-mobile__stat-label">занять<br>щомісяця</p>
+            </div>
+
+            <div class="cta-mobile__stat">
+              <p class="cta-mobile__stat-number"><span class="cta-mobile__stat-value" data-count="3">3</span><span class="cta-mobile__stat-symbol">+</span></p>
+              <p class="cta-mobile__stat-label">років<br>традицій</p>
+            </div>
+
+          </div>
         </div>
 
       </div>
@@ -1941,6 +2067,184 @@
 
       </div>
 
+      <!-- mobile (node 978:1137 "12_FAQ") — self-contained addition, see
+           BLOCK_STARTER_KIT.md's "Mobile version". Verstka only, no
+           entrance motion yet. Accordion open/close IS wired (mirrors
+           desktop's mechanism 1:1 — grid-template-rows 0fr->1fr reveal +
+           +/- swap — but with its own faq-mobile__* classes/JS function,
+           not shared with .faq__item, to keep this block fully
+           self-contained per the working model).
+
+           Row shape differs from desktop on purpose: Figma's mobile frame
+           (metadata, not get_design_context — that tool errored
+           repeatedly on this node/file) shows num "(01)" top-left and the
+           "(+)" toggle top-right on ONE row, with the question BELOW
+           spanning the full width — not desktop's side-by-side
+           num-then-question row (that only works with desktop's wide
+           611u num column, which doesn't fit a 335px mobile column).
+           Answer paragraphs are consequently NOT indented under a num
+           column either — flush left, same as the question above them.
+
+           Text: every question/answer below is copied verbatim from the
+           desktop version per her instruction — question 02's answer is
+           the one Figma's mobile mockup actually shows expanded (matches
+           desktop's question 02 exactly, confirming the reuse instinct
+           was right); 01/03/04/05 aren't in the mockup so their answers
+           come from desktop too, same as desktop's own already-approved
+           copy.
+
+           Font sizes (16/24/24/18px for num/question/toggle/answer) are
+           derived from Figma's measured text-node box heights ÷
+           line-height (metadata gives box size, not font-size directly —
+           get_design_context, which would have, kept erroring), not read
+           directly off a style panel — flag to her if any reads
+           obviously wrong. -->
+      <div class="faq-mobile">
+
+        <div class="faq-mobile__header">
+          <p class="faq-mobile__eyebrow"><span class="italic-symbol">(</span>маєте питання</p>
+          <h2 class="faq-mobile__heading"><span class="faq-mobile__heading-a">ми готові </span><span class="faq-mobile__heading-b">відповісти</span></h2>
+          <p class="faq-mobile__lead">ми зібрали питання, які найчастіше хвилюють майбутніх студентів</p>
+        </div>
+
+        <div class="faq-mobile__list">
+
+          <div class="faq-mobile__item">
+            <h3 class="faq-mobile__row-heading">
+              <button class="faq-mobile__row" type="button" aria-expanded="false" aria-controls="faq-mobile-answer-1" id="faq-mobile-toggle-1">
+                <span class="faq-mobile__row-top">
+                  <span class="faq-mobile__num"><span class="italic-symbol">(</span>01<span class="italic-symbol">)</span></span>
+                  <span class="faq-mobile__toggle" aria-hidden="true">
+                    <span class="italic-symbol">(</span>
+                    <span class="faq-mobile__toggle-track">
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--plus">+</span>
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--minus">-</span>
+                    </span>
+                    <span class="italic-symbol">)</span>
+                  </span>
+                </span>
+                <span class="faq-mobile__question">у мене немає досвіду та особливого таланту. чи вийде в мене щось стоятиме?</span>
+              </button>
+            </h3>
+            <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-1" role="region" aria-labelledby="faq-mobile-toggle-1">
+              <div class="faq-mobile__answer-inner">
+                <div class="faq-mobile__answer-body">
+                  <p>Так, і це питання ми чуємо найчастіше! Наша методика розроблена спеціально для новачків. Ми не віримо в «талант», ми віримо у структурований підхід. Кожен етап — від цифрового ескізу до роботи з глиною — розбитий на зрозумілі кроки, які поступово розвивають ваші навички. Переконайтеся в цьому, переглянувши роботи таких же новачків у блоці «Історії успіху».</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-mobile__item">
+            <h3 class="faq-mobile__row-heading">
+              <button class="faq-mobile__row" type="button" aria-expanded="false" aria-controls="faq-mobile-answer-2" id="faq-mobile-toggle-2">
+                <span class="faq-mobile__row-top">
+                  <span class="faq-mobile__num"><span class="italic-symbol">(</span>02<span class="italic-symbol">)</span></span>
+                  <span class="faq-mobile__toggle" aria-hidden="true">
+                    <span class="italic-symbol">(</span>
+                    <span class="faq-mobile__toggle-track">
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--plus">+</span>
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--minus">-</span>
+                    </span>
+                    <span class="italic-symbol">)</span>
+                  </span>
+                </span>
+                <span class="faq-mobile__question">яке обладнання потрібне? у мене немає гончарного круга</span>
+              </button>
+            </h3>
+            <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-2" role="region" aria-labelledby="faq-mobile-toggle-2">
+              <div class="faq-mobile__answer-inner">
+                <div class="faq-mobile__answer-body">
+                  <p>для старту потрібен мінімум! базовий курс включає техніки ручного ліплення, для яких потрібні лише прості інструменти (ми дамо їх перелік).</p>
+                  <p>модулі з роботою на гончарному крузі проходять у нашій майстерні, все обладнання та матеріали вже включені у вартість.</p>
+                  <p>а безкоштовний урок взагалі не вимагає нічого, крім вашої готовності спробувати</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-mobile__item">
+            <h3 class="faq-mobile__row-heading">
+              <button class="faq-mobile__row" type="button" aria-expanded="false" aria-controls="faq-mobile-answer-3" id="faq-mobile-toggle-3">
+                <span class="faq-mobile__row-top">
+                  <span class="faq-mobile__num"><span class="italic-symbol">(</span>03<span class="italic-symbol">)</span></span>
+                  <span class="faq-mobile__toggle" aria-hidden="true">
+                    <span class="italic-symbol">(</span>
+                    <span class="faq-mobile__toggle-track">
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--plus">+</span>
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--minus">-</span>
+                    </span>
+                    <span class="italic-symbol">)</span>
+                  </span>
+                </span>
+                <span class="faq-mobile__question">я дуже зайнята людина. скільки часу займатиме навчання?</span>
+              </button>
+            </h3>
+            <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-3" role="region" aria-labelledby="faq-mobile-toggle-3">
+              <div class="faq-mobile__answer-inner">
+                <div class="faq-mobile__answer-body">
+                  <p>Ми розробили програму так, щоб її можна було комфортно поєднувати з роботою та особистим життям. Для успішного проходження курсу достатньо виділяти 3-4 години на тиждень. Всі уроки записані — ви можете навчатися у зручному для вас темпі.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-mobile__item">
+            <h3 class="faq-mobile__row-heading">
+              <button class="faq-mobile__row" type="button" aria-expanded="false" aria-controls="faq-mobile-answer-4" id="faq-mobile-toggle-4">
+                <span class="faq-mobile__row-top">
+                  <span class="faq-mobile__num"><span class="italic-symbol">(</span>04<span class="italic-symbol">)</span></span>
+                  <span class="faq-mobile__toggle" aria-hidden="true">
+                    <span class="italic-symbol">(</span>
+                    <span class="faq-mobile__toggle-track">
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--plus">+</span>
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--minus">-</span>
+                    </span>
+                    <span class="italic-symbol">)</span>
+                  </span>
+                </span>
+                <span class="faq-mobile__question">чим ваша школа відрізняється від інших?</span>
+              </button>
+            </h3>
+            <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-4" role="region" aria-labelledby="faq-mobile-toggle-4">
+              <div class="faq-mobile__answer-inner">
+                <div class="faq-mobile__answer-body">
+                  <p>ARTEFACT / CLAY — це не просто курси гончарства. Ми єдині, хто поєднує тисячолітню мудрість ремесла з сучасним дизайн-мисленням. Ви не просто навчитеся крутити на гончарному крузі — ви пройдете шлях від ідеї до артефакту, навчившись спочатку проектувати форму в цифрі, а потім втілювати її в глині. Наш фокус — на створенні унікальних предметів для сучасного простору.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-mobile__item">
+            <h3 class="faq-mobile__row-heading">
+              <button class="faq-mobile__row" type="button" aria-expanded="false" aria-controls="faq-mobile-answer-5" id="faq-mobile-toggle-5">
+                <span class="faq-mobile__row-top">
+                  <span class="faq-mobile__num"><span class="italic-symbol">(</span>05<span class="italic-symbol">)</span></span>
+                  <span class="faq-mobile__toggle" aria-hidden="true">
+                    <span class="italic-symbol">(</span>
+                    <span class="faq-mobile__toggle-track">
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--plus">+</span>
+                      <span class="faq-mobile__toggle-char faq-mobile__toggle-char--minus">-</span>
+                    </span>
+                    <span class="italic-symbol">)</span>
+                  </span>
+                </span>
+                <span class="faq-mobile__question">яка у вас політика повернення коштів?</span>
+              </button>
+            </h3>
+            <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-5" role="region" aria-labelledby="faq-mobile-toggle-5">
+              <div class="faq-mobile__answer-inner">
+                <div class="faq-mobile__answer-body">
+                  <p>Ми цінуємо довіру наших майбутніх студентів. Тому, якщо після проходження перших двох модулів ви вирішите, що курс не для вас, ми повернемо повну суму протягом 14 днів.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
 
   </section>
@@ -2053,6 +2357,105 @@
         <span class="scroll-up-tail" aria-hidden="true"></span>
       </a>
 
+      <!-- MOBILE (node 978:1170, file 6tA1k2sLpFm5U7cLn9p9rZ) — separate
+           markup, not a CSS override of the desktop elements above, same
+           reasoning as every other -mobile block. Text content matches
+           desktop's heading exactly but the lead paragraph is genuinely
+           different copy in her mobile frame ("— там" inserted, checked via
+           get_design_context, not assumed a typo). .social-mobile__intro
+           wraps heading+text in their own 20px gap, separate from
+           .social-mobile__header's own (near-zero) internal gap between the
+           two heading rows — her explicit spec: the heading's 4 wrapped
+           lines should all read as one continuous block (same tight
+           leading throughout), with a deliberate 20px break before the
+           lead paragraph, not the uniform 60/20 split this shipped with
+           first. Photo row is a plain native-scroll peek carousel (no
+           pin/scrub) — same convention as gallery-mobile/stories-mobile/
+           pricing-mobile. Cards 4/video/2 are her mobile frame's own real
+           content (order confirmed via get_metadata, not the same as
+           desktop's own first-3 order); cards 5/6/7/8 were appended after,
+           per her explicit request to match desktop's full 7-card set —
+           her mobile Figma frame itself still only shows 3, this extends
+           beyond it deliberately. The middle card (978:1180) has no image
+           fill in Figma at all (get_design_context returns an empty div for
+           it even though its own screenshot renders a hand-shaping-a-bowl
+           photo, the same authoring-slip class as block 9/10's
+           content-override bugs) — its content visually matches desktop's
+           video card exactly, so it reuses video-social.mp4 rather than
+           reproducing the gap. -->
+      <div class="social-mobile">
+        <div class="social-mobile__intro">
+          <div class="social-mobile__header">
+            <p class="social-mobile__heading-row social-mobile__heading-row--top">Приєднуйтесь до нашого</p>
+            <p class="social-mobile__heading-row social-mobile__heading-row--bottom">творчого закутку</p>
+          </div>
+          <p class="social-mobile__text">в соцмережах — там народжуються ідеї, які потім оживають у глині</p>
+        </div>
+
+        <div class="social-mobile__images">
+          <div class="social-mobile__hero-photo">
+            <img src="img/social-1.jpg" alt="Сухоцвіти у білих керамічних вазах">
+          </div>
+
+          <div class="social-mobile__row" data-lenis-prevent>
+            <div class="social-mobile__track">
+
+              <div class="social-mobile__card">
+                <button class="social-mobile__photo js-cursor-media" type="button"
+                        data-cursor-label="далі" aria-label="Керамічна чаша на ніжці з інжиром">
+                  <img src="img/social-4.jpg" alt="Керамічна чаша на ніжці з інжиром">
+                </button>
+              </div>
+
+              <div class="social-mobile__card">
+                <button class="social-mobile__photo js-cursor-media" type="button"
+                        data-cursor-label="далі" aria-label="Відео: обробка гончарної миски">
+                  <video autoplay muted loop playsinline aria-hidden="true">
+                    <source src="img/video-social.mp4" type="video/mp4">
+                  </video>
+                </button>
+              </div>
+
+              <div class="social-mobile__card">
+                <button class="social-mobile__photo js-cursor-media" type="button"
+                        data-cursor-label="далі" aria-label="Керамічна ваза-кошик із зеленими яблуками">
+                  <img src="img/social-2.jpg" alt="Керамічна ваза-кошик із зеленими яблуками">
+                </button>
+              </div>
+
+              <div class="social-mobile__card">
+                <button class="social-mobile__photo js-cursor-media" type="button"
+                        data-cursor-label="далі" aria-label="Кам'яниста керамічна ваза із сухими травами">
+                  <img src="img/social-5.jpg" alt="Кам'яниста керамічна ваза із сухими травами">
+                </button>
+              </div>
+
+              <div class="social-mobile__card">
+                <button class="social-mobile__photo js-cursor-media" type="button"
+                        data-cursor-label="далі" aria-label="Керамічна чаша на скульптурній підставці">
+                  <img src="img/social-6.jpg" alt="Керамічна чаша на скульптурній підставці">
+                </button>
+              </div>
+
+              <div class="social-mobile__card">
+                <button class="social-mobile__photo js-cursor-media" type="button"
+                        data-cursor-label="далі" aria-label="Текстурні керамічні чаші ручної роботи">
+                  <img src="img/social-7.jpg" alt="Текстурні керамічні чаші ручної роботи">
+                </button>
+              </div>
+
+              <div class="social-mobile__card">
+                <button class="social-mobile__photo js-cursor-media" type="button"
+                        data-cursor-label="далі" aria-label="Керамічний кухоль на тлі вази">
+                  <img src="img/social-8.jpg" alt="Керамічний кухоль на тлі вази">
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </section>
@@ -2162,6 +2565,66 @@
       </svg>
       <span class="scroll-up-tail" aria-hidden="true"></span>
     </a>
+
+    <!-- MOBILE (node 978:1182, file 6tA1k2sLpFm5U7cLn9p9rZ) — separate
+         markup, same reasoning as every other -mobile block. Background
+         reuses .footer's own existing radial-gradient (no separate layer
+         needed here, no blurred-SVG export): the section itself still
+         paints under this content. Contact-line order/casing (address
+         first, all lowercase) and the missing telefon/mail LABELS are her
+         mobile frame's own real copy, not a simplification — checked via
+         get_design_context, not assumed from desktop. Logo uses her own
+         supplied img/mob-logo-footer.png (swapped in mid-build, replacing
+         an earlier .svg export) — re-measured from scratch rather than
+         reusing desktop's -3.54%/-25.2% overscale-inset ratio, since this
+         file's own blur margin is much tighter; see .footer-mobile__logo-img
+         in style.css for the real numbers. -->
+    <div class="footer-mobile">
+      <div class="footer-mobile__top">
+
+        <div class="footer-mobile__subscribe">
+          <p class="footer-mobile__subscribe-heading">Підпишіться</p>
+          <div class="footer-mobile__subscribe-form">
+            <div class="footer-mobile__subscribe-field">
+              <label class="visually-hidden" for="footer-mobile-email">Ваш email</label>
+              <input type="email" id="footer-mobile-email" class="footer-mobile__subscribe-input" autocomplete="email">
+              <span class="footer-mobile__subscribe-line" aria-hidden="true"></span>
+            </div>
+            <button type="button" class="footer-mobile__subscribe-btn js-line-hover" aria-label="Підписатися">
+              <span class="footer-mobile__subscribe-plus-track">
+                <span class="footer-mobile__subscribe-plus-char footer-mobile__subscribe-plus-char--out">+</span>
+                <span class="footer-mobile__subscribe-plus-char footer-mobile__subscribe-plus-char--in">+</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- hover mechanism verbatim from .footer__social-link / .menu-overlay__social-link -->
+        <ul class="footer-mobile__social" aria-label="Соціальні мережі">
+          <li><a href="#" class="footer-mobile__social-link"><span class="italic-symbol footer-mobile__social-link-paren" aria-hidden="true">(</span><span class="footer-mobile__social-link-text">instagram</span></a></li>
+          <li><a href="#" class="footer-mobile__social-link"><span class="italic-symbol footer-mobile__social-link-paren" aria-hidden="true">(</span><span class="footer-mobile__social-link-text">pinterest</span></a></li>
+          <li><a href="#" class="footer-mobile__social-link"><span class="italic-symbol footer-mobile__social-link-paren" aria-hidden="true">(</span><span class="footer-mobile__social-link-text">youtube</span></a></li>
+        </ul>
+
+      </div>
+
+      <div class="footer-mobile__bottom">
+
+        <div class="footer-mobile__contacts">
+          <p>м. київ, вул. майстерня, 15</p>
+          <p>+38 093 123 45 67</p>
+          <p>hello@artefact-clay.com</p>
+        </div>
+
+        <div class="footer-mobile__logo-group">
+          <div class="footer-mobile__logo">
+            <img class="footer-mobile__logo-img" src="img/mob-logo-footer.png" alt="Artefact">
+          </div>
+          <p class="footer-mobile__copyright">© ARTEFACT 2026. All rights reserved</p>
+        </div>
+
+      </div>
+    </div>
 
   </section>
 

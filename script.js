@@ -3063,6 +3063,62 @@ function runPricingEntrance() {
 }
 
 // ==========================================================================
+// PRICING MOBILE — scroll-triggered entrance
+// No pin ahead of it on mobile (gallery/steps/stories all skip pin setup on
+// mobile, see their own comments), so unlike desktop's runPricingEntrance()
+// this needs no startAfterFloor() — plain 'top 80%' is enough, same as
+// every other -mobile block. Beat shape and durations are desktop's own
+// (eyebrow: sine.out fade+rise; heading: power2.out fade+rise, reused
+// verbatim from .hero__title-mobile/.clay__title-mobile's own "3 blurred
+// image lines" recipe since pricing-mobile's heading is the same shape;
+// cards: gallery-mobile/steps-mobile's single-beat card reveal — mobile
+// cards don't get desktop's further title/subtitle/meta/cta breakdown,
+// same simplification already applied to every other mobile card block).
+// ==========================================================================
+
+let pricingMobileSection, pricingMobileEyebrow, pricingMobileHeadingLines, pricingMobileCards;
+
+function cachePricingMobileRefs() {
+  pricingMobileSection = document.querySelector('.pricing-mobile');
+  pricingMobileEyebrow = document.querySelector('.pricing-mobile__eyebrow');
+  pricingMobileHeadingLines = document.querySelectorAll('.pricing-mobile__heading-line');
+  pricingMobileCards = document.querySelectorAll('.pricing-mobile__card');
+}
+
+function setInitialPricingMobileStates() {
+  if (reducedMotion || !pricingMobileSection) return;
+
+  gsap.set(pricingMobileEyebrow, { opacity: 0, y: 12 });
+  gsap.set(pricingMobileHeadingLines, { opacity: 0, y: 30 });
+  gsap.set(pricingMobileCards, { opacity: 0, y: 60 });
+}
+
+function runPricingMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !pricingMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: pricingMobileSection, start: 'top 80%', once: true },
+  })
+    .to(pricingMobileEyebrow, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' })
+    .to(pricingMobileHeadingLines, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(pricingMobileHeadingLines, { clearProps: 'transform' }),
+    }, '-=0.35')
+    .to(pricingMobileCards, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(pricingMobileCards, { clearProps: 'transform' }),
+    }, '-=0.3');
+}
+
+// ==========================================================================
 // CTA SECTION — "11_СТА"
 // ==========================================================================
 
@@ -3206,6 +3262,88 @@ function runCtaEntrance() {
 }
 
 // ==========================================================================
+// CTA MOBILE — scroll-triggered entrance
+// No pin ahead of it on mobile, same reasoning as every other -mobile
+// block's plain 'top 80%' (see runPricingMobileEntrance()) — desktop's
+// startAfterFloor() chain isn't needed here. Beat shape/values are
+// desktop's own runCtaEntrance(): heading -> media -> lead -> stats,
+// video and lead reuse desktop's exact recipes verbatim (y:120/power4.out
+// for the media, y:12/sine.out for the lead); stats collapse to ONE beat
+// per card (opacity+y, no separate symbol/label breakdown) — same
+// simplification already applied to every other mobile card row
+// (gallery-mobile/steps-mobile/pricing-mobile). Counter still runs
+// per-stat off the same data-count attributes as desktop.
+// ==========================================================================
+
+let ctaMobileSection, ctaMobileHeading, ctaMobileArt, ctaMobileLead, ctaMobileStats, ctaMobileStatValues;
+
+function cacheCtaMobileRefs() {
+  ctaMobileSection = document.querySelector('.cta-mobile');
+  ctaMobileHeading = document.querySelector('.cta-mobile__heading');
+  ctaMobileArt = document.querySelector('.cta-mobile__art');
+  ctaMobileLead = document.querySelector('.cta-mobile__lead');
+  ctaMobileStats = document.querySelectorAll('.cta-mobile__stat');
+  ctaMobileStatValues = document.querySelectorAll('.cta-mobile__stat-value');
+}
+
+function setInitialCtaMobileStates() {
+  if (reducedMotion || !ctaMobileSection) return;
+
+  gsap.set(ctaMobileHeading, { opacity: 0, y: 30 });
+  gsap.set(ctaMobileArt, { opacity: 0, y: 120 });
+  gsap.set(ctaMobileLead, { opacity: 0, y: 12 });
+  gsap.set(ctaMobileStats, { opacity: 0, y: 60 });
+  // same width-lock as desktop's setInitialCtaStates — stop the digits
+  // collapsing to "0" from narrowing the value box and shifting the
+  // stat row mid-count
+  ctaMobileStatValues.forEach((el) => {
+    el.style.minWidth = `${el.getBoundingClientRect().width}px`;
+    el.textContent = '0';
+  });
+}
+
+// same shape as desktop's runCtaCounters(), against the mobile value refs
+function runCtaMobileCounters() {
+  ctaMobileStatValues.forEach((el, i) => {
+    const target = parseInt(el.dataset.count, 10) || 0;
+    const counter = { val: 0 };
+    gsap.to(counter, {
+      val: target,
+      duration: 1.4,
+      delay: i * 0.1,
+      ease: 'power1.out',
+      onUpdate: () => { el.textContent = Math.round(counter.val); },
+    });
+  });
+}
+
+function runCtaMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !ctaMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: ctaMobileSection, start: 'top 80%', once: true },
+  })
+    .to(ctaMobileHeading, { opacity: 1, y: 0, duration: 0.9, ease: 'power2.out' })
+    .to(ctaMobileArt, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      ease: 'power4.out',
+      onComplete: () => gsap.set(ctaMobileArt, { clearProps: 'transform' }),
+    }, '-=0.4')
+    .to(ctaMobileLead, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5')
+    .to(ctaMobileStats, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      stagger: 0.1,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(ctaMobileStats, { clearProps: 'transform' }),
+    }, '-=0.3')
+    .call(runCtaMobileCounters, null, '<');
+}
+
+// ==========================================================================
 // CTA VIDEO TOGGLE — same play/pause + cursor-label swap as
 // .clay__video-toggle (initClayVideoToggle), verbatim, just against the
 // button-framed video instead of the full-bleed one.
@@ -3346,6 +3484,25 @@ function initFaqAccordion() {
   });
 }
 
+// Mirrors initFaqAccordion() 1:1 against the mobile markup's own
+// faq-mobile__* classes (see index.html's block comment on why this isn't
+// a shared-class reuse with desktop). No GSAP paragraph fade yet — verstka
+// only, same as every other mobile block's first pass; the CSS
+// grid-template-rows reveal on .faq-mobile__answer-wrap already carries
+// the open/close motion on its own.
+function initFaqMobileAccordion() {
+  document.querySelectorAll('.faq-mobile__item').forEach((item) => {
+    const btn = item.querySelector('.faq-mobile__row');
+    const wrap = item.querySelector('.faq-mobile__answer-wrap');
+    if (!btn || !wrap) return;
+
+    btn.addEventListener('click', () => {
+      const isOpen = item.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', String(isOpen));
+    });
+  });
+}
+
 // ==========================================================================
 // SOCIAL SECTION — "13_соц мережі" (Figma node 978:1536)
 //
@@ -3436,6 +3593,62 @@ function runSocialEntrance() {
   socialEntranceTrigger = tl.scrollTrigger;
 }
 
+let socialMobileSection, socialMobileHeadingRows, socialMobileText, socialMobileHeroImg, socialMobileCards;
+
+function cacheSocialMobileRefs() {
+  socialMobileSection = document.querySelector('.social-mobile');
+  socialMobileHeadingRows = document.querySelectorAll('.social-mobile__heading-row');
+  socialMobileText = document.querySelector('.social-mobile__text');
+  socialMobileHeroImg = document.querySelector('.social-mobile__hero-photo');
+  socialMobileCards = document.querySelectorAll('.social-mobile__card');
+}
+
+function setInitialSocialMobileStates() {
+  if (reducedMotion || !socialMobileSection) return;
+  gsap.set(socialMobileHeadingRows, { opacity: 0, y: 20 });
+  gsap.set(socialMobileText, { opacity: 0, y: 12 });
+  gsap.set(socialMobileHeroImg, { opacity: 0, y: 60 });
+  gsap.set(socialMobileCards, { opacity: 0, y: 40 });
+}
+
+// No startAfterFloor chain needed here — unlike desktop's runSocialEntrance
+// (floored against faqEntranceTrigger), initSocialCarousel()'s pin is
+// skipped entirely on mobile (see its own matchMedia guard), so there's no
+// upstream pinned section whose resolved geometry this needs to wait on.
+// Same reasoning every other -mobile entrance (stories/pricing/cta) already
+// relies on with a plain 'top 80%'.
+function runSocialMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !socialMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: socialMobileSection, start: 'top 80%', once: true },
+  })
+    .to(socialMobileHeadingRows, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(socialMobileHeadingRows, { clearProps: 'transform' }),
+    })
+    .to(socialMobileText, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.4')
+    .to(socialMobileHeroImg, {
+      opacity: 1,
+      y: 0,
+      duration: 1.0,
+      ease: 'power4.out',
+      onComplete: () => gsap.set(socialMobileHeroImg, { clearProps: 'opacity,transform' }),
+    }, '-=0.3')
+    .to(socialMobileCards, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(socialMobileCards, { clearProps: 'opacity,transform' }),
+    }, '-=0.5');
+}
+
 // Verbatim initStoriesPhotoHover()/initGalleryPhotoHover() recipe (scale
 // 1.05 + cursor-tracking parallax drift via gsap.quickTo, GALLERY_HOVER_SHIFT
 // reused so the drift feels like the same effect). No caption to fade, same
@@ -3503,6 +3716,14 @@ let socialPinTrigger;
 
 function initSocialCarousel() {
   if (reducedMotion || !hasGSAP || !window.ScrollTrigger) return;
+  // desktop-only pin+scrub carousel — same reasoning as initGalleryCarousel()/
+  // initStoriesCarousel()'s own mobile guard: on mobile .social__track is
+  // display:none (replaced by .social-mobile's plain native horizontal
+  // scroll), but pin:socialSection doesn't know that and still wraps the
+  // whole section in a GSAP pin-spacer sized for the desktop scrub distance,
+  // holding the page in place for that entire distance regardless. Skipping
+  // pin setup entirely on mobile avoids the pin-spacer existing at all.
+  if (window.matchMedia('(max-width: 768px)').matches) return;
 
   const track = document.querySelector('.social__track');
   if (!track || !socialSection) return;
@@ -3652,6 +3873,59 @@ function runFooterEntrance() {
   footerEntranceTrigger = tl.scrollTrigger;
 }
 
+let footerMobileSection, footerMobileHeading, footerMobileForm, footerMobileSocialLinks,
+  footerMobileContacts, footerMobileLogo, footerMobileCopyright;
+
+function cacheFooterMobileRefs() {
+  footerMobileSection = document.querySelector('.footer-mobile');
+  footerMobileHeading = document.querySelector('.footer-mobile__subscribe-heading');
+  footerMobileForm = document.querySelector('.footer-mobile__subscribe-form');
+  footerMobileSocialLinks = document.querySelectorAll('.footer-mobile__social-link');
+  footerMobileContacts = document.querySelector('.footer-mobile__contacts');
+  footerMobileLogo = document.querySelector('.footer-mobile__logo');
+  footerMobileCopyright = document.querySelector('.footer-mobile__copyright');
+}
+
+function setInitialFooterMobileStates() {
+  if (reducedMotion || !footerMobileSection) return;
+  gsap.set(footerMobileHeading, { opacity: 0, y: 20 });
+  gsap.set(footerMobileForm, { opacity: 0, y: 12 });
+  gsap.set(footerMobileSocialLinks, { opacity: 0, y: 12 });
+  gsap.set(footerMobileContacts, { opacity: 0, y: 12 });
+  gsap.set(footerMobileLogo, { opacity: 0, y: 30 });
+  gsap.set(footerMobileCopyright, { opacity: 0, y: 12 });
+}
+
+// No menu beat (mobile footer has no nav) and no startAfterFloor chain
+// (same reasoning as runSocialMobileEntrance — .footer's own pin-adjacent
+// concerns are all desktop-only), otherwise the same beat order as
+// runFooterEntrance: subscribe -> social links -> contacts -> logo -> copyright.
+function runFooterMobileEntrance() {
+  if (reducedMotion || !hasGSAP || !window.ScrollTrigger || !footerMobileSection) return;
+
+  gsap.timeline({
+    scrollTrigger: { trigger: footerMobileSection, start: 'top 80%', once: true },
+  })
+    .to(footerMobileHeading, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(footerMobileHeading, { clearProps: 'transform' }),
+    })
+    .to(footerMobileForm, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.4')
+    .to(footerMobileSocialLinks, { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'sine.out' }, '-=0.3')
+    .to(footerMobileContacts, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.4')
+    .to(footerMobileLogo, {
+      opacity: 1,
+      y: 0,
+      duration: 0.9,
+      ease: 'power2.out',
+      onComplete: () => gsap.set(footerMobileLogo, { clearProps: 'transform' }),
+    }, '-=0.4')
+    .to(footerMobileCopyright, { opacity: 1, y: 0, duration: 0.6, ease: 'sine.out' }, '-=0.5');
+}
+
 // ==========================================================================
 // INIT
 // ==========================================================================
@@ -3672,10 +3946,14 @@ cacheFreeLessonMobileRefs();
 cacheStoriesRefs();
 cacheStoriesMobileRefs();
 cachePricingRefs();
+cachePricingMobileRefs();
 cacheCtaRefs();
+cacheCtaMobileRefs();
 cacheFaqRefs();
 cacheSocialRefs();
+cacheSocialMobileRefs();
 cacheFooterRefs();
+cacheFooterMobileRefs();
 alignCtaLead();
 // Own ResizeObserver rather than hooking into calibrateFluidUnit(): that
 // function runs once immediately at parse time (line ~39, long before
@@ -3706,10 +3984,14 @@ if (hasGSAP) {
   setInitialStoriesStates();
   setInitialStoriesMobileStates();
   setInitialPricingStates();
+  setInitialPricingMobileStates();
   setInitialCtaStates();
+  setInitialCtaMobileStates();
   setInitialFaqStates();
   setInitialSocialStates();
+  setInitialSocialMobileStates();
   setInitialFooterStates();
+  setInitialFooterMobileStates();
 }
 initPreloader();
 initGlassCursor();
@@ -3741,10 +4023,14 @@ runFreeLessonMobileEntrance();
 runStoriesEntrance();
 runStoriesMobileEntrance();
 runPricingEntrance();
+runPricingMobileEntrance();
 runCtaEntrance();
+runCtaMobileEntrance();
 runFaqEntrance();
 initFaqAccordion();
+initFaqMobileAccordion();
 runSocialEntrance();
+runSocialMobileEntrance();
 initGalleryPhotoHover();
 initStoriesPhotoHover();
 initSocialPhotoHover();
@@ -3752,6 +4038,7 @@ initStoriesReviews();
 initStoriesCarousel();
 initSocialCarousel();
 runFooterEntrance();
+runFooterMobileEntrance();
 initOliveGrain();
 runClayEntrance();
 runMaterialEntrance();
@@ -3766,6 +4053,8 @@ initDragScrollRow('.gallery-mobile__row');
 initDragScrollRow('.steps-mobile__row');
 initDragScrollRow('.stories-mobile__row');
 initDragScrollRow('.pricing-mobile__row');
+initDragScrollRow('.cta-mobile__stats-row');
+initDragScrollRow('.social-mobile__row');
 initSectionScrollLag();
 
 // Settles the page's final layout, including the gallery's pin spacer —

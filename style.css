@@ -4936,11 +4936,18 @@ body.menu-is-open {
     display: none;
   }
 
+  /* bottom padding trimmed 140→82px (2026-08-06) so the visible gap down
+     to block 10 (pricing) reads as exactly 80px — pricing-mobile's own
+     top padding was removed to 0 (see its rule), and the -2px full-bleed
+     seam guard on .pricing eats 2px, so 82-2=80. Verified via
+     getBoundingClientRect between .stories-mobile__row and
+     .pricing-mobile__header. Top padding (140px, gap up to block 9/
+     free-lesson) is untouched. */
   .stories-mobile {
     display: flex;
     flex-direction: column;
     gap: 60px;
-    padding: 140px 20px;
+    padding: 140px 20px 82px;
   }
 
   .stories-mobile__title {
@@ -5588,11 +5595,20 @@ body.menu-is-open {
     display: none;
   }
 
+  /* top AND bottom padding both removed (was 80px each). Top: the gap to
+     block 9 above is owned by .stories-mobile's own bottom padding, see
+     its comment. Bottom: her call (2026-08-06) — the gap down to block
+     11 (olive .cta-mobile) should read as OLIVE, not beige, so it's
+     .cta-mobile's own top padding that owns it now, not this one; two
+     80px paddings on beige+olive would also have doubled the gap to
+     160px. General rule going forward: whichever side of a block
+     boundary should visually "own" the gap's background color gets the
+     padding, not a fixed top-or-bottom convention. */
   .pricing-mobile {
     display: flex;
     flex-direction: column;
     gap: 32px;
-    padding: 80px 0;
+    padding: 0;
   }
 
   .pricing-mobile__header {
@@ -5802,20 +5818,21 @@ body.menu-is-open {
     width: 321px;
   }
 
-  /* mob-pricing-title-3.png, canvas 897×153, bbox min (32,30). Her
-     explicit call 2026-08-06: this title should read SMALLER — width set
-     directly to her requested 277px (scale = 277/897 = 0.3088, well
-     under cards 1/2's ~0.49-0.5). At this scale the visible ink
-     (bbox width 837 * 0.3088 ≈ 258px) fits inside the 338px column with
-     real margin, which also resolves the right-edge fade from the
-     previous pass — that fade was masking a genuine overflow at the
-     larger size, not needed at this one, but left in place since it's a
-     no-op when there's nothing to fade. left/top re-derived at this
-     scale from the same bbox: left = -32*0.3088, top = -30*0.3088. */
+  /* mob-pricing-title-3.png — she re-exported this file 2026-08-06 with a
+     shortened title ("професійний", dropped "рівень"), new canvas
+     581×129, alpha bbox min (19,13) max (568,108). Re-measured from
+     scratch per project convention (never carry over a sibling/previous
+     asset's scale): real "професійний" width in the site's Helvetica
+     Neue 48px/500/-2.4px is 273.75px vs. the asset's own bbox width
+     549px = 0.4986 ≈ clean 2x export, same convention as cards 1/2's
+     natural scale (the old asset's 0.3088 downsize was a one-off CSS
+     override for the previous, longer two-word title and doesn't apply
+     to this new asset). left/top from the same bbox at s=0.5:
+     left = -19*0.5, top = -13*0.5. */
   .pricing-mobile__card--pro .pricing-mobile__card-title {
-    left: -9.88px;
-    top: -9.26px;
-    width: 277px;
+    left: -9.5px;
+    top: -6.5px;
+    width: 290.5px;
   }
 
   .pricing-mobile__card-subtitle {
@@ -6196,6 +6213,195 @@ body.menu-is-open {
 }
 .pricing__card--pro .pricing__card-cta-plus { font-size: calc(var(--u) * 32); }
 
+/* --- cta mobile (node 978:1110 "11_СТА") ---
+   Same two-part override mechanism as every other -mobile block: base
+   display:none here, real layout inside the @media block below. Verstka
+   only — no entrance motion yet (desktop's runCtaEntrance/runCtaCounters
+   aren't touched or ported).
+
+   Heading keeps desktop's 4-tier opacity scheme (100/80/60/40% on
+   #2B3D2D) but as plain inline spans, not desktop's per-row
+   overflow:hidden mask — that structure exists on desktop only to support
+   the kasiasiwosz "line" scroll reveal, which mobile doesn't have yet.
+
+   Stats row: Figma's "advantages" frame is 798px wide against a 375px
+   frame (measured via get_metadata, node 978:1116) — same horizontal
+   overflow shape as every other mobile card row on this site, so it's
+   built as the same drag-scroll .cta-mobile__stats-row/-track pattern
+   (initDragScrollRow) rather than trying to squeeze 4 stats into one
+   screen width. Per-stat padding (0 60px, first stat 0 on the left)
+   reproduces Figma's own box widths exactly: item 1's box is padding-free
+   (203px = its content width exactly), items 2-4 each have symmetric
+   60px padding around their number+symbol group — confirmed against the
+   metadata's absolute x/width values for all 4 "advantages" children. */
+.cta-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .cta {
+    height: auto;
+    overflow: visible;
+  }
+
+  .cta > .section-inner {
+    position: static;
+  }
+
+  .cta__top,
+  .cta__stats {
+    display: none;
+  }
+
+  /* top padding restored — her call (2026-08-06): the gap up to block 10
+     should read as OLIVE (this block's own background), not beige, so it
+     lives here rather than on .pricing-mobile's bottom (now 0, see its
+     comment). 82px not 80 — .cta carries the site's usual -2px full-bleed
+     seam guard (see BLOCK_STARTER_KIT.md), which pulls this section up
+     2px; +2 here cancels it so the MEASURED gap (getBoundingClientRect,
+     .pricing-mobile's last card to .cta-mobile__title) lands on exactly
+     80px, same compensation already applied to .stories-mobile's bottom
+     padding for the block 9/10 seam. */
+  /* bottom 82px not 80 — same -2px seam-guard compensation as the top
+     padding above, this time for .faq's own margin:-2px seam vs. THIS
+     section (block 12 built 2026-08-06); confirmed via
+     getBoundingClientRect between .cta-mobile's last child and
+     .faq-mobile__header. */
+  .cta-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    padding: 82px 20px 82px;
+  }
+
+  .cta-mobile__title {
+    width: 335px;
+  }
+
+  .cta-mobile__heading {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: -0.8px;
+    text-transform: uppercase;
+  }
+
+  .cta-mobile__heading-tier--1 { color: #2B3D2D; }
+  .cta-mobile__heading-tier--2 { color: rgba(43, 61, 45, 0.8); }
+  .cta-mobile__heading-tier--3 { color: rgba(43, 61, 45, 0.6); }
+  .cta-mobile__heading-tier--4 { color: rgba(43, 61, 45, 0.4); }
+
+  .cta-mobile__media-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 337px;
+  }
+
+  .cta-mobile__art {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 422.45 / 580.55;
+    overflow: hidden;
+  }
+
+  .cta-mobile__art-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cta-mobile__lead {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1.1;
+    letter-spacing: -0.64px;
+    color: var(--beige-100);
+  }
+
+  .cta-mobile__lead-dim {
+    color: var(--beige-80);
+  }
+
+  .cta-mobile__stats-row {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    cursor: grab;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .cta-mobile__stats-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cta-mobile__stats-row.is-dragging {
+    cursor: grabbing;
+  }
+
+  .cta-mobile__stats-track {
+    display: flex;
+    width: max-content;
+  }
+
+  .cta-mobile__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex: 0 0 auto;
+    padding: 0 60px;
+  }
+
+  .cta-mobile__stat:first-child {
+    padding-left: 0;
+  }
+
+  .cta-mobile__stat-number {
+    display: flex;
+    align-items: flex-start;
+    margin: 0 0 -20px;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--beige-80);
+  }
+
+  .cta-mobile__stat-value {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 100px;
+    line-height: 1;
+    letter-spacing: -3px;
+  }
+
+  .cta-mobile__stat-symbol {
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 70px;
+    line-height: 1;
+    letter-spacing: -2.1px;
+  }
+
+  .cta-mobile__stat-label {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--beige-80);
+  }
+}
+
 /* ==========================================================================
    FAQ SECTION — "12_FAQ" (Figma node 978:1468, file 6tA1k2sLpFm5U7cLn9p9rZ)
    5-item accordion, all items closed by default, each toggles independently
@@ -6462,6 +6668,215 @@ body.menu-is-open {
   }
 }
 
+/* --- faq mobile (node 978:1137 "12_FAQ") ---
+   Same two-part override mechanism as every other -mobile block: base
+   display:none here, real layout inside the @media block below.
+   Accordion mechanism (grid-template-rows 0fr->1fr, padding one level
+   below the overflow:hidden element — see BLOCK_STARTER_KIT.md's own
+   "grid-template-rows 0fr-collapse trap" note) is copied from desktop's
+   .faq__answer-wrap exactly, just under faq-mobile__* names — see
+   index.html's block comment for why this isn't a shared-class reuse.
+
+   Top padding removed on purpose: the gap up to block 11 (olive
+   .cta-mobile) should read as olive, not beige, same convention as every
+   other block boundary fixed so far — .cta-mobile's own 80px bottom
+   padding already owns that gap. Figma's own mobile frame shows a
+   symmetric 80px here (header sits 80px from the section's top edge),
+   which would double the gap if added on top of cta-mobile's — this
+   deviates from that literal Figma value for the same reason blocks
+   9/10 and 10/11 both needed the same correction. Bottom padding (80px)
+   is a plain symmetric guess, matching how every other block's trailing
+   edge shipped before its actual neighbor existed to check against —
+   revisit once block 13 (social) gets its own mobile pass. */
+.faq-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .faq__header,
+  .faq__list {
+    display: none;
+  }
+
+  .faq-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    padding: 0 20px 80px;
+  }
+
+  .faq-mobile__header {
+    display: flex;
+    flex-direction: column;
+    width: 335px;
+  }
+
+  .faq-mobile__eyebrow {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #2B3D2D;
+  }
+
+  .faq-mobile__eyebrow .italic-symbol {
+    margin-right: 10px;
+  }
+
+  .faq-mobile__heading {
+    margin: 20px 0 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 46px;
+    line-height: 1;
+    letter-spacing: -0.92px;
+    text-transform: uppercase;
+  }
+
+  .faq-mobile__heading-a { color: #2B3D2D; }
+  .faq-mobile__heading-b { color: rgba(43, 61, 45, 0.8); }
+
+  .faq-mobile__lead {
+    margin: 10px 0 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.1;
+    color: rgba(43, 61, 45, 0.8);
+  }
+
+  .faq-mobile__list {
+    border-top: 1.5px solid rgba(43, 61, 45, 0.6);
+  }
+
+  .faq-mobile__item {
+    border-bottom: 1.5px solid rgba(43, 61, 45, 0.6);
+  }
+
+  .faq-mobile__row-heading {
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .faq-mobile__row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding: 24px 0 10px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Helvetica Neue', sans-serif;
+    color: #2B3D2D;
+    /* kills the default blue/gray flash mobile browsers put on tapped
+       buttons — she caught it live (2026-08-06), no other button on the
+       site has hit this yet since none are this big a tap target */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .faq-mobile__row-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .faq-mobile__num {
+    font-size: 16px;
+    line-height: 1.1;
+    letter-spacing: -0.16px;
+  }
+
+  .faq-mobile__num .italic-symbol {
+    margin: 0 6px;
+  }
+
+  .faq-mobile__question {
+    max-width: 300px;
+    font-size: 24px;
+    line-height: 1.1;
+    letter-spacing: -0.48px;
+    font-weight: 400;
+  }
+
+  .faq-mobile__toggle {
+    display: flex;
+    align-items: flex-start;
+    flex-shrink: 0;
+    font-size: 24px;
+    line-height: 1.1;
+    letter-spacing: -0.48px;
+  }
+
+  .faq-mobile__toggle .italic-symbol {
+    margin: 0 6px;
+  }
+
+  .faq-mobile__toggle-track {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    width: 15px;
+    height: 27px;
+    vertical-align: bottom;
+  }
+
+  .faq-mobile__toggle-char {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .faq-mobile__toggle-char--plus { transform: translateY(0%); }
+  .faq-mobile__toggle-char--minus { transform: translateY(100%); }
+  .faq-mobile__item.is-open .faq-mobile__toggle-char--plus { transform: translateY(-100%); }
+  .faq-mobile__item.is-open .faq-mobile__toggle-char--minus { transform: translateY(0%); }
+
+  .faq-mobile__answer-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  .faq-mobile__item.is-open .faq-mobile__answer-wrap {
+    grid-template-rows: 1fr;
+  }
+
+  .faq-mobile__answer-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .faq-mobile__answer-body {
+    padding: 0 0 24px;
+  }
+
+  .faq-mobile__answer-body p {
+    margin: 0 0 16px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.1;
+    color: rgba(43, 61, 45, 0.6);
+  }
+
+  .faq-mobile__answer-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-mobile__answer-wrap,
+    .faq-mobile__toggle-char {
+      transition: none;
+    }
+  }
+}
+
 /* ==========================================================================
    SOCIAL SECTION — "13_соц мережі" (Figma node 978:1536)
    ========================================================================== */
@@ -6652,6 +7067,197 @@ body.menu-is-open {
 .social__card:nth-child(5) .social__photo img { object-position: 45% 50%; }
 .social__card:nth-child(6) .social__photo img { object-position: 35% 40%; }
 .social__card:nth-child(7) .social__photo img { object-position: 40% 72%; }
+
+.social-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* .social uses min-height:100vh + absolute-centered content on desktop
+     (see the block comment above .social__header) — normal flow content
+     needs the section to just size itself instead, same fix every other
+     pinned/centered section got for its own mobile pass. */
+  .social {
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+  }
+
+  .social > .section-inner {
+    position: static;
+  }
+
+  .social__header,
+  .social__content,
+  .scroll-up {
+    display: none;
+  }
+
+  /* padding-top:0 is her actual mobile frame value (checked via
+     get_design_context, not the usual 80px default) — the visible gap
+     above this block is entirely FAQ-mobile's own 80px bottom padding. */
+  .social-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    padding: 0 0 80px 20px;
+  }
+
+  /* intro wraps heading+text in their OWN 20px gap (her explicit request)
+     — separate from .social-mobile's own outer 60px gap, which now only
+     applies between this whole intro block and .social-mobile__images. */
+  .social-mobile__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 335px;
+  }
+
+  /* gap:0 (was 20px) — her explicit request: the heading's two wrapped
+     <p> rows (4 visual lines total) should read as one continuous block
+     with the SAME tight leading between rows 2/3 (the gap between the two
+     <p> elements) as rows 1/2 and 3/4 (each row's own natural line-height
+     wrap), not a distinct larger gap. */
+  .social-mobile__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 335px;
+  }
+
+  .social-mobile__heading-row {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: -0.8px;
+    text-transform: uppercase;
+  }
+
+  /* blue/600 — a shade darker than the project's own --blue (blue/500),
+     used here specifically per her mobile frame; not worth a new custom
+     property for a single one-off row. */
+  .social-mobile__heading-row--top { color: #A0A6B6; }
+  .social-mobile__heading-row--bottom { color: var(--blue); }
+
+  .social-mobile__text {
+    margin: 0;
+    width: 335px;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.1;
+    color: #2B3D2D;
+  }
+
+  .social-mobile__images {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 100%;
+  }
+
+  .social-mobile__hero-photo {
+    position: relative;
+    width: 335px;
+    height: 400px;
+    overflow: hidden;
+  }
+
+  /* +1px/bottom:auto — same hairline-on-settle fix as .social__hero-photo img */
+  .social-mobile__hero-photo img {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    height: calc(100% + 1px);
+    object-fit: cover;
+    display: block;
+  }
+
+  /* peek+scroll row, no pin/scrub — same mechanism as .gallery-mobile__row/
+     .stories-mobile__row/.pricing-mobile__row. No left-padding to cancel
+     here: .social-mobile__images is already inset by .social-mobile's own
+     padding-left, and has no padding-right, so the row bleeds to the true
+     right edge on its own, matching her mobile frame (its own "images"
+     frame is w-full while the hero photo above stays a fixed 335px). */
+  .social-mobile__row {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    cursor: grab;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .social-mobile__row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .social-mobile__row.is-dragging {
+    cursor: grabbing;
+  }
+
+  .social-mobile__track {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+  }
+
+  .social-mobile__card {
+    flex: 0 0 auto;
+  }
+
+  /* button, not div — same reset .social__photo uses, so it can be a real
+     .js-cursor-media target (harmless on touch: the cursor module already
+     gates on hover:hover+pointer:fine before doing anything). */
+  .social-mobile__photo {
+    display: block;
+    position: relative;
+    width: 162px;
+    height: 162px;
+    overflow: hidden;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
+  }
+
+  /* covers both photo cards and the video card — same +1px/bottom:auto
+     hairline fix as .social__photo img/video. */
+  .social-mobile__photo img,
+  .social-mobile__photo video {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    height: calc(100% + 1px);
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+
+  /* same per-photo crop fine-tuning as desktop's own .social__card
+     nth-child rules, matched by ASSET not by position (mobile's card
+     order differs from desktop's) — cards 4-7 here are the exact same
+     social-5/6/7/8.jpg files desktop already fine-tuned. */
+  .social-mobile__card:nth-child(3) .social-mobile__photo img { object-position: center 58%; }
+  .social-mobile__card:nth-child(4) .social-mobile__photo img { object-position: 55% 68%; }
+  .social-mobile__card:nth-child(5) .social-mobile__photo img { object-position: 45% 50%; }
+  .social-mobile__card:nth-child(6) .social-mobile__photo img { object-position: 35% 40%; }
+  .social-mobile__card:nth-child(7) .social-mobile__photo img { object-position: 40% 72%; }
+}
 
 /* ==========================================================================
    FOOTER — "14_футер" (Figma node 978:1556), the last block
@@ -7063,11 +7669,276 @@ body.menu-is-open {
   white-space: nowrap;
 }
 
+.footer-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* .footer's own padding is fluid --u, meant for .footer__top/__bottom —
+     left alone it'd still apply a small residual amount around
+     .footer-mobile on top of ITS OWN fixed padding below. Zeroed here so
+     .footer-mobile owns 100% of its own spacing, same reasoning every
+     other -mobile block's parent section gets (they just don't need this
+     explicit reset since their padding lives on .section-inner instead).
+     min-height:0 (was 100vh, the desktop last-section fix) — her catch:
+     with a single flex child and no bottom-anchored sibling to fill the
+     rest on mobile, min-height:100vh just left a large dead gap of footer
+     background BELOW .footer-mobile's own 80px padding-bottom, so the
+     real visual gap under the copyright line read as ~200px, not the 80px
+     her mobile frame actually specifies. */
+  .footer {
+    padding: 0;
+    min-height: 0;
+  }
+
+  .footer__top,
+  .footer__bottom,
+  .scroll-up {
+    display: none;
+  }
+
+  .footer-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 100px;
+    padding: 40px 20px 80px;
+  }
+
+  .footer-mobile__top {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    width: 335px;
+  }
+
+  .footer-mobile__subscribe {
+    display: flex;
+    flex-direction: column;
+    width: 335px;
+  }
+
+  .footer-mobile__subscribe-heading {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 1.1;
+    letter-spacing: -0.64px;
+    color: #2B3D2D;
+  }
+
+  .footer-mobile__subscribe-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    width: 280px;
+    height: 50px;
+  }
+
+  .footer-mobile__subscribe-field {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .footer-mobile__subscribe-input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    margin: 0;
+    padding: 0 0 8px;
+    border: none;
+    background: transparent;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-size: 24px;
+    line-height: 1;
+    color: #2B3D2D;
+    outline: none;
+  }
+
+  .footer-mobile__subscribe-input::placeholder {
+    color: rgba(43, 61, 45, 0.4);
+  }
+
+  .footer-mobile__subscribe-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: rgba(43, 61, 45, 0.4);
+    pointer-events: none;
+    transition: background-color 0.3s ease;
+  }
+
+  .footer-mobile__subscribe-field:hover .footer-mobile__subscribe-line {
+    background: rgba(43, 61, 45, 0.6);
+  }
+
+  .footer-mobile__subscribe-input:focus ~ .footer-mobile__subscribe-line {
+    background: #2B3D2D;
+  }
+
+  /* plus-icon swap — verbatim .footer__subscribe-btn recipe, mobile's own
+     32px (matches this frame's "+" glyph size, not desktop's 40u) */
+  .footer-mobile__subscribe-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 1em;
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: 32px;
+    line-height: 1;
+    color: rgba(43, 61, 45, 0.8);
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .footer-mobile__subscribe-plus-track {
+    position: relative;
+    display: block;
+    line-height: 1;
+  }
+
+  .footer-mobile__subscribe-plus-char {
+    display: block;
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .footer-mobile__subscribe-plus-char--out {
+    transform: translateY(0%);
+  }
+
+  .footer-mobile__subscribe-plus-char--in {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(100%);
+  }
+
+  .js-line-hover:hover .footer-mobile__subscribe-plus-char--out {
+    transform: translateY(-100%);
+  }
+
+  .js-line-hover:hover .footer-mobile__subscribe-plus-char--in {
+    transform: translateY(0%);
+  }
+
+  .footer-mobile__social {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* hover mechanism verbatim from .footer__social-link — text dims+shifts
+     right, italic "(" fades in at the left edge the shift opens up. */
+  .footer-mobile__social-link {
+    position: relative;
+    display: inline-flex;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 1.1;
+    text-decoration: none;
+    color: #2B3D2D;
+  }
+
+  .footer-mobile__social-link-paren {
+    position: absolute;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .footer-mobile__social-link-text {
+    display: inline-block;
+    white-space: nowrap;
+    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .footer-mobile__social-link:hover .footer-mobile__social-link-paren {
+    opacity: 0.6;
+  }
+
+  .footer-mobile__social-link:hover .footer-mobile__social-link-text {
+    opacity: 0.6;
+    transform: translateX(calc(0.5em + 10px));
+  }
+
+  .footer-mobile__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+    width: 335px;
+  }
+
+  .footer-mobile__contacts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.1;
+    color: #2B3D2D;
+  }
+
+  .footer-mobile__contacts p {
+    margin: 0;
+  }
+
+  .footer-mobile__logo-group {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    width: 100%;
+  }
+
+  /* img/mob-logo-footer.png (swapped 2026-08-06, was the .svg export) —
+     re-measured from scratch per the project's own rule for any swapped
+     asset (never carry over a sibling/previous file's scale). Alpha-scanned
+     the PNG directly: canvas 718x142, ink bbox ~679x104 starting at
+     (23,20) — a small, tight blur-feather margin (~3% each side), nothing
+     like desktop's own logo-footer.png (25%/3.5% overscale margin), so the
+     old SVG's -3.54%/-25.2% inset-and-overscale trick doesn't apply here.
+     Just sized to the asset's own natural aspect ratio instead (335 * 142/718
+     ≈ 66px tall) — no inset/overscale needed since this export's margin is
+     already the intended framing. */
+  .footer-mobile__logo {
+    width: 335px;
+  }
+
+  .footer-mobile__logo-img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .footer-mobile__copyright {
+    margin: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.1;
+    color: #2B3D2D;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .footer__menu-link-underline,
   .footer__social-link-paren,
   .footer__social-link-text,
-  .footer__subscribe-plus-char {
+  .footer__subscribe-plus-char,
+  .footer-mobile__social-link-paren,
+  .footer-mobile__social-link-text,
+  .footer-mobile__subscribe-plus-char {
     transition: none;
   }
 }
