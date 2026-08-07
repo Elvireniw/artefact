@@ -2764,11 +2764,23 @@ body.is-preloading .hero__btn {
   /* native scrollbar hidden — same fix as .steps-mobile__row (her request
      landed on that block first, applied here too for consistency: both
      rows are the same carousel mechanism and leaving one with a visible
-     scrollbar next to one without would itself read as a bug). */
+     scrollbar next to one without would itself read as a bug).
+
+     -webkit-overflow-scrolling:touch deliberately removed (2026-08-07,
+     from all 6 mobile carousel rows — gallery/steps/stories/pricing/cta-
+     stats/social): she reported the page freezing for several seconds
+     whenever a scroll gesture passed over ANY of these rows, on a real
+     phone. That property is the old iOS async-momentum hint — on affected
+     Safari versions a nested `overflow-x` element carrying it can "capture"
+     the touch for its own inertial deceleration, leaving the outer page
+     scroll unresponsive until the row's own momentum finishes (a well-
+     documented iOS quirk, not specific to this codebase). Modern Safari
+     already gives `overflow-x:auto` native momentum without this hint, so
+     removing it costs nothing. If reintroducing it anywhere, retest this
+     exact symptom on a real iOS device first. */
   .gallery-mobile__row {
     position: relative;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     /* pan-x alone blocks native vertical panning for any touch that starts
        over the row — a real jerk when a vertical swipe happens to begin
        here, same bug documented on .stories-mobile__row (see there);
@@ -2807,6 +2819,7 @@ body.is-preloading .hero__btn {
      assumed card height), so it can't drift out of sync with the cards
      the way the old incident bar did. */
   .gallery-mobile__bar {
+    isolation: isolate;
     position: absolute;
     z-index: 0;
     left: -20px;
@@ -2814,6 +2827,19 @@ body.is-preloading .hero__btn {
     top: 320px;
     height: 46px;
     background-color: var(--olive-100);
+  }
+
+  /* same film grain as desktop's .gallery__bar (and .philosophy/.cta/
+     .footer) — see initOliveGrain() in script.js, sets --grain globally on
+     the root so no new JS is needed here. */
+  .gallery-mobile__bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: var(--grain, none);
+    background-repeat: repeat;
+    mix-blend-mode: overlay;
   }
 
   .gallery-mobile__card {
@@ -3148,7 +3174,6 @@ body.is-preloading .hero__btn {
   .steps-mobile__row {
     position: relative;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     /* pan-x pan-y, not pan-x alone — same vertical-scroll-jerk fix as
        .gallery-mobile__row/.stories-mobile__row, see the comment there. */
     touch-action: pan-x pan-y;
@@ -5003,18 +5028,16 @@ body.menu-is-open {
   }
 
   /* native scrollbar hidden — same convention as .steps-mobile__row /
-     .gallery-mobile__row. A hard vertical crop through the next card
-     (the one still mostly off-screen) read as an ugly accident rather than
-     an intentional "there's more, keep scrolling" hint — her own first
-     instinct was "make that bit transparent," which is exactly this: a
-     mask-image fade over the last 25px, not a blur (blur is off-limits
-     project-wide, see CLAUDE.md). The cut card fades to the section's own
-     beige instead of stopping on a hard edge. Right side only — at rest
-     (scrollLeft 0) card 1 is fully on-screen with nothing to soften on the
-     left; a static left fade would needlessly dim it before any scrolling
-     has happened. Kept narrow (25px, tuned down from an initial 50px) —
-     any wider and it started dimming the edge of the last fully-visible
-     card too, not just the truncated one.
+     .gallery-mobile__row.
+
+     Right-edge treatment reverted to plain peek, her later call: the
+     mask-image fade tried first (softening the truncated next card to the
+     section's beige instead of a hard crop) read as an unwanted blur/soft
+     edge. margin-right:-20px cancels .stories-mobile's own 20px side
+     padding so the row bleeds to the true viewport edge on the right, same
+     as .gallery-mobile__row/.steps-mobile__row's own convention (padding-
+     left inset, no right constraint) — the next card now peeks further in
+     naturally, no mask needed.
 
      touch-action: pan-x alone (the same value gallery-mobile/steps-mobile
      use) blocks native vertical panning for any touch that starts over the
@@ -5026,13 +5049,11 @@ body.menu-is-open {
   .stories-mobile__row {
     position: relative;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     cursor: grab;
+    margin-right: -20px;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 25px), transparent 100%);
-    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 25px), transparent 100%);
   }
 
   .stories-mobile__row::-webkit-scrollbar {
@@ -5595,20 +5616,23 @@ body.menu-is-open {
     display: none;
   }
 
-  /* top AND bottom padding both removed (was 80px each). Top: the gap to
-     block 9 above is owned by .stories-mobile's own bottom padding, see
-     its comment. Bottom: her call (2026-08-06) — the gap down to block
-     11 (olive .cta-mobile) should read as OLIVE, not beige, so it's
-     .cta-mobile's own top padding that owns it now, not this one; two
-     80px paddings on beige+olive would also have doubled the gap to
-     160px. General rule going forward: whichever side of a block
-     boundary should visually "own" the gap's background color gets the
-     padding, not a fixed top-or-bottom convention. */
+  /* Top stays 0 — the gap to block 9 above is owned by .stories-mobile's
+     own bottom padding, see its comment.
+
+     Bottom: REVERSED 2026-08-07, her explicit call — she wants a real 80px
+     BEIGE gap after the cards, distinct from .cta-mobile's own 80px olive
+     top padding (not the same gap read twice). The single-shared-gap
+     convention tried on 2026-08-06 (see [[project-artefact-mobile-small-
+     fixes-batch1]]) read as "no gap at all" on her real phone — a same-
+     colour continuation into an already-olive stat card didn't register as
+     intentional whitespace the way a colour change does. Total visual
+     space at this boundary is now genuinely 160px (80 beige + 80 olive),
+     not 80. */
   .pricing-mobile {
     display: flex;
     flex-direction: column;
     gap: 32px;
-    padding: 0;
+    padding: 0 0 80px;
   }
 
   .pricing-mobile__header {
@@ -5675,7 +5699,6 @@ body.menu-is-open {
   .pricing-mobile__row {
     position: relative;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     cursor: grab;
     scrollbar-width: none;
@@ -6332,7 +6355,6 @@ body.menu-is-open {
   .cta-mobile__stats-row {
     position: relative;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     cursor: grab;
     scrollbar-width: none;
@@ -6677,17 +6699,16 @@ body.menu-is-open {
    .faq__answer-wrap exactly, just under faq-mobile__* names — see
    index.html's block comment for why this isn't a shared-class reuse.
 
-   Top padding removed on purpose: the gap up to block 11 (olive
-   .cta-mobile) should read as olive, not beige, same convention as every
-   other block boundary fixed so far — .cta-mobile's own 80px bottom
-   padding already owns that gap. Figma's own mobile frame shows a
-   symmetric 80px here (header sits 80px from the section's top edge),
-   which would double the gap if added on top of cta-mobile's — this
-   deviates from that literal Figma value for the same reason blocks
-   9/10 and 10/11 both needed the same correction. Bottom padding (80px)
-   is a plain symmetric guess, matching how every other block's trailing
-   edge shipped before its actual neighbor existed to check against —
-   revisit once block 13 (social) gets its own mobile pass. */
+   Top padding: REVERSED 2026-08-07 (was removed on purpose 2026-08-06,
+   see [[project-artefact-mobile-small-fixes-batch1]]) — her explicit call,
+   she wants a real 80px BEIGE gap here distinct from .cta-mobile's own
+   80px olive bottom padding, not the same gap read once. The literal
+   Figma value (80px, matching the header's own 80px-from-top inset) turns
+   out to be correct as-is; the "would double the gap" reasoning that
+   removed it was based on a shared-gap convention she has since rejected
+   (a same-colour continuation didn't read as a gap on her real phone).
+   Bottom padding (80px) is unrelated, unchanged, still a plain symmetric
+   guess pending block 13's own mobile pass. */
 .faq-mobile {
   display: none;
 }
@@ -6702,7 +6723,7 @@ body.menu-is-open {
     display: flex;
     flex-direction: column;
     gap: 60px;
-    padding: 0 20px 80px;
+    padding: 80px 20px;
   }
 
   .faq-mobile__header {
@@ -7188,7 +7209,6 @@ body.menu-is-open {
     position: relative;
     width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     touch-action: pan-x pan-y;
     cursor: grab;
     scrollbar-width: none;

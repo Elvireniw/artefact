@@ -566,7 +566,7 @@
         <div class="gallery-mobile__bar" aria-hidden="true"></div>
         <article class="gallery-mobile__card">
           <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: керамічна ваза">
-            <img src="img/gallery-1.jpg" alt="Керамічна ваза">
+            <img loading="lazy" decoding="async" src="img/gallery-1.jpg" alt="Керамічна ваза">
             <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
           </button>
           <p class="gallery-mobile__caption">створено на 8 тижні</p>
@@ -574,7 +574,7 @@
 
         <article class="gallery-mobile__card">
           <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: керамічна чаша">
-            <img src="img/gallery-2.jpg" alt="Керамічна чаша в руках майстрині">
+            <img loading="lazy" decoding="async" src="img/gallery-2.jpg" alt="Керамічна чаша в руках майстрині">
             <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span></span>
           </button>
           <p class="gallery-mobile__caption">створено на 4 тижні</p>
@@ -591,7 +591,7 @@
              finishes that card in Figma; swap src/alt/caption then. -->
         <article class="gallery-mobile__card">
           <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу">
-            <img src="img/gallery-3.jpg" alt="">
+            <img loading="lazy" decoding="async" src="img/gallery-3.jpg" alt="">
             <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
           </button>
           <p class="gallery-mobile__caption">створено на 8 тижні</p>
@@ -599,7 +599,7 @@
 
         <article class="gallery-mobile__card">
           <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: скульптурна керамічна форма">
-            <img src="img/gallery-4.png" alt="Скульптурна керамічна форма">
+            <img loading="lazy" decoding="async" src="img/gallery-4.png" alt="Скульптурна керамічна форма">
             <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
           </button>
           <p class="gallery-mobile__caption">створено на 5 тижні</p>
@@ -607,7 +607,7 @@
 
         <article class="gallery-mobile__card">
           <button class="gallery-mobile__photo js-cursor-media" type="button" data-cursor-label="далі" aria-label="Переглянути роботу: керамічний виріб ручної роботи">
-            <img src="img/gallery-5.jpg" alt="Керамічний виріб ручної роботи">
+            <img loading="lazy" decoding="async" src="img/gallery-5.jpg" alt="Керамічний виріб ручної роботи">
             <span class="gallery-mobile__marks" aria-hidden="true"><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span><span class="gallery-mobile__mark">+</span></span>
           </button>
           <p class="gallery-mobile__caption">створено на 3 тижні</p>
@@ -903,7 +903,13 @@
               </p>
               <div class="steps-mobile__body">
                 <p class="steps-mobile__caption">діалог          з        матерією</p>
-                <p class="steps-mobile__text">саме час оживити ваш ескіз. під нашим проводом ви опануєте танець гончарного круга, навчитеся розуміти «дихання» глини та направляти її в форму, що стане продовженням ваших думок</p>
+                <!-- <br> before "навчитеся": at 320px/20px it landed as the
+                     last word on its line with ~1px of slack before the
+                     right edge — read as a stuck/torn word next to every
+                     other line's normal ragged-right slack. Forcing it onto
+                     its own line lengthens the paragraph by one line
+                     instead. -->
+                <p class="steps-mobile__text">саме час оживити ваш ескіз. під нашим проводом ви опануєте танець гончарного круга,<br>навчитеся розуміти «дихання» глини та направляти її в форму, що стане продовженням ваших думок</p>
               </div>
             </article>
 
@@ -1338,7 +1344,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-4.jpg" alt="Студентка формує виріб на гончарному крузі">
+                  <img loading="lazy" decoding="async" src="img/stories-4.jpg" alt="Студентка формує виріб на гончарному крузі">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1351,7 +1357,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-5.jpg" alt="Керамічна миска на трьох ніжках, робота студента курсу «мова глини»">
+                  <img loading="lazy" decoding="async" src="img/stories-5.jpg" alt="Керамічна миска на трьох ніжках, робота студента курсу «мова глини»">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1364,7 +1370,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-3.jpg" alt="Портрет випускника курсу «професійний» у майстерні">
+                  <img loading="lazy" decoding="async" src="img/stories-3.jpg" alt="Портрет випускника курсу «професійний» у майстерні">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1377,7 +1383,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / перший дотик</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-2.jpg" alt="Набір керамічних тарілок ручної роботи в руках студентки">
+                  <img loading="lazy" decoding="async" src="img/stories-2.jpg" alt="Набір керамічних тарілок ручної роботи в руках студентки">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1390,7 +1396,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-1.jpg" alt="Керамічна скульптурна форма, робота студента курсу «професійний»">
+                  <img loading="lazy" decoding="async" src="img/stories-1.jpg" alt="Керамічна скульптурна форма, робота студента курсу «професійний»">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1415,7 +1421,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-6.png" alt="Керамічна чашка з ручкою в руках студентки за сервірованим столом">
+                  <img loading="lazy" decoding="async" src="img/stories-6.png" alt="Керамічна чашка з ручкою в руках студентки за сервірованим столом">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1428,7 +1434,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / перший дотик</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-7.png" alt="Керамічна фігурка кота ручної роботи з розписаними деталями">
+                  <img loading="lazy" decoding="async" src="img/stories-7.png" alt="Керамічна фігурка кота ручної роботи з розписаними деталями">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1441,7 +1447,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / професійний</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-8.png" alt="Керамічні вази у формі жіночого силуету на полиці">
+                  <img loading="lazy" decoding="async" src="img/stories-8.png" alt="Керамічні вази у формі жіночого силуету на полиці">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1454,7 +1460,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-9.png" alt="Кругла керамічна ваза-чаша в руці на дерев'яній підставці">
+                  <img loading="lazy" decoding="async" src="img/stories-9.png" alt="Кругла керамічна ваза-чаша в руці на дерев'яній підставці">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1467,7 +1473,7 @@
               <div class="stories-mobile__meta">
                 <p class="stories-mobile__label"><span class="stories-mobile__mark" aria-hidden="true">+</span>курс / мова глини</p>
                 <div class="stories-mobile__photo">
-                  <img src="img/stories-10.png" alt="Портрет випускниці курсу, знята крізь скло">
+                  <img loading="lazy" decoding="async" src="img/stories-10.png" alt="Портрет випускниці курсу, знята крізь скло">
                 </div>
               </div>
               <div class="stories-mobile__text">
@@ -1702,7 +1708,7 @@
               <div class="pricing-mobile__card-info">
                 <div class="pricing-mobile__card-title-group">
                   <div class="pricing-mobile__card-title-slot">
-                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-1.png" alt="Перший дотик">
+                    <img loading="lazy" decoding="async" class="pricing-mobile__card-title" src="img/mob-pricing-title-1.png" alt="Перший дотик">
                   </div>
                   <p class="pricing-mobile__card-subtitle"><span class="italic-symbol">(</span>ідеальний старт для тих, хто сумнівається</p>
                 </div>
@@ -1731,7 +1737,7 @@
               <div class="pricing-mobile__card-info">
                 <div class="pricing-mobile__card-title-group">
                   <div class="pricing-mobile__card-title-slot">
-                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-2.png" alt="Мова глини">
+                    <img loading="lazy" decoding="async" class="pricing-mobile__card-title" src="img/mob-pricing-title-2.png" alt="Мова глини">
                   </div>
                   <p class="pricing-mobile__card-subtitle"><span class="italic-symbol">(</span>це ваш шлях від новачка до творця</p>
                 </div>
@@ -1760,7 +1766,7 @@
               <div class="pricing-mobile__card-info">
                 <div class="pricing-mobile__card-title-group">
                   <div class="pricing-mobile__card-title-slot">
-                    <img class="pricing-mobile__card-title" src="img/mob-pricing-title-3.png" alt="Професійний">
+                    <img loading="lazy" decoding="async" class="pricing-mobile__card-title" src="img/mob-pricing-title-3.png" alt="Професійний">
                   </div>
                   <p class="pricing-mobile__card-subtitle"><span class="italic-symbol">(</span>ти вже знаєш основи і маєш сміливу ідею</p>
                 </div>
@@ -1953,7 +1959,7 @@
           <div class="faq__answer-wrap" id="faq-answer-1" role="region" aria-labelledby="faq-toggle-1">
             <div class="faq__answer-inner">
               <div class="faq__answer-body">
-                <p>Так, і це питання ми чуємо найчастіше! Наша методика розроблена спеціально для новачків. Ми не віримо в «талант», ми віримо у структурований підхід. Кожен етап — від цифрового ескізу до роботи з глиною — розбитий на зрозумілі кроки, які поступово розвивають ваші навички. Переконайтеся в цьому, переглянувши роботи таких же новачків у блоці «Історії успіху».</p>
+                <p>так, і це питання ми чуємо найчастіше! наша методика розроблена спеціально для новачків. ми не віримо в «талант», ми віримо у структурований підхід. кожен етап — від цифрового ескізу до роботи з глиною — розбитий на зрозумілі кроки, які поступово розвивають ваші навички. переконайтеся в цьому, переглянувши роботи таких же новачків у блоці «історії успіху».</p>
               </div>
             </div>
           </div>
@@ -2007,7 +2013,7 @@
           <div class="faq__answer-wrap" id="faq-answer-3" role="region" aria-labelledby="faq-toggle-3">
             <div class="faq__answer-inner">
               <div class="faq__answer-body">
-                <p>Ми розробили програму так, щоб її можна було комфортно поєднувати з роботою та особистим життям. Для успішного проходження курсу достатньо виділяти 3-4 години на тиждень. Всі уроки записані — ви можете навчатися у зручному для вас темпі.</p>
+                <p>ми розробили програму так, щоб її можна було комфортно поєднувати з роботою та особистим життям. для успішного проходження курсу достатньо виділяти 3-4 години на тиждень. всі уроки записані — ви можете навчатися у зручному для вас темпі.</p>
               </div>
             </div>
           </div>
@@ -2033,7 +2039,7 @@
           <div class="faq__answer-wrap" id="faq-answer-4" role="region" aria-labelledby="faq-toggle-4">
             <div class="faq__answer-inner">
               <div class="faq__answer-body">
-                <p>ARTEFACT / CLAY — це не просто курси гончарства. Ми єдині, хто поєднує тисячолітню мудрість ремесла з сучасним дизайн-мисленням. Ви не просто навчитеся крутити на гончарному крузі — ви пройдете шлях від ідеї до артефакту, навчившись спочатку проектувати форму в цифрі, а потім втілювати її в глині. Наш фокус — на створенні унікальних предметів для сучасного простору.</p>
+                <p>artefact / clay — це не просто курси гончарства. ми єдині, хто поєднує тисячолітню мудрість ремесла з сучасним дизайн-мисленням. ви не просто навчитеся крутити на гончарному крузі — ви пройдете шлях від ідеї до артефакту, навчившись спочатку проектувати форму в цифрі, а потім втілювати її в глині. наш фокус — на створенні унікальних предметів для сучасного простору.</p>
               </div>
             </div>
           </div>
@@ -2059,7 +2065,7 @@
           <div class="faq__answer-wrap" id="faq-answer-5" role="region" aria-labelledby="faq-toggle-5">
             <div class="faq__answer-inner">
               <div class="faq__answer-body">
-                <p>Ми цінуємо довіру наших майбутніх студентів. Тому, якщо після проходження перших двох модулів ви вирішите, що курс не для вас, ми повернемо повну суму протягом 14 днів.</p>
+                <p>ми цінуємо довіру наших майбутніх студентів. тому, якщо після проходження перших двох модулів ви вирішите, що курс не для вас, ми повернемо повну суму протягом 14 днів.</p>
               </div>
             </div>
           </div>
@@ -2129,7 +2135,7 @@
             <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-1" role="region" aria-labelledby="faq-mobile-toggle-1">
               <div class="faq-mobile__answer-inner">
                 <div class="faq-mobile__answer-body">
-                  <p>Так, і це питання ми чуємо найчастіше! Наша методика розроблена спеціально для новачків. Ми не віримо в «талант», ми віримо у структурований підхід. Кожен етап — від цифрового ескізу до роботи з глиною — розбитий на зрозумілі кроки, які поступово розвивають ваші навички. Переконайтеся в цьому, переглянувши роботи таких же новачків у блоці «Історії успіху».</p>
+                  <p>так, і це питання ми чуємо найчастіше! наша методика розроблена спеціально для новачків. ми не віримо в «талант», ми віримо у структурований підхід. кожен етап — від цифрового ескізу до роботи з глиною — розбитий на зрозумілі кроки, які поступово розвивають ваші навички. переконайтеся в цьому, переглянувши роботи таких же новачків у блоці «історії успіху».</p>
                 </div>
               </div>
             </div>
@@ -2183,7 +2189,7 @@
             <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-3" role="region" aria-labelledby="faq-mobile-toggle-3">
               <div class="faq-mobile__answer-inner">
                 <div class="faq-mobile__answer-body">
-                  <p>Ми розробили програму так, щоб її можна було комфортно поєднувати з роботою та особистим життям. Для успішного проходження курсу достатньо виділяти 3-4 години на тиждень. Всі уроки записані — ви можете навчатися у зручному для вас темпі.</p>
+                  <p>ми розробили програму так, щоб її можна було комфортно поєднувати з роботою та особистим життям. для успішного проходження курсу достатньо виділяти 3-4 години на тиждень. всі уроки записані — ви можете навчатися у зручному для вас темпі.</p>
                 </div>
               </div>
             </div>
@@ -2209,7 +2215,7 @@
             <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-4" role="region" aria-labelledby="faq-mobile-toggle-4">
               <div class="faq-mobile__answer-inner">
                 <div class="faq-mobile__answer-body">
-                  <p>ARTEFACT / CLAY — це не просто курси гончарства. Ми єдині, хто поєднує тисячолітню мудрість ремесла з сучасним дизайн-мисленням. Ви не просто навчитеся крутити на гончарному крузі — ви пройдете шлях від ідеї до артефакту, навчившись спочатку проектувати форму в цифрі, а потім втілювати її в глині. Наш фокус — на створенні унікальних предметів для сучасного простору.</p>
+                  <p>artefact / clay — це не просто курси гончарства. ми єдині, хто поєднує тисячолітню мудрість ремесла з сучасним дизайн-мисленням. ви не просто навчитеся крутити на гончарному крузі — ви пройдете шлях від ідеї до артефакту, навчившись спочатку проектувати форму в цифрі, а потім втілювати її в глині. наш фокус — на створенні унікальних предметів для сучасного простору.</p>
                 </div>
               </div>
             </div>
@@ -2235,7 +2241,7 @@
             <div class="faq-mobile__answer-wrap" id="faq-mobile-answer-5" role="region" aria-labelledby="faq-mobile-toggle-5">
               <div class="faq-mobile__answer-inner">
                 <div class="faq-mobile__answer-body">
-                  <p>Ми цінуємо довіру наших майбутніх студентів. Тому, якщо після проходження перших двох модулів ви вирішите, що курс не для вас, ми повернемо повну суму протягом 14 днів.</p>
+                  <p>ми цінуємо довіру наших майбутніх студентів. тому, якщо після проходження перших двох модулів ви вирішите, що курс не для вас, ми повернемо повну суму протягом 14 днів.</p>
                 </div>
               </div>
             </div>
