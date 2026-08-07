@@ -188,19 +188,79 @@ the top of this file and [[project-artefact-block12-faq]],
 [[project-artefact-block13-social]], [[project-artefact-block14-footer]]
 for full detail on each.
 
-## Mobile version — next phase, not yet started
+## Mobile version — DONE, 2026-08-07. Both desktop and mobile are now complete.
 
-No mobile layout exists anywhere on the site except the menu overlay's own
-`max-width:768px` variant (see `CLAUDE.md`'s "Layout system"). Every other
-section is desktop-only fluid geometry (`--u` scaled from a 1920px
-reference, no other breakpoints). Scope and per-block approach for this
-pass had not been established as of this note — check current memory
-(`MEMORY.md` in the auto-memory system) for anything decided since.
+All 14 blocks have mobile coverage. Two different techniques were used
+depending on how much a block's layout diverges from desktop, both
+deliberate, not an inconsistency:
 
-**Starting a new block/phase in a new chat?** She now wants each new block
-built in its own chat, without reading this whole file. Point that chat at
-`docs/context/BLOCK_STARTER_KIT.md` instead — it's a distilled,
-self-contained reference (structure, colors, fonts, grid, every reusable
-motion recipe with values) built specifically so a fresh session doesn't
-need this file, `project_artefact_pending_fixes.md`, or a full read of
-`style.css`/`script.js`. She merges finished blocks herself afterward.
+- **Blocks 1/2/3/4 (hero, craft, clay, material)** — plain responsive CSS
+  on the SAME desktop classes/markup, inside `@media (max-width: 768px)`
+  overrides. No separate `-mobile` DOM. Chosen because these sections'
+  mobile layout is close enough to desktop's that a full duplicate wasn't
+  needed (`.material` in particular needs no override at all — its
+  `height:100vh` design is already viewport-fluid).
+- **Blocks 5/6/7/8/9/10/11/12/13/14** — a fully separate, self-contained
+  `-mobile` markup block per section (`.gallery-mobile`, `.philosophy-
+  mobile`, `.steps-mobile`, `.free-lesson-mobile`, `.stories-mobile`,
+  `.pricing-mobile`, `.cta-mobile`, `.faq-mobile`, `.social-mobile`,
+  `.footer-mobile`), base `display:none`, shown via its own
+  `@media (max-width: 768px)` block, desktop's own markup hidden the same
+  way. Used wherever the mobile layout genuinely differs in structure
+  (carousels, accordions, reflowed card grids) — see
+  `BLOCK_STARTER_KIT.md`'s "Mobile version" section for the pattern.
+- Fixed px throughout the mobile breakpoint (not `--u`) — confirmed
+  against the menu overlay's own pre-existing mobile CSS, which already
+  used literal px. Single breakpoint at 768px; no second breakpoint at
+  480px was ever actually needed (confirmed by grep, 2026-08-07 — the
+  375px Figma frame's values just work down to real small phones without a
+  second scale-down step).
+
+**Mobile-phase durable lessons, worth reusing on any future block:**
+- **Carousel rows**: `overflow-x:auto` + `touch-action: pan-x pan-y`
+  (never `pan-x` alone — blocks vertical page scroll for any touch
+  starting over the row) + `data-lenis-prevent` (so Lenis's page-wide
+  listener doesn't swallow the row's own horizontal gesture). Do **not**
+  add `-webkit-overflow-scrolling: touch` — on real iOS it can "capture" a
+  touch for the row's own inertial deceleration and freeze the outer page
+  scroll for several seconds; removed from all 6 mobile carousel rows
+  2026-08-07 after she reported exactly this on a real phone.
+- **"Next card peeks" convention**: `padding-left: 20px` on the row (or a
+  `margin-right: -20px` to cancel the section's own side padding), no
+  right-side constraint — the row bleeds to the true viewport edge and the
+  next card's own width naturally peeks past it. This is the default; a
+  `mask-image` edge fade was tried once (`.stories-mobile__row`) and later
+  explicitly rejected as reading like an unwanted blur.
+- **Block-boundary gaps are NOT shared** — each side of a boundary gets its
+  own full padding in ITS OWN colour (e.g. pricing-mobile's 80px beige
+  bottom padding AND cta-mobile's own 80px olive top padding both exist,
+  stacking to ~160px total). An earlier "whichever side should own the
+  colour gets the padding, not both" convention (single shared 80px) was
+  tried and explicitly reversed 2026-08-07 — a monochrome continuation
+  (olive box space with nothing else olive-toned immediately behind it)
+  does not read as an intentional gap to a real eye, even when the numbers
+  say 80px of empty space exists. Default to giving both sides their own
+  spacing from now on.
+- **Any image inside a `-mobile` carousel card should get `loading="lazy"
+  decoding="async"`** — nothing on the site had this at all until
+  2026-08-07; the site's heaviest photos (several ~700-900KB PNGs) sit
+  inside horizontally-scrolling rows, exactly where eager-loading is most
+  costly on a real phone.
+- Desktop and mobile images/markup are genuinely separate elements (not
+  shared DOM toggled by CSS) — a fix to one never risks the other, but
+  also means a fix must be applied twice if it's meant to apply to both
+  (the FAQ answer lowercase-text fix, 2026-08-07, needed the same
+  `replace_all` edit against both `.faq__answer-body` and
+  `.faq-mobile__answer-body`'s identical paragraph text).
+
+**GitHub Pages**: the repo has GitHub Pages enabled (auto Jekyll build, no
+custom workflow file). A `.nojekyll` file was added 2026-08-07 after the
+default Jekyll build started failing (Jekyll was trying to process
+`_serve.cjs` and this repo's own markdown docs with YAML frontmatter as
+Jekyll source) — keep this file, it's required for the Pages deploy to
+succeed on this repo.
+
+**Starting a new block/phase in a new chat?** `BLOCK_STARTER_KIT.md` is
+still the right pointer for any NEW block work; this file (and
+[[project-artefact-mobile-small-fixes-batch1]] in the auto-memory system)
+are the record of what shipped and why, for review/fix sessions instead.
