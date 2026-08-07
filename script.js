@@ -1951,6 +1951,195 @@ function initMenuOverlay() {
 }
 
 // ==========================================================================
+// POP-UPS — generic open/close, one instance so far (.popup-free-lesson,
+// Figma node 1386:1135, "free lesson" lead magnet — see
+// project_artefact_popup_modals_scope.md for the other two groups still to
+// build). Same clip-path curtain mechanism as openMenu()/closeMenu(), just
+// keyed by id so more popups can reuse this without new open/close
+// functions each time: any trigger gets `data-popup-open="<popup id>"`,
+// any close control inside a popup gets `.js-popup-close`.
+// ==========================================================================
+
+const popupTweens = {}; // one GSAP timeline per open popup id, so a rapid
+                         // re-click cleanly kills the in-progress one
+                         // instead of stacking (same reasoning as menuTl)
+
+function setInitialPopupState(popup) {
+  const staggerItems = popup.querySelectorAll('.js-popup-stagger');
+  gsap.set(popup, { clipPath: 'inset(0% 0% 100% 0%)' });
+  gsap.set(staggerItems, { opacity: 0, y: 12 });
+}
+
+function openPopup(popup) {
+  if (!popup) return;
+  const id = popup.id;
+  if (popupTweens[id]) popupTweens[id].kill();
+  document.body.classList.add('popup-is-open');
+  popup.setAttribute('aria-hidden', 'false');
+
+  const staggerItems = popup.querySelectorAll('.js-popup-stagger');
+
+  if (reducedMotion) {
+    gsap.set(popup, { clipPath: 'inset(0% 0% 0% 0%)' });
+    gsap.set(staggerItems, { opacity: 1, y: 0 });
+    return;
+  }
+
+  gsap.set(staggerItems, { opacity: 0, y: 12 });
+  popupTweens[id] = gsap.timeline()
+    .to(popup, { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.2, ease: 'power3.out' })
+    .to(staggerItems, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'sine.out' }, '+=0.15');
+}
+
+function closePopup(popup) {
+  if (!popup) return;
+  const id = popup.id;
+  if (popupTweens[id]) popupTweens[id].kill();
+  document.body.classList.remove('popup-is-open');
+  popup.setAttribute('aria-hidden', 'true');
+
+  const staggerItems = popup.querySelectorAll('.js-popup-stagger');
+
+  if (reducedMotion) {
+    gsap.set(popup, { clipPath: 'inset(0% 0% 100% 0%)' });
+    gsap.set(staggerItems, { opacity: 0, y: 12 });
+    return;
+  }
+
+  popupTweens[id] = gsap.timeline()
+    .to(staggerItems, { opacity: 0, y: 12, duration: 0.2, ease: 'sine.out' }, 0)
+    .to(popup, { clipPath: 'inset(0% 0% 100% 0%)', duration: 1.2, ease: 'power3.out' }, 0);
+}
+
+function initPopups() {
+  // .js-popup, not [id^="popup-"] — an id-prefix match also caught
+  // #popup-free-lesson-submit (the CTA link inside the popup, id shares
+  // the same "popup-" prefix by coincidence) and clipped it to invisible
+  // via setInitialPopupState(), a real bug she caught 2026-08-07. A
+  // dedicated class only matches the actual popup container.
+  const popups = document.querySelectorAll('.js-popup');
+  if (!popups.length) return;
+
+  popups.forEach((popup) => {
+    setInitialPopupState(popup);
+
+    // preventDefault matters here: .popup-subscription__close is a real
+    // <a href="#"> (matching every other CTA on the site), and without
+    // this the browser's own default "jump to top" navigation fires
+    // ALONGSIDE closePopup() — she'd land back on the hero instead of
+    // wherever she opened the popup from. Real bug, caught 2026-08-07.
+    popup.querySelectorAll('.js-popup-close').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        closePopup(popup);
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-popup-open]').forEach((trigger) => {
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      const popup = document.getElementById(trigger.dataset.popupOpen);
+      openPopup(popup);
+    });
+  });
+
+  // All 3 tariff forms converge on the same .popup-confirm success screen
+  // (Group A's shared final screen) once their required fields validate —
+  // no backend yet, so "submit" here just means client-side validation
+  // passes, then swap the tariff popup for the confirm one.
+  const confirmPopup = document.getElementById('popup-confirm');
+
+  // Pricing card 2 ("мова глини") -> .popup-tariff-2 (Group A, second of 3
+  // course-booking variants). Same 3-field pattern as tariff-1's own
+  // wiring, just its own ids.
+  const tariff2Submit = document.getElementById('tariff-2-submit');
+  const tariff2Name = document.getElementById('tariff-2-name');
+  const tariff2Phone = document.getElementById('tariff-2-phone');
+  const tariff2Email = document.getElementById('tariff-2-email');
+  if (tariff2Submit && tariff2Name && tariff2Phone && tariff2Email) {
+    tariff2Submit.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!tariff2Name.reportValidity()) return;
+      if (!tariff2Phone.reportValidity()) return;
+      if (!tariff2Email.reportValidity()) return;
+      closePopup(document.getElementById('popup-tariff-2'));
+      openPopup(confirmPopup);
+    });
+  }
+
+  // Pricing card 1 ("перший дотик") -> .popup-tariff-1 (Group A, first of 3
+  // course-booking variants). Trigger itself is wired generically via
+  // [data-popup-open] above; this validates the 3 fields on submit, then
+  // hands off to .popup-confirm. Ids deliberately do NOT start with
+  // "popup-" (see the id-prefix bug this file's own comment above warns
+  // about for .js-popup selection).
+  const tariff1Submit = document.getElementById('tariff-1-submit');
+  const tariff1Name = document.getElementById('tariff-1-name');
+  const tariff1Phone = document.getElementById('tariff-1-phone');
+  const tariff1Email = document.getElementById('tariff-1-email');
+  if (tariff1Submit && tariff1Name && tariff1Phone && tariff1Email) {
+    tariff1Submit.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!tariff1Name.reportValidity()) return;
+      if (!tariff1Phone.reportValidity()) return;
+      if (!tariff1Email.reportValidity()) return;
+      closePopup(document.getElementById('popup-tariff-1'));
+      openPopup(confirmPopup);
+    });
+  }
+
+  // Pricing card 3 ("професійний рівень") -> .popup-tariff-3 (Group A,
+  // third of 3 course-booking variants). Same pattern as tariff-1's own
+  // wiring above, just 4 fields — the 4th ("коротко про ваш досвід/ідею")
+  // is optional (no `required` in the HTML), so it's intentionally not
+  // checked here.
+  const tariff3Submit = document.getElementById('tariff-3-submit');
+  const tariff3Name = document.getElementById('tariff-3-name');
+  const tariff3Phone = document.getElementById('tariff-3-phone');
+  const tariff3Email = document.getElementById('tariff-3-email');
+  if (tariff3Submit && tariff3Name && tariff3Phone && tariff3Email) {
+    tariff3Submit.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!tariff3Name.reportValidity()) return;
+      if (!tariff3Phone.reportValidity()) return;
+      if (!tariff3Email.reportValidity()) return;
+      closePopup(document.getElementById('popup-tariff-3'));
+      openPopup(confirmPopup);
+    });
+  }
+
+  // No backend yet, and the design's success screen (a separate Figma
+  // frame) isn't built — this just validates the email field and stops
+  // there. reportValidity() shows the browser's own native "enter a valid
+  // email" bubble, same as any other required input; wire the real
+  // success-screen transition once that screen exists.
+  const freeLessonSubmit = document.getElementById('popup-free-lesson-submit');
+  const freeLessonEmail = document.getElementById('popup-free-lesson-email');
+  if (freeLessonSubmit && freeLessonEmail) {
+    freeLessonSubmit.addEventListener('click', (event) => {
+      event.preventDefault();
+      freeLessonEmail.reportValidity();
+    });
+  }
+
+  // Footer newsletter — opens .popup-subscription (Group C, confirmation-
+  // only) once a valid email is entered in the EXISTING footer form
+  // (.footer__subscribe-form, built with block 14). No backend, so this
+  // just validates + opens the confirmation screen; nothing is actually
+  // sent anywhere yet.
+  const footerSubscribeBtn = document.querySelector('.footer__subscribe-btn');
+  const footerEmail = document.getElementById('footer-email');
+  const subscriptionPopup = document.getElementById('popup-subscription');
+  if (footerSubscribeBtn && footerEmail && subscriptionPopup) {
+    footerSubscribeBtn.addEventListener('click', () => {
+      if (!footerEmail.reportValidity()) return;
+      openPopup(subscriptionPopup);
+    });
+  }
+}
+
+// ==========================================================================
 // PRELOADER — "The Focusing Logo"
 // The 8 letters (img/logo-letter-1.svg..8.svg) animate purely through the
 // CSS `@keyframes animateBlur` (exactly 3 passes, animation-fill-mode:
@@ -3578,7 +3767,16 @@ function runSocialEntrance() {
       y: 0,
       duration: 1.2,
       ease: 'power4.out',
-      onComplete: () => gsap.set(socialHeroImg, { clearProps: 'opacity,transform' }),
+      // clearProps: 'transform' (NOT included here on purpose, unlike every
+      // other entrance beat) — this image also carries a scroll-scrubbed
+      // yPercent parallax (mediaImageGroups(), still running long after this
+      // entrance completes). Clearing the inline transform out from under a
+      // still-active scrub tween read as a one-frame snap: her report,
+      // 2026-08-07, "дергається, ніби падає знизу вгору" right as the block
+      // enters view. Only opacity needs clearing here; the parallax already
+      // owns `transform` indefinitely afterward and keeps it correct on its
+      // own next tick regardless of whether this clears it first.
+      onComplete: () => gsap.set(socialHeroImg, { clearProps: 'opacity' }),
     }, '-=0.5')
     .to(socialTextWords, { opacity: 1, duration: 0.8, stagger: 0.05, ease: 'sine.out' }, '-=0.8')
     .to(socialCards, {
@@ -3997,6 +4195,7 @@ initPreloader();
 initGlassCursor();
 initCustomCursor();
 initMenuOverlay();
+initPopups();
 runCraftEntrance();
 initMediaImageHover();
 initMediaImageParallax();

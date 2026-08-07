@@ -254,6 +254,7 @@ video {
   --olive-100: #9A9671;
   --olive-80: rgba(154, 150, 113, 0.8);
   --olive-60: rgba(154, 150, 113, 0.6);
+  --brown-700: #5D4033;
   --preloader-bg: radial-gradient(circle at center, rgba(217, 224, 242, 1) 0%, rgba(147, 154, 172, 1) 100%);
   --preloader-fg: #2B3D2D;
 }
@@ -462,22 +463,44 @@ video {
   display: inline-block;
 }
 
-/* underline hidden at rest; draws in left-to-right on hover, exits to the
-   right on mouseleave (same left/right transform-origin flip as the menu
-   and CTA underlines, just starting from scaleX(0) instead of visible) */
-.hero__link-underline {
+/* matches olgaprudka.com's own nav-link underline (read straight from
+   their live stylesheet 2026-08-07, .link::after on their Projects/About/
+   Contact) — hidden at rest, draws in left-to-right on hover, retracts
+   back to the right on mouseleave. 0.5s, cubic-bezier(0.215, 0.61, 0.355,
+   1) — NOT this project's usual signature curve, deliberately, per her
+   explicit "as on the reference" request.
+
+   Track+line split (same as .hero__btn-line-track/.hero__btn-line): the
+   TRACK holds the fixed height:1px and never gets a transform; only the
+   inner LINE (inset:0 of the track) gets scaleX animated. Putting the
+   scaleX transform directly on a height:1px element (the previous,
+   single-span version) made the browser re-rasterize that hairline at
+   whatever fractional width the transition was mid-flight at, which
+   visibly jittered the line's THICKNESS while it animated — same family
+   of sub-pixel/dpr issue as the project's other hairline-vs-transform
+   gotchas (BLOCK_STARTER_KIT.md's hover-scale counter-scale case), just
+   triggered by scaleX instead of the whole card scaling. The wrapping
+   track is never transformed, so its 1px height is never subject to that
+   rounding at all. */
+.hero__link-line-track {
   position: absolute;
   left: 0;
   right: 0;
   bottom: calc(var(--u) * -6);
   height: 1px;
+  overflow: hidden;
+}
+
+.hero__link-line {
+  position: absolute;
+  inset: 0;
   background: var(--beige-100);
   transform-origin: right;
   transform: scaleX(0);
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
-.hero__link:hover .hero__link-underline {
+.hero__link:hover .hero__link-line {
   transform-origin: left;
   transform: scaleX(1);
 }
@@ -2062,13 +2085,14 @@ body.is-preloading .hero__btn {
   bottom: calc(var(--u) * -6);
   height: 1px;
   background: #2B3D2D;
-  transform-origin: right;
+  /* fixed origin:left, never flipped — same mid-transition jump/jitter fix
+     as .hero__link-underline, see its own comment for the full mechanism. */
+  transform-origin: left;
   transform: scaleX(0);
   transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .gallery__filter-item:hover .gallery__filter-underline {
-  transform-origin: left;
   transform: scaleX(1);
 }
 
@@ -3868,6 +3892,30 @@ body.menu-is-open {
   pointer-events: none;
 }
 
+/* same scroll-hover guard, block 13's carousel: the track scrubs cards
+   horizontally under a stationary cursor as the pin drives the page
+   scroll, so a card sliding under the pointer fires a real mouseenter on
+   .social__photo (initSocialPhotoHover() listens for it directly, not via
+   CSS :hover) — scale(1.05) + cursor-drift kick in uninvited, reading as
+   the photo "jerking/swapping." Confirmed 2026-08-07, most noticeable on
+   whichever card happens to end up under wherever her mouse rests while
+   scrolling. Reuses the existing global .is-scrolling toggle
+   (initStepHoverGuard() in script.js already sets/clears it on ANY
+   scroll, not just over .step) — no new JS needed. */
+.is-scrolling .social__photo {
+  pointer-events: none;
+}
+
+/* same guard, the big hero photo above the carousel row: it's static (not
+   sliding under the cursor like the cards), but scrolling the PAGE past a
+   stationary cursor resting on top of it fires the same uninvited
+   mouseenter (initMediaImageHover()) → scale(1.05) kick right as the block
+   enters view — a second, distinct contributor to the same "jerks on
+   entrance" report alongside the clearProps fix in runSocialEntrance(). */
+.is-scrolling .social__hero-photo {
+  pointer-events: none;
+}
+
 .step--1 {
   right: 0;
 }
@@ -4213,6 +4261,1691 @@ body.menu-is-open {
     opacity: 0;
     pointer-events: none;
   }
+}
+
+/* ==========================================================================
+   POP-UP — course booking, tariff 1 "перший дотик" (Figma node 1386:1198,
+   file 6tA1k2sLpFm5U7cLn9p9rZ, "pop-up-1-tarif"). Group A from
+   project_artefact_popup_modals_scope.md — first of 3 course-booking
+   variants (beige theme, 3-field form: ім'я/телефон/ел-пошта). Triggered
+   by .pricing__card--basic .pricing__card-cta via [data-popup-open]. Same
+   curtain mechanism as the other 2 popups, see openPopup()/closePopup()/
+   initPopups() in script.js. No success screen yet (same as the other 2
+   popups when first built) — submit only reportValidity()s.
+
+   Heading images (img/pop-up-h-1.png, img/pop-up-h-2.png) are her own
+   pre-rendered exports of the Figma text layers' blur-[12px] effect — NOT
+   live CSS blur (off-limits project-wide, same exception precedent as the
+   footer wordmark). Verified real alpha transparency at all 4 corners
+   (not an opaque-background false positive — see the pricing-title PNG
+   gotcha in BLOCK_STARTER_KIT.md) and confirmed both PNGs are flat 2x
+   exports of their own Figma text node via a pixel-scan bounding box
+   (PowerShell System.Drawing, alpha>15 threshold): dividing each image's
+   measured ink bbox by 2 lands almost exactly on the node's own Figma
+   width (1008u/1820u), confirming the scale factor rather than guessing
+   it. Position/size below = (natural px ÷ 2) for size, offset by minus
+   half the measured bleed margin so the image's blurred ink sits where
+   Figma's original sharp text frame was, not the image's own canvas edge.
+   ========================================================================== */
+
+.popup-tariff-1 {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  clip-path: inset(0% 0% 100% 0%);
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--beige-100);
+}
+
+body.popup-is-open .popup-tariff-1 {
+  pointer-events: auto;
+}
+
+.popup-tariff-1__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 50);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+.popup-tariff-1__heading {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 320);
+}
+
+.popup-tariff-1__title-img {
+  position: absolute;
+  left: calc(var(--u) * -10);
+  top: calc(var(--u) * -24);
+  width: calc(var(--u) * 1046);
+  height: auto;
+  display: block;
+}
+
+.popup-tariff-1__subtitle-img {
+  position: absolute;
+  left: calc(var(--u) * -24);
+  top: calc(var(--u) * 107);
+  width: calc(var(--u) * 1854);
+  height: auto;
+  display: block;
+}
+
+.popup-tariff-1__note {
+  position: absolute;
+  left: calc(var(--u) * 910);
+  top: calc(var(--u) * 279);
+  width: calc(var(--u) * 452);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 18);
+  line-height: 1.5;
+  color: #2B3D2D;
+}
+
+.popup-tariff-1__note .italic-symbol { margin-right: 10px; }
+
+.popup-tariff-1__bottom {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 529.5);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 306);
+}
+
+.popup-tariff-1__txt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 447);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: #2B3D2D;
+  opacity: 0.6;
+}
+
+.popup-tariff-1__form-wrap {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: 0;
+  width: calc(var(--u) * 905);
+  height: calc(var(--u) * 306);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 100);
+}
+
+.popup-tariff-1__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-tariff-1__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: calc(var(--u) * 56);
+}
+
+/* line lives on its own element, not the input's own border — same
+   recipe as .footer__subscribe-field/.popup-free-lesson__field (a CSS
+   border anti-aliases at a visibly different weight than the flat
+   height:1px lines everywhere else on the site). */
+.popup-tariff-1__input {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: calc(var(--u) * 6) 0 calc(var(--u) * 8);
+  border: none;
+  background: transparent;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 18);
+  line-height: 1.1;
+  color: #2B3D2D;
+  outline: none;
+}
+
+.popup-tariff-1__input::placeholder {
+  color: rgba(43, 61, 45, 0.4);
+}
+
+/* the "absurd transition delay" autofill fix — confirmed final version
+   (round 5 on this project, see project_artefact_popup_modals_scope.md),
+   background-agnostic unlike box-shadow-repaint or autocomplete="off". */
+.popup-tariff-1__input:-webkit-autofill,
+.popup-tariff-1__input:-webkit-autofill:hover,
+.popup-tariff-1__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #2B3D2D;
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.popup-tariff-1__field-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: #2B3D2D;
+  pointer-events: none;
+}
+
+/* --- CTA: same static-underline recipe as every other CTA on the site
+   (.craft__cta, .pricing__card-cta, .popup-free-lesson__cta, ...) — 8u
+   padding-bottom, not Figma's literal pb-[2px] (that value was explicitly
+   rejected project-wide already, see BLOCK_STARTER_KIT.md/
+   project_artefact_status.md). --- */
+.popup-tariff-1__cta {
+  /* .popup-tariff-1__form-wrap is a column flex container with the default
+     align-items:stretch, which was stretching this CTA's box (and its
+     border-bottom with it) to the full 905u form width — align-self:
+     flex-start opts it back out to shrink-wrap its own content, same as
+     every other CTA on the site (.craft__cta/.pricing__card-cta use
+     inline-flex specifically so this can't happen; this one sits inside a
+     stretching flex parent instead, so it needs the explicit override). */
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding-bottom: calc(var(--u) * 8);
+  border-bottom: 1px solid #2B3D2D;
+  text-decoration: none;
+}
+
+.popup-tariff-1__cta-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.popup-tariff-1__cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+  color: #2B3D2D;
+}
+
+.popup-tariff-1__cta-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.popup-tariff-1__cta-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popup-tariff-1__cta-plus-char--out {
+  transform: translateY(0%);
+}
+
+.popup-tariff-1__cta-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .popup-tariff-1__cta-plus-char--in {
+  transform: translateY(0%);
+}
+
+.js-line-hover:hover .popup-tariff-1__cta-plus-char--out {
+  transform: translateY(-100%);
+}
+
+/* --- close button: no underline in Figma (unlike the CTA), just a
+   text+icon pair — same "quiet" opacity-dim-on-hover recipe as
+   .popup-free-lesson__close, just recolored dark for this light popup. --- */
+/* wrapper carries the position AND the entrance stagger (.js-popup-stagger,
+   fade+rise-from-below like every other group) — the button itself must
+   never get that class directly, or GSAP's tween leaves an inline opacity
+   that permanently blocks the button's own :hover rule (no clearProps is
+   ever called). Real bug already hit once on this exact button, see
+   project_artefact_popup_modals_scope.md. */
+.popup-tariff-1__close-wrap {
+  position: absolute;
+  left: calc(var(--u) * 1644);
+  top: calc(var(--u) * 945);
+}
+
+.popup-tariff-1__close {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding: 0 0 2px;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: #2B3D2D;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-tariff-1__close:hover {
+    opacity: 0.6;
+  }
+}
+
+.popup-tariff-1__close-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  white-space: nowrap;
+}
+
+.popup-tariff-1__close-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
+}
+
+.popup-tariff-1__close-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   POP-UP — course booking, tariff 2 "мова глини" (Figma node 1386:1234,
+   file 6tA1k2sLpFm5U7cLn9p9rZ, "pop-up-2-tarif"). Group A, second of 3
+   course-booking variants — same layout skeleton as .popup-tariff-1, but
+   OLIVE theme: bg var(--olive-100), body text/field labels/lines/close all
+   light beige, CTA text/border stays DARK green #2B3D2D on purpose — same
+   convention .pricing__card--featured already uses for its own olive card
+   (dark CTA reads as the accent against the olive, not an inversion bug).
+   data-cursor-theme="dark" (not "light") to match every other olive/dark
+   section (.cta, .hero, ...) — the custom cursor renders light over dark.
+
+   Content box is offset left:55u (not 50u) and close-btn/txt/form-wrap
+   x-values also differ slightly from tariff-1/3's own numbers (910u form
+   start here vs 915u there, 910u form width vs 905u) — read straight off
+   this node's own Figma metadata, not copied from the other 2 variants;
+   every popup in this group has small per-design metric differences.
+
+   Heading images (pop-up-h-5.png, pop-up-h-6.png) verified with the same
+   pixel-scan technique as the other 2 popups' own images (real alpha
+   transparency at all 4 corners, ~2x export confirmed: 810/1607=0.504 and
+   1820/3603=0.505 against this node's own Figma text widths). Close
+   button intentionally does NOT get .js-popup-stagger — giving GSAP's
+   stagger tween direct control of an element's inline opacity permanently
+   blocks that element's own CSS :hover rule (no clearProps was ever
+   called), a real bug found and fixed on tariff-1/tariff-3's close
+   buttons; this one skips it from the start. Same reason align-self:
+   flex-start is on the CTA from the start, not added after the fact.
+   ========================================================================== */
+
+.popup-tariff-2 {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  clip-path: inset(0% 0% 100% 0%);
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--olive-100);
+}
+
+body.popup-is-open .popup-tariff-2 {
+  pointer-events: auto;
+}
+
+.popup-tariff-2__content {
+  position: absolute;
+  left: calc(var(--u) * 55);
+  top: calc(var(--u) * 50);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+.popup-tariff-2__heading {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 320);
+}
+
+.popup-tariff-2__title-img {
+  position: absolute;
+  left: calc(var(--u) * -10);
+  top: calc(var(--u) * -13);
+  width: calc(var(--u) * 837);
+  height: auto;
+  display: block;
+}
+
+.popup-tariff-2__subtitle-img {
+  position: absolute;
+  left: calc(var(--u) * -24);
+  top: calc(var(--u) * 104);
+  width: calc(var(--u) * 1843.5);
+  height: auto;
+  display: block;
+}
+
+.popup-tariff-2__note {
+  position: absolute;
+  left: calc(var(--u) * 1063);
+  top: calc(var(--u) * 282);
+  width: calc(var(--u) * 359);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 18);
+  line-height: 1.1;
+  color: #2B3D2D;
+}
+
+.popup-tariff-2__note .italic-symbol { margin-right: 10px; }
+
+.popup-tariff-2__bottom {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 529.5);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 306);
+}
+
+.popup-tariff-2__txt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 447);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: var(--beige-100);
+  opacity: 0.6;
+}
+
+.popup-tariff-2__form-wrap {
+  position: absolute;
+  left: calc(var(--u) * 910);
+  top: 0;
+  width: calc(var(--u) * 910);
+  height: calc(var(--u) * 306);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 100);
+}
+
+.popup-tariff-2__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-tariff-2__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: calc(var(--u) * 56);
+}
+
+.popup-tariff-2__input {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: calc(var(--u) * 6) 0 calc(var(--u) * 8);
+  border: none;
+  background: transparent;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 18);
+  line-height: 1.1;
+  color: var(--beige-100);
+  outline: none;
+}
+
+.popup-tariff-2__input::placeholder {
+  color: var(--beige-40);
+}
+
+.popup-tariff-2__input:-webkit-autofill,
+.popup-tariff-2__input:-webkit-autofill:hover,
+.popup-tariff-2__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--beige-100);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.popup-tariff-2__field-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--beige-100);
+  pointer-events: none;
+}
+
+/* CTA text/border stays dark green even on this olive background — same
+   accent convention as .pricing__card--featured .pricing__card-cta. */
+.popup-tariff-2__cta {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding-bottom: calc(var(--u) * 8);
+  border-bottom: 1px solid #2B3D2D;
+  text-decoration: none;
+}
+
+.popup-tariff-2__cta-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.popup-tariff-2__cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+  color: #2B3D2D;
+}
+
+.popup-tariff-2__cta-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.popup-tariff-2__cta-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popup-tariff-2__cta-plus-char--out {
+  transform: translateY(0%);
+}
+
+.popup-tariff-2__cta-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .popup-tariff-2__cta-plus-char--in {
+  transform: translateY(0%);
+}
+
+.js-line-hover:hover .popup-tariff-2__cta-plus-char--out {
+  transform: translateY(-100%);
+}
+
+/* same wrapper split as .popup-tariff-1__close-wrap — see its comment. */
+.popup-tariff-2__close-wrap {
+  position: absolute;
+  left: calc(var(--u) * 1644);
+  top: calc(var(--u) * 945);
+}
+
+.popup-tariff-2__close {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding: 0 0 2px;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--beige-100);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-tariff-2__close:hover {
+    opacity: 0.6;
+  }
+}
+
+.popup-tariff-2__close-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  white-space: nowrap;
+}
+
+.popup-tariff-2__close-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
+}
+
+.popup-tariff-2__close-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   POP-UP — course booking, tariff 3 "професійний рівень" (Figma node
+   1386:1251, file 6tA1k2sLpFm5U7cLn9p9rZ, "pop-up-3-tarif"). Group A,
+   third of 3 course-booking variants — same beige theme + layout as
+   .popup-tariff-1 (see its own comment block for the full rationale:
+   heading images are her pre-rendered blur exports, not live CSS blur;
+   CTA uses align-self:flex-start inside the stretching form-wrap column,
+   same fix applied from the start here). Triggered by .pricing__card--pro
+   .pricing__card-cta via [data-popup-open]. Only real structural diff:
+   4 fields, not 3 (adds "коротко про ваш досвід / ідею", left optional —
+   not marked required, unlike the other 3 fields), so .popup-tariff-3__bottom/
+   __form-wrap/__form are all taller than tariff-1's (224u form vs 168u,
+   362u bottom vs 306u) — verified against this node's own metadata, not
+   assumed identical to tariff-1's numbers.
+
+   Same pixel-scan verification as tariff-1's own images: both PNGs
+   confirmed real alpha transparency at all 4 corners and land within
+   ~0.1% of an exact 2x export of their Figma text node (scale computed
+   from measured ink bbox ÷ Figma's own text width — 1374/2745=0.5005 and
+   1820/3633=0.5011), same PowerShell/System.Drawing technique. Bleed
+   margins differ from tariff-1's own two images (different glyphs blur
+   differently) — each image's offset below is its OWN measured bleed,
+   not copied from tariff-1. ========================================================================== */
+
+.popup-tariff-3 {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  clip-path: inset(0% 0% 100% 0%);
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--beige-100);
+}
+
+body.popup-is-open .popup-tariff-3 {
+  pointer-events: auto;
+}
+
+.popup-tariff-3__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 50);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+.popup-tariff-3__heading {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 320);
+}
+
+.popup-tariff-3__title-img {
+  position: absolute;
+  left: calc(var(--u) * -10);
+  top: calc(var(--u) * -24);
+  width: calc(var(--u) * 1406.5);
+  height: auto;
+  display: block;
+}
+
+.popup-tariff-3__subtitle-img {
+  position: absolute;
+  left: calc(var(--u) * -24);
+  top: calc(var(--u) * 114);
+  width: calc(var(--u) * 1853);
+  height: auto;
+  display: block;
+}
+
+.popup-tariff-3__note {
+  position: absolute;
+  left: calc(var(--u) * 910);
+  top: calc(var(--u) * 287);
+  width: calc(var(--u) * 475);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 18);
+  line-height: 1.1;
+  color: #2B3D2D;
+}
+
+.popup-tariff-3__note .italic-symbol { margin-right: 10px; }
+
+.popup-tariff-3__bottom {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 501.5);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 362);
+}
+
+.popup-tariff-3__txt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 447);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: #2B3D2D;
+  opacity: 0.6;
+}
+
+.popup-tariff-3__form-wrap {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: 0;
+  width: calc(var(--u) * 905);
+  height: calc(var(--u) * 362);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 100);
+}
+
+.popup-tariff-3__form {
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-tariff-3__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: calc(var(--u) * 56);
+}
+
+.popup-tariff-3__input {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: calc(var(--u) * 6) 0 calc(var(--u) * 8);
+  border: none;
+  background: transparent;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 18);
+  line-height: 1.1;
+  color: #2B3D2D;
+  outline: none;
+}
+
+.popup-tariff-3__input::placeholder {
+  color: rgba(43, 61, 45, 0.4);
+}
+
+.popup-tariff-3__input:-webkit-autofill,
+.popup-tariff-3__input:-webkit-autofill:hover,
+.popup-tariff-3__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #2B3D2D;
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.popup-tariff-3__field-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: #2B3D2D;
+  pointer-events: none;
+}
+
+/* align-self:flex-start — .popup-tariff-3__form-wrap is a column flex
+   container (default align-items:stretch), which would otherwise stretch
+   this CTA's border-bottom to the full 905u form width. Same real bug
+   already fixed on .popup-tariff-1__cta, applied from the start here. */
+.popup-tariff-3__cta {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding-bottom: calc(var(--u) * 8);
+  border-bottom: 1px solid #2B3D2D;
+  text-decoration: none;
+}
+
+.popup-tariff-3__cta-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.popup-tariff-3__cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+  color: #2B3D2D;
+}
+
+.popup-tariff-3__cta-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.popup-tariff-3__cta-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popup-tariff-3__cta-plus-char--out {
+  transform: translateY(0%);
+}
+
+.popup-tariff-3__cta-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .popup-tariff-3__cta-plus-char--in {
+  transform: translateY(0%);
+}
+
+.js-line-hover:hover .popup-tariff-3__cta-plus-char--out {
+  transform: translateY(-100%);
+}
+
+/* same wrapper split as .popup-tariff-1__close-wrap — see its comment. */
+.popup-tariff-3__close-wrap {
+  position: absolute;
+  left: calc(var(--u) * 1644);
+  top: calc(var(--u) * 945);
+}
+
+.popup-tariff-3__close {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding: 0 0 2px;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: #2B3D2D;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-tariff-3__close:hover {
+    opacity: 0.6;
+  }
+}
+
+.popup-tariff-3__close-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  white-space: nowrap;
+}
+
+.popup-tariff-3__close-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
+}
+
+.popup-tariff-3__close-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   POP-UP — shared course-booking success screen (Figma node 1386:1216,
+   file 6tA1k2sLpFm5U7cLn9p9rZ, "pop-up-confirm"). Group A's shared final
+   screen, opened by all 3 tariff forms (.popup-tariff-1/2/3) on a valid
+   submit — see the wiring in initPopups(). Beige bg per this node's own
+   Figma data (checked directly — the plain heading has no blur-[12px]
+   class at all here, unlike the 3 tariff headings, so it's live CSS text
+   with 3 opacity tiers, same recipe as .popup-subscription__word, not a
+   pre-rendered image). The 2 rounded-rect photo slots use her real
+   exports (popup-final-1.png/popup-final-2.png), identified by opening
+   both files and matching against the Figma screenshot's actual photo
+   content, not by filename order. Figma's own layer tree has the
+   top-right photo duplicated (2 separate node ids, byte-identical
+   position/image) — rendered once here, not twice.
+   ========================================================================== */
+
+.popup-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  clip-path: inset(0% 0% 100% 0%);
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--beige-100);
+}
+
+body.popup-is-open .popup-confirm {
+  pointer-events: auto;
+}
+
+.popup-confirm__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 50);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+.popup-confirm__heading {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 991);
+}
+
+.popup-confirm__line {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+  text-transform: uppercase;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.popup-confirm__line--1 { opacity: 1; }
+.popup-confirm__line--2 { opacity: 0.8; }
+.popup-confirm__line--3 { opacity: 0.6; }
+
+.popup-confirm__photo-top {
+  position: absolute;
+  left: calc(var(--u) * 1525);
+  top: 0;
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+}
+
+.popup-confirm__photo-bottom {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 685);
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+}
+
+.popup-confirm__photo-top img,
+.popup-confirm__photo-bottom img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-confirm__photo-top:hover img,
+  .popup-confirm__photo-bottom:hover img {
+    transform: scale(1.05);
+  }
+}
+
+.popup-confirm__note {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: calc(var(--u) * 484);
+  width: calc(var(--u) * 905);
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -1.28);
+  color: var(--olive-100);
+}
+
+.popup-confirm__social {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: calc(var(--u) * 828);
+  width: calc(var(--u) * 512);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 40);
+}
+
+.popup-confirm__social-label {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: var(--olive-100);
+  opacity: 0.6;
+}
+
+.popup-confirm__social-links {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 40);
+}
+
+.popup-confirm__social-link {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1;
+  color: #2B3D2D;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-confirm__social-link:hover {
+    opacity: 0.6;
+  }
+}
+
+/* same wrapper/stagger split as .popup-tariff-1__close-wrap — see its
+   comment. Dark green, matching this screen's own beige bg (not olive). */
+.popup-confirm__close-wrap {
+  position: absolute;
+  left: calc(var(--u) * 1644);
+  top: calc(var(--u) * 945);
+}
+
+.popup-confirm__close {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding: 0 0 2px;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: #2B3D2D;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-confirm__close:hover {
+    opacity: 0.6;
+  }
+}
+
+.popup-confirm__close-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  white-space: nowrap;
+}
+
+.popup-confirm__close-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
+}
+
+.popup-confirm__close-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   POP-UP — "free lesson" lead magnet (Figma node 1386:1135, file
+   6tA1k2sLpFm5U7cLn9p9rZ, "pop-up-free lesson"). First of 3 popup
+   mechanics scoped 2026-08-04 (see project_artefact_popup_modals_scope.md)
+   — this is Group B, the free-lesson lead magnet. Triggered by
+   .free-lesson__cta (block 8's "free вебинар" button) via
+   [data-popup-open]. Same fixed full-viewport + clip-path curtain
+   mechanism as .menu-overlay, just its own brown theme — see
+   initPopups()/openPopup()/closePopup() in script.js.
+
+   Content sits on a 1920x1080 reference frame, same --u system as every
+   desktop block, inset by the site's own 50u --grid-margin.
+   ========================================================================== */
+
+.popup-free-lesson {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  clip-path: inset(0% 0% 100% 0%);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body.popup-is-open {
+  overflow: hidden;
+}
+
+body.popup-is-open .popup-free-lesson {
+  pointer-events: auto;
+}
+
+.popup-free-lesson__bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--brown-700);
+  pointer-events: none;
+}
+
+/* Figma's own "gradient" group here is the same asset as block 8's own
+   background (4 heavily Gaussian-blurred rotated ellipses) — reusing
+   .free-lesson__gradient's already-approved radial-gradient approximation
+   verbatim (real blur filters are off-limits project-wide) rather than
+   re-deriving it from scratch. */
+.popup-free-lesson__gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 70% 85% at 55% 62%, rgba(126, 100, 84, 0.55) 0%, rgba(126, 100, 84, 0) 70%),
+    radial-gradient(ellipse 60% 75% at 82% 52%, rgba(100, 71, 55, 0.5) 0%, rgba(100, 71, 55, 0) 70%),
+    radial-gradient(ellipse 45% 55% at 60% 88%, rgba(91, 64, 50, 0.55) 0%, rgba(91, 64, 50, 0) 70%),
+    radial-gradient(ellipse 55% 60% at 6% 4%, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0) 65%);
+}
+
+.popup-free-lesson__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 50);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+/* --- heading, same typography as .free-lesson__word (128u, uppercase,
+   -3.84u tracking) — this popup's own opacity tiers differ slightly from
+   block 8's (её "до" is 80% here, not 40%), so it's its own class set,
+   not a shared one, per the starter kit's no-cross-block-reuse rule. --- */
+
+.popup-free-lesson__line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: calc(var(--u) * 128);
+  margin: 0;
+}
+
+.popup-free-lesson__line--1 { top: 0; }
+.popup-free-lesson__line--2 { top: calc(var(--u) * 128); }
+.popup-free-lesson__line--3 { top: calc(var(--u) * 256); }
+
+.popup-free-lesson__word {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.popup-free-lesson__word--nohe { left: 0; color: var(--beige-100); }
+.popup-free-lesson__word--gotovi { left: 0; color: var(--beige-80); }
+.popup-free-lesson__word--do { left: calc(var(--u) * 1177); color: var(--beige-80); }
+.popup-free-lesson__word--povno { left: 0; color: var(--beige-60); }
+.popup-free-lesson__word--course { left: calc(var(--u) * 1418); color: var(--beige-60); }
+
+.popup-free-lesson__mark {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+  color: var(--beige-100);
+}
+
+/* --- email field: same "line lives on its own element, not the input's
+   own border" recipe as .footer__subscribe-field (a CSS border anti-
+   aliases at a visibly different weight than the flat height:1px lines
+   everywhere else on the site). Figma has this line fully opaque at rest
+   (not dimmed like the footer's), so there's no separate hover/focus
+   state to add here — it's already the "engaged" look. --- */
+
+.popup-free-lesson__field {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 444);
+  width: calc(var(--u) * 905);
+}
+
+.popup-free-lesson__input {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: calc(var(--u) * 14) 0 calc(var(--u) * 16);
+  border: none;
+  background: transparent;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: calc(var(--u) * 24);
+  line-height: 1.1;
+  color: var(--beige-100);
+  outline: none;
+}
+
+.popup-free-lesson__input::placeholder {
+  color: var(--beige-40);
+}
+
+/* same background-agnostic autofill fix as .footer__subscribe-input — see
+   its own comment for why (box-shadow-repaint and autocomplete="off" were
+   both tried first and neither actually worked against a gradient bg). */
+.popup-free-lesson__input:-webkit-autofill,
+.popup-free-lesson__input:-webkit-autofill:hover,
+.popup-free-lesson__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--beige-100);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+
+.popup-free-lesson__field-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--beige-100);
+  pointer-events: none;
+}
+
+/* --- course-image row + "( отримайте... )" text/CTA column --- */
+
+.popup-free-lesson__images {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 685);
+  height: calc(var(--u) * 295);
+  display: flex;
+  gap: calc(var(--u) * 10);
+}
+
+.popup-free-lesson__img {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+}
+
+.popup-free-lesson__img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* her call 2026-08-07: "add at least a little movement" to the popup
+   photos — plain CSS hover-scale (the frame's own overflow:hidden already
+   crops it), no JS needed since there's no scroll happening inside a
+   fixed-position popup to also parallax against. */
+@media (hover: hover) and (pointer: fine) {
+  .popup-free-lesson__img:hover img {
+    transform: scale(1.05);
+  }
+}
+
+/* her call 2026-08-07: level with the photo's own top edge (685u), not
+   Figma's original 60u-lower offset (745u) — raised to align with
+   .popup-free-lesson__images. */
+/* height:295u + space-between (not gap) — her call 2026-08-07: the
+   отримати/закрити row should sit level with the photo's own BOTTOM edge
+   (295u tall, same as .popup-free-lesson__images), not just trail 9u below
+   the text block. */
+.popup-free-lesson__info {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: calc(var(--u) * 685);
+  width: calc(var(--u) * 905);
+  height: calc(var(--u) * 295);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.popup-free-lesson__txt {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -2);
+  color: var(--beige-100);
+}
+
+.popup-free-lesson__txt-paren { margin-right: 12px; }
+.popup-free-lesson__txt-paren--close { margin-right: 0; margin-left: 40px; }
+
+.popup-free-lesson__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* --- CTA: identical recipe to .free-lesson__cta (static underline, not
+   the sweep — same reasoning as pricing's CTA underline, see
+   project_artefact_block10_pricing.md), just as a real <button> now. --- */
+.popup-free-lesson__cta {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding-bottom: calc(var(--u) * 8);
+  border-bottom: 1px solid var(--beige-100);
+}
+
+.popup-free-lesson__cta-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1.1;
+  color: var(--beige-100);
+  white-space: nowrap;
+}
+
+/* two-line icon swap — same recipe as .free-lesson__cta-plus verbatim. */
+.popup-free-lesson__cta-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+  color: var(--beige-100);
+}
+
+.popup-free-lesson__cta-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.popup-free-lesson__cta-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popup-free-lesson__cta-plus-char--out {
+  transform: translateY(0%);
+}
+
+.popup-free-lesson__cta-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .popup-free-lesson__cta-plus-char--in {
+  transform: translateY(0%);
+}
+
+.js-line-hover:hover .popup-free-lesson__cta-plus-char--out {
+  transform: translateY(-100%);
+}
+
+/* --- close button: no underline in Figma (unlike the CTA), just a
+   text+icon pair — a plain opacity dim on hover instead, same feedback
+   .faq__toggle already uses for a similar "quiet" control. --- */
+.popup-free-lesson__close {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding: 0 0 2px;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--beige-100);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-free-lesson__close:hover {
+    opacity: 0.6;
+  }
+}
+
+.popup-free-lesson__close-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  white-space: nowrap;
+}
+
+.popup-free-lesson__close-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
+}
+
+.popup-free-lesson__close-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   POP-UP — footer newsletter confirmation (Figma node 1386:1114, file
+   6tA1k2sLpFm5U7cLn9p9rZ, "pop-up-subscription"). Group C — confirmation
+   screen only, no form of its own (real form is .footer__subscribe-form,
+   in the FOOTER section below). Same curtain mechanism as .popup-free-
+   lesson, see openPopup()/closePopup()/initPopups() in script.js.
+
+   Two of the 3 bottom-row photo slots are opacity-0 in Figma itself (not
+   just an unfinished placeholder like the other popup) — genuinely only
+   1 photo here, matches her explicit "only the leftmost photo" call on
+   the free-lesson popup too.
+   ========================================================================== */
+
+.popup-subscription {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  clip-path: inset(0% 0% 100% 0%);
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--blue);
+}
+
+body.popup-is-open .popup-subscription {
+  pointer-events: auto;
+}
+
+.popup-subscription__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 50);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+.popup-subscription__top {
+  position: relative;
+  width: 100%;
+  height: calc(var(--u) * 512);
+}
+
+.popup-subscription__heading {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 1068);
+  height: calc(var(--u) * 512);
+}
+
+/* absolute, not flex+space-between — the first pass used space-between,
+   which pushed "ЗА"/"НА" flush to the line's far right edge (~905u/896u
+   worth of gap) instead of Figma's real, much narrower gap (ЗА sits at
+   533u, НА at 896u — neither is edge-flush). Match the literal metadata
+   left values per word, same convention .popup-free-lesson's heading
+   already uses, not a flexible layout trick. */
+.popup-subscription__line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: calc(var(--u) * 128);
+  margin: 0;
+}
+
+.popup-subscription__line--1 { top: 0; }
+.popup-subscription__line--2 { top: calc(var(--u) * 128); }
+.popup-subscription__line--3 { top: calc(var(--u) * 256); }
+.popup-subscription__line--4 { top: calc(var(--u) * 384); }
+
+.popup-subscription__word {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.popup-subscription__word--dakuyu { left: 0; }
+.popup-subscription__word--za { left: calc(var(--u) * 533); }
+.popup-subscription__word--pidpysku { left: 0; }
+.popup-subscription__word--na { left: calc(var(--u) * 896); }
+.popup-subscription__word--lysty { left: 0; }
+.popup-subscription__word--tvorchyh { left: 0; }
+
+.popup-subscription__line--1 .popup-subscription__word { color: #2B3D2D; }
+.popup-subscription__line--2 .popup-subscription__word { color: rgba(43, 61, 45, 0.8); }
+.popup-subscription__line--3 .popup-subscription__word { color: rgba(43, 61, 45, 0.6); }
+.popup-subscription__line--4 .popup-subscription__word { color: rgba(43, 61, 45, 0.4); }
+
+.popup-subscription__photo-top {
+  position: absolute;
+  left: calc(var(--u) * 1525);
+  top: 0;
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+}
+
+.popup-subscription__photo-top img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-subscription__photo-top:hover img {
+    transform: scale(1.05);
+  }
+}
+
+.popup-subscription__bottom {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 685);
+  width: calc(var(--u) * 1515);
+  height: calc(var(--u) * 295);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.popup-subscription__images {
+  display: flex;
+  gap: calc(var(--u) * 10);
+}
+
+.popup-subscription__img {
+  flex: 0 0 auto;
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+}
+
+.popup-subscription__img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-subscription__img:hover img {
+    transform: scale(1.05);
+  }
+}
+
+.popup-subscription__info {
+  width: calc(var(--u) * 600);
+  height: calc(var(--u) * 295);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.popup-subscription__txt {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -2);
+  color: var(--beige-100);
+}
+
+/* --- close: same underline+plus CTA recipe as .craft__cta (dark green on
+   a light background, unlike .popup-free-lesson's beige-on-brown), just
+   this popup's own class names. --- */
+.popup-subscription__close {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding-bottom: calc(var(--u) * 8);
+  border-bottom: 1px solid #2B3D2D;
+}
+
+.popup-subscription__close-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 36);
+  line-height: 1;
+  color: #2B3D2D;
+  white-space: nowrap;
+}
+
+.popup-subscription__close-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 40);
+  line-height: 1;
+  overflow: hidden;
+  height: 1em;
+  color: #2B3D2D;
+}
+
+.popup-subscription__close-plus-track {
+  position: relative;
+  display: block;
+  line-height: 1;
+}
+
+.popup-subscription__close-plus-char {
+  display: block;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popup-subscription__close-plus-char--out {
+  transform: translateY(0%);
+}
+
+.popup-subscription__close-plus-char--in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(100%);
+}
+
+.js-line-hover:hover .popup-subscription__close-plus-char--in {
+  transform: translateY(0%);
+}
+
+.js-line-hover:hover .popup-subscription__close-plus-char--out {
+  transform: translateY(-100%);
 }
 
 /* ==========================================================================
@@ -4626,7 +6359,12 @@ body.menu-is-open {
     display: flex;
     align-items: center;
     gap: 28px;
-    padding-bottom: 2px;
+    /* 6px, not Figma's literal pb-[2px] — same correction already applied
+       to every desktop CTA underline (.craft__cta, .hero__btn-line-track,
+       ...) and to .craft__cta's own mobile variant; this one and
+       .pricing-mobile__card-cta were missed when mobile was built, found
+       2026-08-07 auditing every CTA underline for a consistent offset. */
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--beige-100);
   }
 
@@ -5989,7 +7727,9 @@ body.menu-is-open {
     align-self: flex-start;
     gap: 28px;
     margin-top: auto;
-    padding-bottom: 2px;
+    /* 6px, not Figma's literal pb-[2px] — same fix as .free-lesson-mobile__cta
+       above, see its comment. */
+    padding-bottom: 6px;
     border-bottom: 1px solid #2B3D2D;
     text-decoration: none;
     font-family: 'Helvetica Neue', sans-serif;
@@ -7373,21 +9113,32 @@ body.menu-is-open {
   display: inline-block;
 }
 
-/* underline hidden at rest, draws in on hover — same recipe as
-   .hero__link-underline */
-.footer__menu-link-underline {
+/* EXACT same recipe as .hero__link-line-track/.hero__link-line — confirmed
+   final with her 2026-08-07, DO NOT CHANGE without her asking again (see
+   feedback_nav_underline_settings memory): olgaprudka.com's own nav-link
+   underline values (0.5s, cubic-bezier(0.215, 0.61, 0.355, 1), origin
+   flips right->left on hover), split into a track (fixed height:1px,
+   never transformed) + inner line (gets the scaleX transform) so the
+   hairline's thickness never jitters mid-transition. */
+.footer__menu-link-line-track {
   position: absolute;
   left: 0;
   right: 0;
   bottom: calc(var(--u) * -6);
   height: 1px;
+  overflow: hidden;
+}
+
+.footer__menu-link-line {
+  position: absolute;
+  inset: 0;
   background: #2B3D2D;
   transform-origin: right;
   transform: scaleX(0);
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
-.footer__menu-link:hover .footer__menu-link-underline {
+.footer__menu-link:hover .footer__menu-link-line {
   transform-origin: left;
   transform: scaleX(1);
 }
@@ -7465,6 +9216,26 @@ body.menu-is-open {
 
 .footer__subscribe-input::placeholder {
   color: rgba(43, 61, 45, 0.4);
+}
+
+/* Chrome autofill highlight, take 2 — her report 2026-08-07 showed it on
+   THIS field too, plus autocomplete="off" alone (tried on the popup's own
+   email field) doesn't reliably stop Chrome for an <input type="email">
+   it recognises as a saved value, and a box-shadow repaint (tried first)
+   can only match a FLAT background colour — both this footer field and
+   the free-lesson popup's sit on a gradient, so neither fix actually
+   worked. This is the version that's background-agnostic: an absurdly
+   long transition delay on the two properties Chrome's autofill forces
+   (background-color, color) means that "change" is still technically
+   queued 600000s from now — visually the field never appears to update
+   at all, regardless of what's behind it. -webkit-text-fill-color (not
+   color — autofill's forced text colour only answers to this) keeps the
+   real text visible immediately, not deferred with everything else. */
+.footer__subscribe-input:-webkit-autofill,
+.footer__subscribe-input:-webkit-autofill:hover,
+.footer__subscribe-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #2B3D2D;
+  transition: background-color 600000s 0s, color 600000s 0s;
 }
 
 .footer__subscribe-line {
@@ -7952,7 +9723,7 @@ body.menu-is-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .footer__menu-link-underline,
+  .footer__menu-link-line,
   .footer__social-link-paren,
   .footer__social-link-text,
   .footer__subscribe-plus-char,
