@@ -2793,9 +2793,20 @@ function setInitialFreeLessonStates() {
 // the user past the section) — but bunching beats together to hit that
 // budget defeated the point of a staggered reveal: she saw the heading and
 // eyebrow, then everything else (photo, body text, CTA) landed together
-// too fast to register as separate beats. Total is now ~2.7s, still well
-// inside the "don't get outrun by scroll" budget, but each beat gets its
-// own moment.
+// too fast to register as separate beats.
+//
+// Overlaps tightened again 2026-08-09 (her report: media/txt/cta "не
+// проявляються" — same root cause as craft's own CTA-arrives-too-late
+// history, just the other direction: the OLD ~2.96s total left too little
+// margin before startAfterFloor()'s 'top 80%' pre-fire gap (~0.8 viewport
+// height of scroll, well under a second at a normal scroll speed) gets
+// eaten and the section is still off-screen when the sequence finishes —
+// she never sees the reveal at all, arrives to find it already done. Same
+// fix precedent as craft's own "CTA hadn't appeared by the time a normal
+// scroll reached the bottom" — shorten the total, don't touch the trigger
+// point itself (startAfterFloor()'s 0.8 is shared by every block using
+// this chain, changing it here alone would make this one inconsistent
+// with the rest of the project instead of matching it). Now ~1.9s total.
 //
 // start: the same startAfterFloor() chain steps/philosophy use — natural
 // "top 80%" via a live getBoundingClientRect() read, floored to fire no
@@ -2809,17 +2820,17 @@ function runFreeLessonEntrance() {
   const tl = gsap.timeline({
     scrollTrigger: { trigger: freeLessonSection, start: startAfterFloor(freeLessonSection, floor), once: true },
   })
-    .to(freeLessonLines, { opacity: 1, y: 0, duration: 0.9, stagger: 0.08, ease: 'power2.out' })
-    .to(freeLessonEyebrowWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, '-=0.5')
+    .to(freeLessonLines, { opacity: 1, y: 0, duration: 0.7, stagger: 0.06, ease: 'power2.out' })
+    .to(freeLessonEyebrowWords, { opacity: 1, duration: 0.5, stagger: 0.04, ease: 'sine.out' }, '-=0.45')
     .to(freeLessonMedia, {
       opacity: 1,
       y: 0,
-      duration: 1.0,
+      duration: 0.8,
       ease: 'power4.out',
       onComplete: () => gsap.set(freeLessonMedia, { clearProps: 'transform' }),
-    }, '-=0.2')
-    .to(freeLessonTxtWords, { opacity: 1, duration: 0.6, stagger: 0.05, ease: 'sine.out' }, '-=0.5')
-    .to(freeLessonCta, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.1');
+    }, '-=0.25')
+    .to(freeLessonTxtWords, { opacity: 1, duration: 0.5, stagger: 0.04, ease: 'sine.out' }, '-=0.5')
+    .to(freeLessonCta, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '-=0.25');
 
   freeLessonEntranceTrigger = tl.scrollTrigger;
 }
