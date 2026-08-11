@@ -9072,12 +9072,12 @@ body.popup-is-open .popup-subscription {
   width: calc(var(--u) * 295);
 }
 
-/* override the shared .scroll-up bottom:50u — her spec 2026-08-09: align
-   its own bottom edge with cards 2/3's bottom edge (measured live,
-   getBoundingClientRect, not derived from the cards' own content-driven
-   height in CSS). */
+/* override the shared .scroll-up bottom:50u — her revised spec
+   2026-08-09: align with .social__hero-photo's own bottom edge (the big
+   left photo), not cards 2/3 like .steps uses. Measured live,
+   getBoundingClientRect. */
 .social .scroll-up {
-  bottom: calc(var(--u) * 573);
+  bottom: calc(var(--u) * 619.5);
 }
 
 /* button, not div — same reset .gallery__photo uses, so it can be a real
