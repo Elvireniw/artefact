@@ -2188,8 +2188,10 @@ function initPopups() {
   // there. reportValidity() shows the browser's own native "enter a valid
   // email" bubble, same as any other required input. On a valid email,
   // hands off to .popup-free-lesson-confirm (Group B's success screen,
-  // built 2026-08-08) — same closePopup+openPopup swap the 3 tariff forms
-  // use.
+  // built 2026-08-08) — crossfadeToPopup(), same content-only crossfade
+  // the 3 tariff forms use (her catch 2026-08-09: this one was still on
+  // the old closePopup()+openPopup() double-curtain, missed when the
+  // crossfade fix was first done).
   const freeLessonSubmit = document.getElementById('popup-free-lesson-submit');
   const freeLessonEmail = document.getElementById('popup-free-lesson-email');
   const freeLessonConfirmPopup = document.getElementById('popup-free-lesson-confirm');
@@ -2197,8 +2199,7 @@ function initPopups() {
     freeLessonSubmit.addEventListener('click', (event) => {
       event.preventDefault();
       if (!freeLessonEmail.reportValidity()) return;
-      closePopup(document.getElementById('popup-free-lesson'));
-      openPopup(freeLessonConfirmPopup);
+      crossfadeToPopup(document.getElementById('popup-free-lesson'), freeLessonConfirmPopup);
     });
   }
 
