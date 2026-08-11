@@ -2075,24 +2075,34 @@ body.is-preloading .hero__btn {
   opacity: 0.6;
 }
 
-/* same underline sweep as the nav links (.hero__link-underline): hidden at
-   rest, drawn in left-to-right on hover, retracted to the right on leave,
-   on the project's signature easing curve */
-.gallery__filter-underline {
+/* EXACT same LOCKED recipe as .hero__link-line-track/.hero__link-line and
+   .footer__menu-link-line-track/.footer__menu-link-line — see
+   feedback_nav_underline_settings_locked.md. Track (fixed height:1px,
+   never transformed) + inner line (gets the scaleX transform) so the
+   hairline's thickness never jitters mid-transition; hidden at rest,
+   draws in left-to-right on hover, retracts back to the right on leave;
+   olgaprudka.com's own values (0.5s, cubic-bezier(0.215, 0.61, 0.355, 1)),
+   not this project's usual signature curve — deliberate. */
+.gallery__filter-line-track {
   position: absolute;
   left: 0;
   right: 0;
   bottom: calc(var(--u) * -6);
   height: 1px;
-  background: #2B3D2D;
-  /* fixed origin:left, never flipped — same mid-transition jump/jitter fix
-     as .hero__link-underline, see its own comment for the full mechanism. */
-  transform-origin: left;
-  transform: scaleX(0);
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-.gallery__filter-item:hover .gallery__filter-underline {
+.gallery__filter-line {
+  position: absolute;
+  inset: 0;
+  background: #2B3D2D;
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.gallery__filter-item:hover .gallery__filter-line {
+  transform-origin: left;
   transform: scaleX(1);
 }
 
@@ -3916,6 +3926,18 @@ body.menu-is-open {
   pointer-events: none;
 }
 
+/* same guard, block 7's own big left photo (.steps__art): identical setup
+   to .social__hero-photo above — a static, non-clickable photo registered
+   in mediaImageGroups() for hover-scale, so scrolling it past a
+   stationary cursor while the section's entrance timeline settles fires
+   the same uninvited mouseenter -> scale(1.05) kick, reading as a jerk
+   right as the elements land. Confirmed 2026-08-08, same root cause as
+   block 13's, same fix — no new JS, initStepHoverGuard() already toggles
+   .is-scrolling globally on ANY scroll. */
+.is-scrolling .steps__art {
+  pointer-events: none;
+}
+
 .step--1 {
   right: 0;
 }
@@ -5263,10 +5285,16 @@ body.popup-is-open .popup-confirm {
   color: var(--olive-100);
 }
 
+/* bottom:0 (not a top offset) — her catch 2026-08-08: this block read as
+   disconnected/floating above .popup-confirm__close-wrap, which sits at
+   945u/content height 980u i.e. already flush with the content box's own
+   bottom edge. Anchoring this block to the same bottom edge puts both
+   groups at the same visual "level" instead of leaving dead space
+   between the social links row and закрити. */
 .popup-confirm__social {
   position: absolute;
   left: calc(var(--u) * 915);
-  top: calc(var(--u) * 828);
+  bottom: 0;
   width: calc(var(--u) * 512);
   display: flex;
   flex-direction: column;
@@ -5290,7 +5318,16 @@ body.popup-is-open .popup-confirm {
   gap: calc(var(--u) * 40);
 }
 
+/* hover mechanism verbatim from .menu-overlay__social-link/
+   .footer__social-link — see either's own comment for the full
+   reasoning. Text dims + shifts right; an italic "(" hidden at rest
+   (no layout space, position:absolute) fades in to fill the gap the
+   shift opens up. Font-size lives on the <a> itself so the paren
+   inherits it (her catch on the footer version — a paren with no
+   font-size of its own renders at the page's base size instead). */
 .popup-confirm__social-link {
+  position: relative;
+  display: inline-flex;
   font-family: 'Helvetica Neue', sans-serif;
   font-weight: 400;
   font-size: calc(var(--u) * 36);
@@ -5298,12 +5335,28 @@ body.popup-is-open .popup-confirm {
   color: #2B3D2D;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.popup-confirm__social-paren {
+  position: absolute;
+  left: 0;
+  opacity: 0;
   transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.popup-confirm__social-text {
+  display: inline-block;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .popup-confirm__social-link:hover {
+  .popup-confirm__social-link:hover .popup-confirm__social-paren {
     opacity: 0.6;
+  }
+
+  .popup-confirm__social-link:hover .popup-confirm__social-text {
+    opacity: 0.6;
+    transform: translateX(calc(0.5em + 10px));
   }
 }
 
@@ -5708,6 +5761,229 @@ body.popup-is-open .popup-free-lesson {
 }
 
 .popup-free-lesson__close-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   POP-UP — free-lesson lead-magnet success screen (Figma node 1386:1176,
+   file 6tA1k2sLpFm5U7cLn9p9rZ, "pop-up-free lesson-confirmation"). Group
+   B's missing second half — .popup-free-lesson is the form, this is the
+   success screen it was always meant to lead to (see
+   project_artefact_popup_modals_scope.md). Same brown theme + background
+   gradient as .popup-free-lesson (identical asset, reused verbatim — see
+   its own comment for why the gradient is a radial-gradient
+   approximation, not a real blur filter). No CTA button on this screen —
+   just the promo code, a video thumbnail, and close.
+
+   Video thumbnail (img/popup-free-lesson-confirm-video.png) is a genuinely
+   NEW photo (hands on the wheel), not a repeat of
+   img/free-lesson-course.png (the vase) — confirmed by opening both files
+   and comparing, not assumed from either filename. Play icon is the exact
+   lucide/play SVG downloaded from this node's own Figma asset (never
+   hand-drawn), recolored to currentColor so it inherits beige-100 like
+   every other inlined icon on the site. ========================================================================== */
+
+.popup-free-lesson-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  clip-path: inset(0% 0% 100% 0%);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body.popup-is-open .popup-free-lesson-confirm {
+  pointer-events: auto;
+}
+
+.popup-free-lesson-confirm__bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--brown-700);
+  pointer-events: none;
+}
+
+.popup-free-lesson-confirm__gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 70% 85% at 55% 62%, rgba(126, 100, 84, 0.55) 0%, rgba(126, 100, 84, 0) 70%),
+    radial-gradient(ellipse 60% 75% at 82% 52%, rgba(100, 71, 55, 0.5) 0%, rgba(100, 71, 55, 0) 70%),
+    radial-gradient(ellipse 45% 55% at 60% 88%, rgba(91, 64, 50, 0.55) 0%, rgba(91, 64, 50, 0) 70%),
+    radial-gradient(ellipse 55% 60% at 6% 4%, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0) 65%);
+}
+
+.popup-free-lesson-confirm__content {
+  position: absolute;
+  left: calc(var(--u) * 50);
+  top: calc(var(--u) * 50);
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 980);
+}
+
+.popup-free-lesson-confirm__heading {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 1820);
+  height: calc(var(--u) * 384);
+}
+
+.popup-free-lesson-confirm__line {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 128);
+  line-height: 1;
+  letter-spacing: calc(var(--u) * -3.84);
+  text-transform: uppercase;
+  color: var(--beige-100);
+}
+
+.popup-free-lesson-confirm__line--2 { color: var(--beige-80); }
+.popup-free-lesson-confirm__line--3 { color: var(--beige-60); }
+
+.popup-free-lesson-confirm__lesson {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 508);
+  width: calc(var(--u) * 905);
+}
+
+.popup-free-lesson-confirm__note {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -1.28);
+  color: var(--beige-100);
+}
+
+/* absolute, NOT a margin-top flow offset — .lesson's own 177u in Figma is
+   an offset from ITS top-left, not a gap after the note paragraph's real
+   rendered height. A margin-top here added 177u AFTER whatever height the
+   note wrapped to (~116u), landing the video ~115u too low and badly
+   misaligned with .popup-free-lesson-confirm__right's own bottom-flush
+   promo-code/close row — her catch 2026-08-08, confirmed live (video
+   bottom was overflowing past the content box's own bottom edge). */
+.popup-free-lesson-confirm__video {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * 177);
+  width: calc(var(--u) * 295);
+  height: calc(var(--u) * 295);
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.popup-free-lesson-confirm__video-el {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-free-lesson-confirm__video:hover .popup-free-lesson-confirm__video-el {
+    transform: scale(1.05);
+  }
+}
+
+.popup-free-lesson-confirm__right {
+  position: absolute;
+  left: calc(var(--u) * 915);
+  top: calc(var(--u) * 685);
+  width: calc(var(--u) * 458);
+}
+
+.popup-free-lesson-confirm__promo-label {
+  margin: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  color: var(--beige-100);
+  opacity: 0.6;
+}
+
+.popup-free-lesson-confirm__promo-code {
+  margin: calc(var(--u) * 138) 0 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 64);
+  line-height: 0.9;
+  letter-spacing: calc(var(--u) * -1.28);
+  color: var(--beige-100);
+}
+
+.popup-free-lesson-confirm__note .italic-symbol,
+.popup-free-lesson-confirm__promo-code .italic-symbol {
+  margin-right: 10px;
+}
+
+/* wrapper carries the position AND the entrance stagger — the button
+   itself must never get .js-popup-stagger directly, see
+   feedback_nav_underline_settings_locked.md's sibling lesson on
+   .popup-tariff-1__close-wrap for why (GSAP leaves an inline opacity that
+   blocks :hover otherwise). */
+.popup-free-lesson-confirm__close-wrap {
+  position: absolute;
+  left: calc(var(--u) * 1644);
+  top: calc(var(--u) * 945);
+}
+
+.popup-free-lesson-confirm__close {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 36);
+  padding: 0 0 2px;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: var(--beige-100);
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .popup-free-lesson-confirm__close:hover {
+    opacity: 0.6;
+  }
+}
+
+.popup-free-lesson-confirm__close-label {
+  font-family: 'Helvetica Neue', sans-serif;
+  font-weight: 400;
+  font-size: calc(var(--u) * 30);
+  line-height: 1.1;
+  letter-spacing: calc(var(--u) * -0.3);
+  white-space: nowrap;
+}
+
+.popup-free-lesson-confirm__close-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 30);
+  height: calc(var(--u) * 30);
+}
+
+.popup-free-lesson-confirm__close-icon svg {
   display: block;
   width: 100%;
   height: 100%;

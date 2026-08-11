@@ -705,7 +705,7 @@ function startVaseBreathe() {
   gsap.to(vase, { y: -8, duration: 2.5, yoyo: true, repeat: -1, ease: 'sine.inOut' });
 }
 
-// The preloader logo settles, then a 0.75s hold (LETTER_HOLD) elapses
+// The preloader logo settles, then a 0.375s hold (LETTER_HOLD) elapses
 // before this timeline is even built. The preloader itself never fades —
 // it stays fully opaque and static. .hero__bg is temporarily bumped above
 // it in z-index so the curtain's growing revealed region visually climbs
@@ -716,7 +716,7 @@ function startVaseBreathe() {
 // previous one has fully finished, plus its own explicit gap. The only
 // intentional overlaps are H1+ghost (together at 'h1Start') and
 // table+labels+vase (together, at vase's start via '<'):
-//   -0.75s (hold)         preloader logo settled, waiting to start
+//   -0.375s (hold)        preloader logo settled, waiting to start
 //   0.0s                  curtain rises over the static preloader, 1.6s
 //   +0.4s gap             header (nav + menu button drop + menu-line draw-in)
 //   +0.11s gap            eyebrow words fade in
@@ -1542,7 +1542,16 @@ function runStepsEntrance() {
     y: 0,
     duration: 0.8,
     ease: 'power4.out',
-    onComplete: () => gsap.set(stepsArtImgs, { clearProps: 'transform' }),
+    // clearProps: 'transform' (NOT included, unlike a normal entrance beat)
+    // — stepsArtImgs also carries the ongoing scroll-scrubbed yPercent
+    // parallax from mediaImageGroups(), still running long after this
+    // entrance finishes. Clearing the inline transform out from under a
+    // still-active scrub tween is exactly the "дергається" bug already
+    // found and fixed on .social__hero-photo (see runSocialEntrance()) —
+    // this was the same bug, just never ported over here. Only opacity
+    // needs clearing; the parallax already owns `transform` afterward and
+    // keeps it correct on its own next tick regardless.
+    onComplete: () => gsap.set(stepsArtImgs, { clearProps: 'opacity' }),
   });
 
   // Each card enters fully on its own, one after another — card2/card3 used
@@ -1741,8 +1750,14 @@ const GALLERY_PAGES = 2;              // gaps between those stops
 const GALLERY_PAGE_SCROLL = 1100;     // scroll per page, in u
 // Lenis keeps emitting scroll while its own glide decays, so this only has to
 // outlast the frame gap, not the glide — the settle lands when the page has
-// actually come to rest.
-const GALLERY_SETTLE_IDLE = 120;      // ms of stillness before settling
+// actually come to rest. Raised from 120 to 450 (2026-08-09, her call) — 120ms
+// was short enough that an ordinary micro-pause mid-scroll (especially while
+// screen-recording for a Behance case video, where her mouse movement is more
+// careful/deliberate) could trip the idle timer before she'd actually meant
+// to stop, firing a settle that visibly tugged the cards backward toward the
+// nearest stop. 450ms only fires for a genuine pause, not a recording-induced
+// hiccup — same settle mechanism, just less trigger-happy.
+const GALLERY_SETTLE_IDLE = 450;      // ms of stillness before settling
 const GALLERY_SETTLE_DURATION = 0.5;  // s, the settle itself
 
 function initGalleryCarousel() {
@@ -2011,6 +2026,68 @@ function closePopup(popup) {
     .to(popup, { clipPath: 'inset(0% 0% 100% 0%)', duration: 1.2, ease: 'power3.out' }, 0);
 }
 
+// Swaps directly from one open popup to another (tariff form -> shared
+// "Дякуємо" screen) — CONTENT crossfades, the popup shells themselves
+// never do. First version faded the whole .popup-X container's opacity on
+// both sides at once, which for that brief overlap meant NEITHER
+// container was fully opaque — the real page (pricing block) showed
+// through both of them for about a second. Her catch 2026-08-08: fixed by
+// never touching either container's own opacity at all (each stays a
+// solid, fully opaque background permanently) and instead only crossfading
+// the .js-popup-content wrapper's opacity — fromPopup's content fades out
+// first, THEN toPopup's solid background is swapped in with a single
+// instant (duration:0) gsap.set — a plain color swap, not a transparent
+// blend — and its content fades in on top of that. The site is never once
+// visible through either layer.
+function crossfadeToPopup(fromPopup, toPopup) {
+  if (!fromPopup || !toPopup) return;
+  const fromId = fromPopup.id;
+  const toId = toPopup.id;
+  if (popupTweens[fromId]) popupTweens[fromId].kill();
+  if (popupTweens[toId]) popupTweens[toId].kill();
+
+  document.body.classList.add('popup-is-open');
+  toPopup.setAttribute('aria-hidden', 'false');
+  fromPopup.setAttribute('aria-hidden', 'true');
+
+  const fromContent = fromPopup.querySelector('.js-popup-content');
+  const toContent = toPopup.querySelector('.js-popup-content');
+  const toStagger = toPopup.querySelectorAll('.js-popup-stagger');
+
+  if (reducedMotion) {
+    gsap.set(fromPopup, { clipPath: 'inset(0% 0% 100% 0%)' });
+    gsap.set(fromContent, { opacity: 1 });
+    gsap.set(toPopup, { clipPath: 'inset(0% 0% 0% 0%)' });
+    gsap.set(toContent, { opacity: 1 });
+    gsap.set(toStagger, { opacity: 1, y: 0 });
+    return;
+  }
+
+  // toPopup starts CLOSED (curtain-clipped), same as any normal popup at
+  // rest — NOT opened yet. toPopup is later in the DOM than every tariff
+  // popup, so equal z-index means it paints ON TOP of fromPopup the
+  // instant it's unclipped; opening it here already would cover fromPopup
+  // completely before fromContent's fade-out ever became visible. It only
+  // opens inside the .call() below, at the exact swap instant.
+  gsap.set(toPopup, { clipPath: 'inset(0% 0% 100% 0%)' });
+  gsap.set(toContent, { opacity: 0 });
+  gsap.set(toStagger, { opacity: 0, y: 12 });
+
+  popupTweens[toId] = gsap.timeline()
+    .to(fromContent, { opacity: 0, duration: 0.4, ease: 'sine.inOut' }, 0)
+    .call(() => {
+      // both instant, same tick — a flat color swap (beige<->olive
+      // depending which tariff), never a semi-transparent blend of the
+      // two, so the real page underneath is never exposed for even one
+      // frame
+      gsap.set(fromPopup, { clipPath: 'inset(0% 0% 100% 0%)' });
+      gsap.set(fromContent, { opacity: 1 });
+      gsap.set(toPopup, { clipPath: 'inset(0% 0% 0% 0%)' });
+    })
+    .to(toContent, { opacity: 1, duration: 0.4, ease: 'sine.inOut' })
+    .to(toStagger, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'sine.out' }, '-=0.1');
+}
+
 function initPopups() {
   // .js-popup, not [id^="popup-"] — an id-prefix match also caught
   // #popup-free-lesson-submit (the CTA link inside the popup, id shares
@@ -2063,8 +2140,7 @@ function initPopups() {
       if (!tariff2Name.reportValidity()) return;
       if (!tariff2Phone.reportValidity()) return;
       if (!tariff2Email.reportValidity()) return;
-      closePopup(document.getElementById('popup-tariff-2'));
-      openPopup(confirmPopup);
+      crossfadeToPopup(document.getElementById('popup-tariff-2'), confirmPopup);
     });
   }
 
@@ -2084,8 +2160,7 @@ function initPopups() {
       if (!tariff1Name.reportValidity()) return;
       if (!tariff1Phone.reportValidity()) return;
       if (!tariff1Email.reportValidity()) return;
-      closePopup(document.getElementById('popup-tariff-1'));
-      openPopup(confirmPopup);
+      crossfadeToPopup(document.getElementById('popup-tariff-1'), confirmPopup);
     });
   }
 
@@ -2104,22 +2179,26 @@ function initPopups() {
       if (!tariff3Name.reportValidity()) return;
       if (!tariff3Phone.reportValidity()) return;
       if (!tariff3Email.reportValidity()) return;
-      closePopup(document.getElementById('popup-tariff-3'));
-      openPopup(confirmPopup);
+      crossfadeToPopup(document.getElementById('popup-tariff-3'), confirmPopup);
     });
   }
 
   // No backend yet, and the design's success screen (a separate Figma
   // frame) isn't built — this just validates the email field and stops
   // there. reportValidity() shows the browser's own native "enter a valid
-  // email" bubble, same as any other required input; wire the real
-  // success-screen transition once that screen exists.
+  // email" bubble, same as any other required input. On a valid email,
+  // hands off to .popup-free-lesson-confirm (Group B's success screen,
+  // built 2026-08-08) — same closePopup+openPopup swap the 3 tariff forms
+  // use.
   const freeLessonSubmit = document.getElementById('popup-free-lesson-submit');
   const freeLessonEmail = document.getElementById('popup-free-lesson-email');
+  const freeLessonConfirmPopup = document.getElementById('popup-free-lesson-confirm');
   if (freeLessonSubmit && freeLessonEmail) {
     freeLessonSubmit.addEventListener('click', (event) => {
       event.preventDefault();
-      freeLessonEmail.reportValidity();
+      if (!freeLessonEmail.reportValidity()) return;
+      closePopup(document.getElementById('popup-free-lesson'));
+      openPopup(freeLessonConfirmPopup);
     });
   }
 
@@ -2154,7 +2233,7 @@ function initPopups() {
 const LETTER_STAGGER = 0.12; // must match `calc(0.12s * var(--i))` in CSS
 const LETTER_ANIM_DURATION = 2.0; // must match `animateBlur 2.0s` in CSS
 const LETTER_ANIM_PASSES = 3; // must match the `3` iteration-count in CSS
-const LETTER_HOLD = 0.75; // requested 0.75s pause after the 3rd pass
+const LETTER_HOLD = 0.375; // pause after the 3rd blur pass, before the curtain starts — half of the original 0.75s, her explicit "2x shorter" request 2026-08-08
 
 function initPreloader() {
   const preloader = document.getElementById('preloader');
@@ -2162,7 +2241,7 @@ function initPreloader() {
 
   const letters = preloader.querySelectorAll('.preloader__logo span');
   // no letter-logo loading screen on mobile — the full 3-pass animation +
-  // hold is ~7.7s (LETTER_STAGGER*8 + LETTER_ANIM_DURATION*3 + HOLD),
+  // hold is ~7.3s (LETTER_STAGGER*8 + LETTER_ANIM_DURATION*3 + HOLD),
   // which read as a broken/frozen page on a phone. Drop straight into
   // runHeroEntrance() instead — the curtain reveal + entrance chain still
   // run, just without the multi-second wait in front of them.
@@ -3047,6 +3126,12 @@ function initStoriesReviews() {
 const STORIES_PAGE_WIDTH = 1820;    // u, matches .stories__page's flex-basis
 const STORIES_PAGE_GAP = 50;        // u, matches .stories__grid's gap
 const STORIES_PAGE_SCROLL = 900;    // u of scroll consumed paging to page 2
+// u of EXTRA scroll held after the cards finish moving, before the pin
+// releases into block 10 — her report 2026-08-08: page 2 finishes and the
+// section scrolls away before she can click a card. Scroll-distance, not
+// literal seconds (this is a scrub carousel, not a timer) — a rough first
+// pass, tune by feel like every other timing value on this site.
+const STORIES_PAGE_HOLD = 350;
 const STORIES_SETTLE_IDLE = 120;    // ms of stillness before settling
 const STORIES_SETTLE_DURATION = 0.5; // s, the settle itself
 
@@ -3070,42 +3155,60 @@ function initStoriesCarousel() {
 
   const u = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
   const travel = () => (STORIES_PAGE_WIDTH + STORIES_PAGE_GAP) * u();
+  const totalScroll = STORIES_PAGE_SCROLL + STORIES_PAGE_HOLD;
+  // fraction of the pin's total scroll actually spent moving the cards —
+  // the remainder is a static hold at page 2. initStoriesSettle() uses
+  // this same fraction so "page 2 reached" still means "cards finished
+  // moving", not "scrolled all the way through the hold too".
+  const travelFraction = STORIES_PAGE_SCROLL / totalScroll;
 
-  const tween = gsap.to(track, {
-    x: () => -travel(),
-    ease: 'none',
+  // a timeline, not a bare tween — scrub maps ScrollTrigger's progress
+  // (0-1 over the pin's full scroll distance) onto the TIMELINE's own
+  // totalDuration, not onto any one tween's duration. Giving the x-tween
+  // duration:travelFraction and padding the rest with an empty tween
+  // (duration: 1-travelFraction) makes the cards finish moving at
+  // travelFraction of the scroll, then sit frozen for the remainder —
+  // the hold. A single gsap.to() has no such split; everything about it
+  // scales to fill the whole scroll range, hold included.
+  const tl = gsap.timeline({
     scrollTrigger: {
       trigger: track,
       pin: storiesSection,
       start: 'center center',
-      end: () => `+=${STORIES_PAGE_SCROLL * u()}`,
+      end: () => `+=${totalScroll * u()}`,
       anticipatePin: 1,
       scrub: 1,
       invalidateOnRefresh: true,
     },
   });
 
-  storiesPinTrigger = tween.scrollTrigger;
-  initStoriesSettle(tween.scrollTrigger);
+  tl.to(track, { x: () => -travel(), ease: 'none', duration: travelFraction }, 0)
+    .to({}, { duration: 1 - travelFraction });
+
+  storiesPinTrigger = tl.scrollTrigger;
+  initStoriesSettle(tl.scrollTrigger, travelFraction);
 }
 
 // Only 2 stops (page 1 / page 2), unlike gallery's card-pitch grid — see
 // initGallerySettle()'s own header comment for why this settles through
-// lenis.scrollTo() rather than ScrollTrigger's `snap`.
-function initStoriesSettle(st) {
+// lenis.scrollTo() rather than ScrollTrigger's `snap`. travelFraction (not
+// a flat 1) is where "page 2" actually sits now that STORIES_PAGE_HOLD
+// exists — past that point she's in the hold, where track.x is already
+// frozen and there's nothing meaningful to snap her TO, so settle() just
+// leaves her alone rather than yanking her back to travelFraction every
+// time she pauses mid-hold.
+function initStoriesSettle(st, travelFraction) {
   if (!st || !lenis) return;
 
-  const stops = [0, 1];
   let idleTimer;
 
   const settle = () => {
     if (!st.isActive) return;
 
     const progress = st.progress;
-    const nearest = stops.reduce((best, s) => (
-      Math.abs(s - progress) < Math.abs(best - progress) ? s : best
-    ), stops[0]);
+    if (progress > travelFraction) return;
 
+    const nearest = Math.abs(travelFraction - progress) < progress ? travelFraction : 0;
     const target = st.start + (st.end - st.start) * nearest;
     if (Math.abs(target - window.scrollY) < 2) return;
 
@@ -3564,6 +3667,53 @@ function initCtaVideoToggle() {
       setState(false);
     }
   });
+}
+
+// Same play/pause + cursor-label swap as .clay__video-toggle/.cta__media,
+// verbatim, plus one addition neither of those needs: this video does NOT
+// autoplay (it's a real lesson clip, not a decorative loop), so the play
+// glyph (.popup-free-lesson-confirm__play) has to actually reflect
+// paused/playing state — toggled via .is-playing on the button itself.
+function initFreeLessonConfirmVideoToggle() {
+  const toggle = document.querySelector('.popup-free-lesson-confirm__video');
+  const video = document.querySelector('.popup-free-lesson-confirm__video-el');
+  if (!toggle || !video) return;
+
+  const cursor = document.getElementById('cursor');
+  const cursorLabel = cursor && cursor.querySelector('.cursor__media-label');
+
+  function setState(isPlaying) {
+    toggle.classList.toggle('is-playing', isPlaying);
+    const label = isPlaying ? 'стоп' : 'грати';
+    toggle.dataset.cursorLabel = label;
+    toggle.setAttribute('aria-label', isPlaying ? 'Зупинити відео' : 'Відтворити відео');
+    if (cursorLabel && cursor.classList.contains('is-media')) {
+      cursorLabel.textContent = label;
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    if (video.paused) {
+      video.play();
+      setState(true);
+    } else {
+      video.pause();
+      setState(false);
+    }
+  });
+
+  // pause on close — unlike .clay__bg/.cta__media (silent decorative
+  // loops), this video plays with real audio, so leaving it running
+  // behind a closed curtain would keep audibly playing with nothing on
+  // screen. Its own close button only, not every .js-popup-close on the
+  // page.
+  const closeBtn = document.querySelector('#popup-free-lesson-confirm .js-popup-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      video.pause();
+      setState(false);
+    });
+  }
 }
 
 // ==========================================================================
@@ -4244,6 +4394,7 @@ runMaterialEntrance();
 initClayVideoParallax();
 initClayVideoToggle();
 initCtaVideoToggle();
+initFreeLessonConfirmVideoToggle();
 initScrollDownArrows();
 initAnchorNav();
 initScrollUpArrows();

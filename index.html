@@ -355,15 +355,15 @@
     <div class="gallery__filter">
       <button class="gallery__filter-item js-gallery-filter" type="button">
         <span class="gallery__filter-text">Ліплення</span>
-        <span class="gallery__filter-underline" aria-hidden="true"></span>
+        <span class="gallery__filter-line-track" aria-hidden="true"><span class="gallery__filter-line"></span></span>
       </button>
       <button class="gallery__filter-item js-gallery-filter is-active" type="button" aria-pressed="true">
         <span class="gallery__filter-text">Гончарне коло</span>
-        <span class="gallery__filter-underline" aria-hidden="true"></span>
+        <span class="gallery__filter-line-track" aria-hidden="true"><span class="gallery__filter-line"></span></span>
       </button>
       <button class="gallery__filter-item js-gallery-filter" type="button">
         <span class="gallery__filter-text">Декор</span>
-        <span class="gallery__filter-underline" aria-hidden="true"></span>
+        <span class="gallery__filter-line-track" aria-hidden="true"><span class="gallery__filter-line"></span></span>
       </button>
     </div>
 
@@ -2742,7 +2742,7 @@
        the success screen isn't built yet. ========================================================================== -->
   <div id="popup-tariff-1" class="popup-tariff-1 js-popup" data-cursor-theme="light" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Бронювання курсу «Перший дотик»">
 
-    <div class="popup-tariff-1__content">
+    <div class="popup-tariff-1__content js-popup-content">
 
       <div class="popup-tariff-1__heading js-popup-stagger">
         <img class="popup-tariff-1__title-img" src="img/pop-up-h-1.png" alt="Перший дотик">
@@ -2807,7 +2807,7 @@
        same as tariff-1. ========================================================================== -->
   <div id="popup-tariff-2" class="popup-tariff-2 js-popup" data-cursor-theme="dark" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Бронювання курсу «Мова глини»">
 
-    <div class="popup-tariff-2__content">
+    <div class="popup-tariff-2__content js-popup-content">
 
       <div class="popup-tariff-2__heading js-popup-stagger">
         <img class="popup-tariff-2__title-img" src="img/pop-up-h-5.png" alt="Мова глини">
@@ -2870,7 +2870,7 @@
        Tariff 2 ("мова глини", olive theme) not built yet. ========================================================================== -->
   <div id="popup-tariff-3" class="popup-tariff-3 js-popup" data-cursor-theme="light" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Бронювання курсу «Професійний рівень»">
 
-    <div class="popup-tariff-3__content">
+    <div class="popup-tariff-3__content js-popup-content">
 
       <div class="popup-tariff-3__heading js-popup-stagger">
         <img class="popup-tariff-3__title-img" src="img/pop-up-h-3.png" alt="Професійний рівень">
@@ -2945,7 +2945,7 @@
        dismiss. ========================================================================== -->
   <div id="popup-confirm" class="popup-confirm js-popup" data-cursor-theme="light" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Заявку прийнято">
 
-    <div class="popup-confirm__content">
+    <div class="popup-confirm__content js-popup-content">
 
       <div class="popup-confirm__heading js-popup-stagger">
         <p class="popup-confirm__line popup-confirm__line--1">Дякуємо&nbsp;&nbsp;&nbsp;!</p>
@@ -2966,9 +2966,9 @@
       <div class="popup-confirm__social js-popup-stagger">
         <p class="popup-confirm__social-label">а поки чекаєте — перегляньте</p>
         <div class="popup-confirm__social-links">
-          <a href="#" class="popup-confirm__social-link">instagram</a>
-          <a href="#" class="popup-confirm__social-link">pinterest</a>
-          <a href="#" class="popup-confirm__social-link">youtube</a>
+          <a href="#" class="popup-confirm__social-link"><span class="italic-symbol popup-confirm__social-paren" aria-hidden="true">(</span><span class="popup-confirm__social-text">instagram</span></a>
+          <a href="#" class="popup-confirm__social-link"><span class="italic-symbol popup-confirm__social-paren" aria-hidden="true">(</span><span class="popup-confirm__social-text">pinterest</span></a>
+          <a href="#" class="popup-confirm__social-link"><span class="italic-symbol popup-confirm__social-paren" aria-hidden="true">(</span><span class="popup-confirm__social-text">youtube</span></a>
         </div>
       </div>
 
@@ -3063,6 +3063,57 @@
             </span>
           </button>
         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       POP-UP — free-lesson lead-magnet success screen (Figma node
+       1386:1176, "pop-up-free lesson-confirmation"). Group B's missing
+       second half (the form half, .popup-free-lesson, was built
+       2026-08-07 — see project_artefact_popup_modals_scope.md). Opens
+       after a valid email is submitted in .popup-free-lesson's own form.
+       Same brown theme/background gradient as .popup-free-lesson (reused
+       verbatim, same asset). No further action here besides closing — no
+       CTA button, just the promo code + video thumbnail + close. ========================================================================== -->
+  <div id="popup-free-lesson-confirm" class="popup-free-lesson-confirm js-popup" data-cursor-theme="dark" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Вітаємо, ви зробили перший крок у світ глини">
+
+    <div class="popup-free-lesson-confirm__bg" aria-hidden="true">
+      <div class="popup-free-lesson-confirm__gradient"></div>
+    </div>
+
+    <div class="popup-free-lesson-confirm__content">
+
+      <div class="popup-free-lesson-confirm__heading js-popup-stagger">
+        <p class="popup-free-lesson-confirm__line popup-free-lesson-confirm__line--1">Вітаємо&nbsp;&nbsp;&nbsp;!</p>
+        <p class="popup-free-lesson-confirm__line popup-free-lesson-confirm__line--2">Ви зробили перший</p>
+        <p class="popup-free-lesson-confirm__line popup-free-lesson-confirm__line--3">крок&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;у&nbsp;&nbsp;&nbsp;світ глини</p>
+      </div>
+
+      <div class="popup-free-lesson-confirm__lesson js-popup-stagger">
+        <p class="popup-free-lesson-confirm__note"><span class="italic-symbol">(</span>&nbsp;&nbsp;нижче ваше посилання на безкоштовний урок&nbsp;&nbsp;<span class="italic-symbol">)</span></p>
+        <button type="button" class="popup-free-lesson-confirm__video js-cursor-media" data-cursor-label="грати" aria-label="Відтворити відео">
+          <video class="popup-free-lesson-confirm__video-el" muted playsinline aria-hidden="true">
+            <source src="img/popup-video-art.mp4" type="video/mp4">
+          </video>
+        </button>
+      </div>
+
+      <div class="popup-free-lesson-confirm__right js-popup-stagger">
+        <p class="popup-free-lesson-confirm__promo-label">ваш персональний промокод<br>на знижку -15%<br>на будь-який курс</p>
+        <p class="popup-free-lesson-confirm__promo-code"><span class="italic-symbol">(</span>&nbsp;&nbsp;artefact15&nbsp;&nbsp;<span class="italic-symbol">)</span></p>
+      </div>
+
+      <div class="popup-free-lesson-confirm__close-wrap js-popup-stagger">
+        <button type="button" class="popup-free-lesson-confirm__close js-popup-close">
+          <span class="popup-free-lesson-confirm__close-label">закрити</span>
+          <span class="popup-free-lesson-confirm__close-icon" aria-hidden="true">
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.5 7.5L7.5 22.5M7.5 7.5L22.5 22.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
       </div>
 
     </div>
