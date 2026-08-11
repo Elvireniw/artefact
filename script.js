@@ -2595,7 +2595,17 @@ function initScrollDownArrows() {
       const target = window.scrollY + next.getBoundingClientRect().top;
 
       if (lenis) {
-        lenis.scrollTo(target, { duration: 1.4 });
+        lenis.scrollTo(target, {
+          duration: 1.4,
+          // explicit signature curve — without it this falls back to the
+          // Lenis instance's own easing (initLenis(), tuned for continuous
+          // wheel deceleration), whose min(1, 1.001 - 2^(-7t)) never
+          // actually reaches 1. A discrete duration-based scrollTo() then
+          // spends its last frames barely moving (looks stopped) before
+          // Animate.advance() force-snaps the final frame to the exact
+          // target — read as an abrupt stop-then-jerk on arrival.
+          easing: (t) => 1 - Math.pow(1 - t, 3),
+        });
       } else {
         window.scrollTo({ top: target, behavior: reducedMotion ? 'auto' : 'smooth' });
       }
@@ -2620,7 +2630,12 @@ function initScrollUpArrows() {
       event.preventDefault();
 
       if (lenis) {
-        lenis.scrollTo(0, { duration: 1.4 });
+        lenis.scrollTo(0, {
+          duration: 1.4,
+          // same fix as the scroll-down arrows just above — see that
+          // comment for why the explicit easing is required here
+          easing: (t) => 1 - Math.pow(1 - t, 3),
+        });
       } else {
         window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
       }
@@ -2697,7 +2712,13 @@ function initAnchorNav() {
         : window.scrollY + target.getBoundingClientRect().top;
 
       if (lenis) {
-        lenis.scrollTo(dest, { duration: 1.4 });
+        lenis.scrollTo(dest, {
+          duration: 1.4,
+          // same fix as .js-scroll-down / .js-scroll-up — omitting this
+          // falls back to the Lenis instance's wheel-tuned easing, which
+          // caps below 1 and produces a stop-then-jerk on arrival
+          easing: (t) => 1 - Math.pow(1 - t, 3),
+        });
       } else {
         window.scrollTo({ top: dest, behavior: reducedMotion ? 'auto' : 'smooth' });
       }

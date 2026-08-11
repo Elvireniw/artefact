@@ -9078,9 +9078,14 @@ body.popup-is-open .popup-subscription {
    two elements at the same instant (not derived from .social's own
    getBoundingClientRect() — .social is a pinned section, so its bounding
    rect reads differently depending on scroll/pin state, which produced a
-   wrong 619.5u the first time this was computed that way). */
+   wrong 619.5u the first time this was computed that way). Re-measured
+   2026-08-11 against .section-inner's own bottom edge (79.5u was still
+   63.85px too low — the earlier pass measured a stale/pre-pin state).
+   Her follow-up: raise it one more arrow-height (36*1.1 = 39.6u) above
+   that flush position, leaving a one-arrow-height gap between the
+   arrow's own bottom edge and the photo's bottom edge: 176.4 + 39.6 = 216. */
 .social .scroll-up {
-  bottom: calc(var(--u) * 79.5);
+  bottom: calc(var(--u) * 216);
 }
 
 /* button, not div — same reset .gallery__photo uses, so it can be a real
