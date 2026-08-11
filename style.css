@@ -3955,6 +3955,14 @@ body.menu-is-open {
   position: relative;
 }
 
+/* override the shared .scroll-up bottom:50u — her spec 2026-08-09: align
+   its own bottom edge with cards 2/3's bottom edge (measured live,
+   getBoundingClientRect, not derived from the cards' own content-driven
+   height in CSS). */
+.steps .scroll-up {
+  bottom: calc(var(--u) * 145.5);
+}
+
 /* --- "(N)" / hover swap: same family as .craft__cta-plus-char's swap — a
    plain CSS-transition hover, not GSAP, per the project's convention that
    simple hover interactions live in CSS while GSAP is reserved for
@@ -9062,6 +9070,14 @@ body.popup-is-open .popup-subscription {
 .social__card {
   flex: 0 0 auto;
   width: calc(var(--u) * 295);
+}
+
+/* override the shared .scroll-up bottom:50u — her spec 2026-08-09: align
+   its own bottom edge with cards 2/3's bottom edge (measured live,
+   getBoundingClientRect, not derived from the cards' own content-driven
+   height in CSS). */
+.social .scroll-up {
+  bottom: calc(var(--u) * 573);
 }
 
 /* button, not div — same reset .gallery__photo uses, so it can be a real
